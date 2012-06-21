@@ -81,6 +81,7 @@ INSTALLED_APPS = (
     "django.contrib.messages",
 
     # External
+    "south",
 
     # Internal
     "warehouse",

@@ -6,6 +6,7 @@ import warehouse
 
 install_requires = [
     "logan",
+    "south",
 ]
 
 setup(
