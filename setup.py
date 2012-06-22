@@ -7,6 +7,7 @@ import warehouse
 install_requires = [
     "logan",
     "south",
+    "django-model-utils>=1.1",
 ]
 
 setup(
