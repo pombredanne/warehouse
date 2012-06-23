@@ -1,12 +1,16 @@
 import re
 
 from django.db import models
+from django.utils.translation import ugettext_lazy as _
 
 from django_hstore import hstore
+from model_utils import Choices
 from model_utils.fields import AutoCreatedField, AutoLastModifiedField
 from model_utils.models import TimeStampedModel
 
+from warehouse.conf import settings
 from warehouse.fields import dbarray
+from warehouse.utils.packages import version_file_upload_path, package_storage
 
 
 __all__ = ["Project", "Version"]
@@ -84,3 +88,44 @@ class Version(models.Model):
     class Meta:
         app_label = "warehouse"
         unique_together = ("project", "version")
+
+
+class VersionFile(models.Model):
+
+    TYPES = Choices(
+        ("sdist", _("Source")),
+        ("bdist_egg", "Egg"),
+        ("bdist_msi", "MSI"),
+        ("bdist_dmg", "DMG"),
+        ("bdist_rpm", "RPM"),
+        ("bdist_dumb", _("Dumb Binary Distribution")),
+        ("bdist_wininst", _("Windows Installer Binary Distribution")),
+    )
+
+    version = models.ForeignKey(Version, related_name="files")
+
+    created = AutoCreatedField("created", db_index=True)
+    modified = AutoLastModifiedField("modified")
+
+    yanked = models.BooleanField(default=False)
+
+    type = models.CharField(max_length=25, choices=TYPES)
+
+    file = models.FileField(upload_to=version_file_upload_path, storage=package_storage, max_length=512)
+    python_version = models.CharField(max_length=25)
+    digests = hstore.DictionaryField()
+
+    comment = models.TextField(blank=True)
+
+    # De normalization
+    filename = models.CharField(max_length=200)
+    filesize = models.PositiveIntegerField(default=0)
+
+    # Manager
+    objects = hstore.HStoreManager()
+
+    class Meta:
+        app_label = "warehouse"
+
+    def __unicode__(self):
+        return self.filename
