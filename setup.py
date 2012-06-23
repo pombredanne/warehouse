@@ -5,9 +5,12 @@ import warehouse
 
 
 install_requires = [
+    "Django>=1.4",
+
+    "django-model-utils>=1.1",
+    "django-hstore",
     "logan",
     "south",
-    "django-model-utils>=1.1",
 ]
 
 setup(
