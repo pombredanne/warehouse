@@ -66,7 +66,7 @@ class Version(models.Model):
     platforms = dbarray.TextArrayField(blank=True)
     supported_platforms = dbarray.TextArrayField(blank=True)
 
-    # @@@ Can we convert this to a tagging system instead of a freeform text field?
+    # @@@ Can we convert this to a tagging system instead of a free form text field?
     keywords = models.TextField(blank=True)
 
     uris = hstore.DictionaryField()
