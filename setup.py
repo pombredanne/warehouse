@@ -7,6 +7,7 @@ import warehouse
 install_requires = [
     "Django>=1.4",
 
+    "django-appconf",
     "django-model-utils>=1.1",
     "django-hstore",
     "logan",
