@@ -10,6 +10,7 @@ install_requires = [
     "django-appconf",
     "django-model-utils>=1.1",
     "django-hstore",
+    "django-tastypie",
     "logan",
     "south",
 

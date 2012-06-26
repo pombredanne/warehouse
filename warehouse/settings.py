@@ -82,6 +82,7 @@ INSTALLED_APPS = (
 
     # External
     "south",
+    "tastypie",
 
     # Internal
     "warehouse",
