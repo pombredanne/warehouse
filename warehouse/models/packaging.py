@@ -32,6 +32,9 @@ _normalize_regex = re.compile(r"[^A-Za-z0-9.]+")
 class Project(TimeStampedModel):
     name = models.CharField(max_length=150, unique=True)
 
+    # This mostly exists for sake of the Simple and Simple-Restricted API
+    uris = dbarray.TextArrayField(blank=True)
+
     # De-normalization
     normalized = models.CharField(max_length=150, unique=True)
     downloads = models.PositiveIntegerField(default=0)
