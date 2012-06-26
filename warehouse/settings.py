@@ -66,7 +66,7 @@ MIDDLEWARE_CLASSES = (
     "django.contrib.messages.middleware.MessageMiddleware",
 )
 
-ROOT_URLCONF = "warehouse.conf.urls"
+ROOT_URLCONF = "warehouse.urls"
 
 TEMPLATE_DIRS = [
     os.path.join(PROJECT_ROOT, "templates"),
