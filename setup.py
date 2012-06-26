@@ -12,6 +12,8 @@ install_requires = [
     "django-hstore",
     "logan",
     "south",
+
+    "distutils2",
 ]
 
 setup(

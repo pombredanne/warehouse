@@ -1,12 +1,16 @@
 import re
 
 from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from django.utils.translation import ugettext_lazy as _
 
 from django_hstore import hstore
 from model_utils import Choices
 from model_utils.fields import AutoCreatedField, AutoLastModifiedField
 from model_utils.models import TimeStampedModel
+
+from distutils2 import version as verlib
 
 from warehouse.conf import settings
 from warehouse.fields import dbarray
@@ -184,3 +188,27 @@ class OldProvide(BaseRequirement):
 
 class OldObsolete(BaseRequirement):
     project_version = models.ForeignKey(Version, related_name="old_obsoletes")
+
+
+@receiver(post_save, sender=Version)
+def version_ordering(sender, **kwargs):
+    instance = kwargs.get("instance")
+    if instance is not None:
+        all_versions = Version.objects.filter(package__pk=instance.package.pk)
+
+        versions = []
+        dated = []
+
+        for v in all_versions:
+            normalized = verlib.suggest_normalized_version(v.version)
+            if normalized is not None:
+                versions.append(v)
+            else:
+                dated.append(v)
+
+        versions.sort(key=lambda x: verlib.NormalizedVersion(verlib.suggest_normalized_version(x.version)))
+        dated.sort(key=lambda x: x.created)
+
+        for i, v in enumerate(dated + versions):
+            if v.order != i:
+                Version.objects.filter(pk=v.pk).update(order=i)
