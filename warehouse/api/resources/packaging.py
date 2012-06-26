@@ -19,5 +19,5 @@ class ProjectResource(ModelResource):
         queryset = Project.objects.all()
         fields = ["created", "downloads", "name", "normalized"]
 
-        list_allowed_methods = ["GET", "POST"]
-        detail_allowed_methods = ["GET"]
+        list_allowed_methods = ["get", "post"]
+        detail_allowed_methods = ["get"]
