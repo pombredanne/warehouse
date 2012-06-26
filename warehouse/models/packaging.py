@@ -13,7 +13,7 @@ from warehouse.fields import dbarray
 from warehouse.utils.packages import version_file_upload_path, package_storage
 
 
-__all__ = ["Project", "Version"]
+__all__ = ["Project", "Version", "VersionFile"]
 
 
 METADATA_VERSIONS = [
