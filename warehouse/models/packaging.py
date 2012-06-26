@@ -12,7 +12,6 @@ from model_utils.models import TimeStampedModel
 
 from distutils2 import version as verlib
 
-from warehouse.conf import settings
 from warehouse.fields import dbarray
 from warehouse.utils.packages import version_file_upload_path, package_storage
 
