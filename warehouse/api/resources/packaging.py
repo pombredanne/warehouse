@@ -4,6 +4,9 @@ from tastypie.resources import ModelResource
 from warehouse.models import Project
 
 
+# @@@ Allow deletion of projects if user has permission
+
+
 class ProjectResource(ModelResource):
 
     created = fields.DateTimeField(attribute="created", readonly=True)
@@ -15,3 +18,6 @@ class ProjectResource(ModelResource):
 
         queryset = Project.objects.all()
         fields = ["created", "downloads", "name", "normalized"]
+
+        list_allowed_methods = ["GET", "POST"]
+        detail_allowed_methods = ["GET"]
