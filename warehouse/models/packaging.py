@@ -13,7 +13,11 @@ from warehouse.fields import dbarray
 from warehouse.utils.packages import version_file_upload_path, package_storage
 
 
-__all__ = ["Project", "Version", "VersionFile"]
+__all__ = [
+    "Project", "Version", "VersionFile",
+    "Require", "Provide", "Obsolete",
+    "OldRequire", "OldProvide", "OldObsolete",
+]
 
 
 METADATA_VERSIONS = [
@@ -129,3 +133,51 @@ class VersionFile(models.Model):
 
     def __unicode__(self):
         return self.filename
+
+
+class BaseRequirement(models.Model):
+
+    name = models.CharField(max_length=150)
+    version = models.CharField(max_length=50, blank=True)
+    environment = models.TextField(blank=True)
+
+    class Meta:
+        app_label = "warehouse"
+        abstract = True
+
+    def __unicode__(self):
+        rtr = self.name
+
+        if self.version:
+            rtr = "{rtr} ({version})".format(rtr=rtr, version=self.version)
+
+        if self.environment:
+            rtr = "{rtr}; {environment}".format(rtr=rtr, environment=self.environment)
+
+        return rtr
+
+
+# These are the *-Dist version of Requires/Provides/Obsoletes, and are the way forward
+class Require(BaseRequirement):
+    project_version = models.ForeignKey(Version, related_name="requires")
+
+
+class Provide(BaseRequirement):
+    project_version = models.ForeignKey(Version, related_name="provides")
+
+
+class Obsolete(BaseRequirement):
+    project_version = models.ForeignKey(Version, related_name="obsoletes")
+
+
+# These are the original version of Requires/Provides/Obsoletes and are mostly useless
+class OldRequire(BaseRequirement):
+    project_version = models.ForeignKey(Version, related_name="old_requires")
+
+
+class OldProvide(BaseRequirement):
+    project_version = models.ForeignKey(Version, related_name="old_provides")
+
+
+class OldObsolete(BaseRequirement):
+    project_version = models.ForeignKey(Version, related_name="old_obsoletes")
