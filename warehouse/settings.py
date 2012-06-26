@@ -79,6 +79,7 @@ INSTALLED_APPS = (
     "django.contrib.sessions",
     "django.contrib.sites",
     "django.contrib.messages",
+    "django.contrib.staticfiles",
 
     # External
     "south",
@@ -89,3 +90,5 @@ INSTALLED_APPS = (
 )
 
 EMAIL_SUBJECT_PREFIX = "[Warehouse] "
+
+STATIC_URL = "/site_media/static/"
