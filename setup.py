@@ -31,4 +31,10 @@ setup(
 
     packages=find_packages(exclude=["tests"]),
     zip_safe=False,
+
+    entry_points={
+        "console_scripts": [
+            "warehouse = warehouse.commands.__main__:main",
+        ],
+    },
 )
