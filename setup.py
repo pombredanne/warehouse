@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+import sys
+
 from setuptools import setup, find_packages
 
 install_requires = [
@@ -7,6 +9,11 @@ install_requires = [
 
     "distutils2",
 ]
+
+if sys.version_info < (2, 7):
+    install_requires += [
+        "importlib",
+    ]
 
 setup(
     name="warehouse",
