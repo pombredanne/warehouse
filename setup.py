@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 from setuptools import setup, find_packages
 
-import warehouse
-
-
 install_requires = [
     "Flask",
     "distutils2",
@@ -11,7 +8,7 @@ install_requires = [
 
 setup(
     name="warehouse",
-    version=warehouse.__version__,
+    version="0.1.dev1",
 
     description="API Driven Python Package Index",
     long_description=open("README.rst").read(),
