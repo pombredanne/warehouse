@@ -75,6 +75,43 @@ class Downgrade(AlembicMixin, Command):
         command.downgrade(cfg, revision=revision, sql=sql)
 
 
+class Alembic(AlembicMixin, Command):
+    """
+    Manage the database state.
+    """
+
+    option_list = (
+        Option(
+            "action",
+            choices=["history", "branches", "stamp", "current"],
+            help="Manage and query the state of the database"
+        ),
+        Option(
+            "--revision",
+            dest="revision", nargs="?", default=None,
+            help="Specific revision to upgrade to"
+        ),
+        Option(
+            "--sql",
+            action="store_true", dest="sql",
+            help="Don't emit SQL to database - dump to standard output/file instead"
+        ),
+    )
+
+    def run(self, action, revision=None, sql=None):
+        cfg = self.get_config()
+
+        if action == "history":
+            command.history(cfg)
+        elif action == "current":
+            command.current(cfg)
+        elif action == "branches":
+            command.branches(cfg)
+        elif action == "stamp":
+            command.stamp(cfg, revision=revision, sql=sql)
+
+
 manager.add_command("migration", Migration())
 manager.add_command("upgrade", Upgrade())
 manager.add_command("downgrade", Downgrade())
+manager.add_command("alembic", Alembic())
