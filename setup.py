@@ -6,6 +6,7 @@ from setuptools import setup, find_packages
 install_requires = [
     "Flask",
     "Flask-Script",
+    "Flask-SQLAlchemy",
 
     "distutils2",
 ]
