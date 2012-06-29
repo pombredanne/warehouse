@@ -1,12 +1,56 @@
 from __future__ import with_statement
 from alembic import context
 from sqlalchemy import create_engine, pool
+import logging.config
 
 
 from warehouse.core import db
 
 config = context.config
 target_metadata = db.metadata
+
+
+logging.config.dictConfig({
+    "version": 1,
+    "disable_existing_loggers": True,
+    "formatters": {
+        "simple": {
+            "format": "%(levelname)-5.5s [%(name)s] %(message)s",
+            "datefmt": "%H:%M:%S",
+        },
+        "simple_alembic": {
+            "format": "[upgrade] %(message)s",
+            "datefmt": "%H:%M:%S",
+        },
+    },
+    "handlers": {
+        "console": {
+            "level": "DEBUG",
+            "class": "logging.StreamHandler",
+            "formatter": "simple"
+        },
+        "console_output": {
+            "level": "INFO",
+            "class": "logging.StreamHandler",
+            "formatter": "simple_alembic"
+        },
+    },
+    "loggers": {
+        "": {
+            "handlers": ["console"],
+            "level": "WARN",
+        },
+        "alembic": {
+            "handlers": ["console_output"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "sqlalchemy.engine": {
+            "handlers": ["console"],
+            "level": "WARN",
+        }
+    }
+})
 
 
 def run_migrations_offline():

@@ -25,11 +25,6 @@ class Migration(AlembicMixin, Command):
 
     option_list = (
         Option(dest="message", help="Message string to use with 'revision'"),
-        # Option(
-        #     "--sql",
-        #     action="store_true", dest="sql",
-        #     help="Don't emit SQL to database - dump to standard output/file instead"
-        # ),
         Option(
             "--autogenerate", "-a",
             action="store_true", dest="autogenerate",
@@ -37,9 +32,49 @@ class Migration(AlembicMixin, Command):
         ),
     )
 
-    def run(self, message=None, sql=None, autogenerate=None):
+    def run(self, message=None, autogenerate=None):
         cfg = self.get_config()
         command.revision(cfg, message=message, autogenerate=autogenerate)
 
 
+class Upgrade(AlembicMixin, Command):
+    """
+    Upgrades the database.
+    """
+
+    option_list = (
+        Option(dest="revision", help="Specific revision to upgrade to", nargs="?", default="head"),
+        Option(
+            "--sql",
+            action="store_true", dest="sql",
+            help="Don't emit SQL to database - dump to standard output/file instead"
+        ),
+    )
+
+    def run(self, revision, sql=None):
+        cfg = self.get_config()
+        command.upgrade(cfg, revision=revision, sql=sql)
+
+
+class Downgrade(AlembicMixin, Command):
+    """
+    Downgrades the database.
+    """
+
+    option_list = (
+        Option(dest="revision", help="Specific revision to upgrade to", nargs="?", default=None),
+        Option(
+            "--sql",
+            action="store_true", dest="sql",
+            help="Don't emit SQL to database - dump to standard output/file instead"
+        ),
+    )
+
+    def run(self, revision, sql=None):
+        cfg = self.get_config()
+        command.downgrade(cfg, revision=revision, sql=sql)
+
+
 manager.add_command("migration", Migration())
+manager.add_command("upgrade", Upgrade())
+manager.add_command("downgrade", Downgrade())
