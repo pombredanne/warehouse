@@ -8,6 +8,7 @@ install_requires = [
     "Flask-Script",
     "Flask-SQLAlchemy",
 
+    "alembic",
     "distutils2",
     "psycopg2",
 ]
