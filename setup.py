@@ -9,6 +9,7 @@ install_requires = [
     "Flask-SQLAlchemy",
 
     "distutils2",
+    "psycopg2",
 ]
 
 if sys.version_info < (2, 7):
