@@ -15,6 +15,7 @@ install_requires = [
     "south",
 
     "distutils2",
+    "psycopg2",
 ]
 
 setup(
