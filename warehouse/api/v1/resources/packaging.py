@@ -41,7 +41,13 @@ class VersionResource(ModelResource):
     # Read Only Fields
     project = fields.ToOneField(ProjectResource, "project", readonly=True)
     version = fields.CharField(attribute="version", readonly=True)
-    # yanked
+    yanked = fields.BooleanField(attribute="yanked", readonly=True)
+
+    # Advanced Data Prep
+    uris = fields.DictField(attribute="uris")
+    platforms = fields.ListField(attribute="platforms")
+    supported_platforms = fields.ListField(attribute="supported_platforms")
+    requires_external = fields.ListField(attribute="requires_external")
 
     class Meta:
         resource_name = "versions"
