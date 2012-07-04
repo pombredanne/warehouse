@@ -59,6 +59,9 @@ class VersionResource(ModelResource):
     supported_platforms = fields.ListField(attribute="supported_platforms")
     requires_external = fields.ListField(attribute="requires_external")
 
+    author = fields.DictField()
+    maintainer = fields.DictField()
+
     class Meta:
         resource_name = "versions"
         detail_uri_name = "version"
@@ -70,7 +73,7 @@ class VersionResource(ModelResource):
         fields = [
             "created", "project", "version", "yanked",
             "summary", "description", "license", "uris",
-            "author", "author_email", "maintainer", "maintainer_email",
+            "author", "maintainer",
             "platforms", "supported_platforms",
             "requires_python", "requires_external",
         ]
@@ -92,3 +95,18 @@ class VersionResource(ModelResource):
             orm_filters["yanked"] = False
 
         return orm_filters
+
+    def dehydrate_author(self, bundle):
+        return {"name": bundle.obj.author, "email": bundle.obj.author_email}
+
+    def dehydrate_maintainer(self, bundle):
+        return {"name": bundle.obj.maintainer, "email": bundle.obj.maintainer_email}
+
+    def hydrate(self, bundle):
+        bundle.obj.author = bundle.data.get("author", {}).get("name", "")
+        bundle.obj.author_email = bundle.data.get("author", {}).get("email", "")
+
+        bundle.obj.maintainer = bundle.data.get("maintainer", {}).get("name", "")
+        bundle.obj.maintainer_email = bundle.data.get("maintainer", {}).get("email", "")
+
+        return bundle
