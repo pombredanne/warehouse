@@ -54,7 +54,7 @@ class Project(TimeStampedModel):
 
 
 class Version(models.Model):
-    project = models.ForeignKey(Project, related_name="releases")
+    project = models.ForeignKey(Project, related_name="versions")
     version = models.CharField(max_length=512)
 
     created = AutoCreatedField("created", db_index=True)
