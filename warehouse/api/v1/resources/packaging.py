@@ -14,7 +14,7 @@ class ProjectResource(ModelResource):
     normalized = fields.CharField(attribute="normalized", readonly=True)
 
     class Meta:
-        resource_name = "project"
+        resource_name = "projects"
 
         queryset = Project.objects.all()
         fields = ["created", "downloads", "name", "normalized"]
