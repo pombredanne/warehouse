@@ -12,18 +12,28 @@ from warehouse.models import Project, Version
 # @@@ Can we use actual data structures for version author and maintainer
 
 
+def handle_yanked(bundle):
+    if not bundle.request.GET.get("show_yanked", "no").lower() in ["yes", "on", "true", "t", "1"]:
+        return bundle.obj.versions.filter(yanked=False)
+    return bundle.obj.versions.all()
+
+
 class ProjectResource(ModelResource):
 
+    # Read only fields
     created = fields.DateTimeField(attribute="created", readonly=True)
     downloads = fields.IntegerField(attribute="downloads", readonly=True)
     normalized = fields.CharField(attribute="normalized", readonly=True)
+
+    # related fields
+    versions = fields.ToManyField("warehouse.api.v1.resources.VersionResource", handle_yanked)
 
     class Meta:
         resource_name = "projects"
         detail_uri_name = "normalized"
 
         queryset = Project.objects.all()
-        fields = ["created", "downloads", "name", "normalized"]
+        fields = ["created", "downloads", "name", "normalized", "versions"]
 
         filtering = {
             "name": ALL,
