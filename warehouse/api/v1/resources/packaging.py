@@ -51,6 +51,8 @@ class VersionResource(ModelResource):
 
     class Meta:
         resource_name = "versions"
+        detail_uri_name = "version"
+
         parent_resource = ProjectResource
         parent_resource_uri_prefix = "project"
 
