@@ -69,3 +69,14 @@ class VersionResource(ModelResource):
 
         list_allowed_methods = ["get"]
         detail_allowed_methods = ["get"]
+
+    def build_filters(self, filters=None):
+        if filters is None:
+            filters = {}
+
+        orm_filters = super(VersionResource, self).build_filters(filters)
+
+        if not filters.get("show_yanked", "no").lower() in ["yes", "on", "true", "t", "1"]:
+            orm_filters["yanked"] = False
+
+        return orm_filters
