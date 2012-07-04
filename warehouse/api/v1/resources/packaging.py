@@ -1,4 +1,5 @@
 from tastypie import fields
+from tastypie.constants import ALL
 
 from warehouse.api.resources import ModelResource
 from warehouse.models import Project
@@ -19,6 +20,13 @@ class ProjectResource(ModelResource):
 
         queryset = Project.objects.all()
         fields = ["created", "downloads", "name", "normalized"]
+
+        filtering = {
+            "name": ALL,
+            "normalized": ALL,
+        }
+
+        ordering = ["name", "normalized", "downloads"]
 
         list_allowed_methods = ["get", "post"]
         detail_allowed_methods = ["get"]
