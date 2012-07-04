@@ -9,7 +9,6 @@ from warehouse.models import Project, Version
 # @@@ Allow creating a new version of a project if user has permission
 # @@@ Allow editing a version of a project if user has permission
 #         - Should restrict which fields can be edited based on user
-# @@@ Can we use actual data structures for version author and maintainer
 
 
 def handle_yanked(bundle):
