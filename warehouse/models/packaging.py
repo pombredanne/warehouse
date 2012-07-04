@@ -83,7 +83,7 @@ class Version(models.Model):
     # @@@ Can we convert this to a tagging system instead of a free form text field?
     keywords = models.TextField(blank=True)
 
-    uris = hstore.DictionaryField()
+    uris = hstore.DictionaryField(blank=True, default=dict)
 
     # Requirements
     requires_python = models.CharField(max_length=25, blank=True)
@@ -98,6 +98,9 @@ class Version(models.Model):
     class Meta:
         app_label = "warehouse"
         unique_together = ("project", "version")
+
+    def __unicode__(self):
+        return u"%(project)s %(version)s" % {"project": self.project.name, "version": self.version}
 
 
 class VersionFile(models.Model):
@@ -193,7 +196,7 @@ class OldObsolete(BaseRequirement):
 def version_ordering(sender, **kwargs):
     instance = kwargs.get("instance")
     if instance is not None:
-        all_versions = Version.objects.filter(package__pk=instance.package.pk)
+        all_versions = Version.objects.filter(project__pk=instance.project.pk)
 
         versions = []
         dated = []
