@@ -60,6 +60,7 @@ class VersionResource(ModelResource):
 
     author = fields.DictField()
     maintainer = fields.DictField()
+    classifiers = fields.ListField()
 
     class Meta:
         resource_name = "versions"
@@ -116,6 +117,9 @@ class VersionResource(ModelResource):
             person.update({"email": bundle.obj.maintainer_email})
 
         return person
+
+    def dehydrate_classifiers(self, bundle):
+        return [c.trove for c in bundle.obj.classifiers.all()]
 
     def hydrate(self, bundle):
         bundle.obj.author = bundle.data.get("author", {}).get("name", "")
