@@ -48,7 +48,7 @@ class ProjectResource(ModelResource):
 class VersionResource(ModelResource):
 
     # Read Only Fields
-    project = fields.ToOneField(ProjectResource, "project", readonly=True)
+    project = fields.ToOneField("warehouse.api.v1.resources.ProjectResource", "project", readonly=True)
     version = fields.CharField(attribute="version", readonly=True)
     yanked = fields.BooleanField(attribute="yanked", readonly=True)
 
