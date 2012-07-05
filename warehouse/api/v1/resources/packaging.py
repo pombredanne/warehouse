@@ -96,10 +96,26 @@ class VersionResource(ModelResource):
         return orm_filters
 
     def dehydrate_author(self, bundle):
-        return {"name": bundle.obj.author, "email": bundle.obj.author_email}
+        person = {}
+
+        if bundle.obj.author:
+            person.update({"name": bundle.obj.author})
+
+        if bundle.obj.author_email:
+            person.update({"email": bundle.obj.author_email})
+
+        return person
 
     def dehydrate_maintainer(self, bundle):
-        return {"name": bundle.obj.maintainer, "email": bundle.obj.maintainer_email}
+        person = {}
+
+        if bundle.obj.maintainer:
+            person.update({"name": bundle.obj.maintainer})
+
+        if bundle.obj.maintainer_email:
+            person.update({"email": bundle.obj.maintainer_email})
+
+        return person
 
     def hydrate(self, bundle):
         bundle.obj.author = bundle.data.get("author", {}).get("name", "")
