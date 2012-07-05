@@ -59,7 +59,7 @@ def main():
     run_app(
         project="warehouse",
         default_config_path="~/.warehouse/warehouse.conf.py",
-        default_settings="warehouse.settings",
+        default_settings="warehouse.settings.base",
         settings_initializer=generate_settings,
         settings_envvar="WAREHOUSE_CONF",
     )

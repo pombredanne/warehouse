@@ -15,7 +15,6 @@ install_requires = [
     "south",
 
     "distutils2",
-    "gunicorn",
     "psycopg2",
 ]
 
