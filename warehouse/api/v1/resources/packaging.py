@@ -1,8 +1,10 @@
 from tastypie import fields
 from tastypie.constants import ALL, ALL_WITH_RELATIONS
+from tastypie.resources import ModelResource as TastypieModelResource
 
 from warehouse.api.resources import ModelResource
 from warehouse.models import Project, Version
+from warehouse.models import Require, Provide, Obsolete
 
 
 # @@@ Allow deletion of projects if user has permission
@@ -65,6 +67,11 @@ class VersionResource(ModelResource):
     maintainer = fields.DictField()
     classifiers = fields.ListField()
 
+    # Requirements
+    requires = fields.ToManyField("warehouse.api.v1.resources.RequireResource", "requires", full=True)
+    provides = fields.ToManyField("warehouse.api.v1.resources.ProvideResource", "provides", full=True)
+    obsoletes = fields.ToManyField("warehouse.api.v1.resources.ObsoleteResource", "obsoletes", full=True)
+
     class Meta:
         resource_name = "versions"
         detail_uri_name = "version"
@@ -79,6 +86,7 @@ class VersionResource(ModelResource):
             "author", "maintainer",
             "platforms", "supported_platforms",
             "requires_python", "requires_external",
+            "requires", "provides", "obsoletes",
         ]
 
         filtering = {
@@ -132,3 +140,27 @@ class VersionResource(ModelResource):
         bundle.obj.maintainer_email = bundle.data.get("maintainer", {}).get("email", "")
 
         return bundle
+
+
+class RequireResource(TastypieModelResource):
+
+    class Meta:
+        fields = ["name", "version", "environment"]
+        include_resource_uri = False
+        queryset = Require.objects.all()
+
+
+class ProvideResource(TastypieModelResource):
+
+    class Meta:
+        fields = ["name", "version", "environment"]
+        include_resource_uri = False
+        queryset = Provide.objects.all()
+
+
+class ObsoleteResource(TastypieModelResource):
+
+    class Meta:
+        fields = ["name", "version", "environment"]
+        include_resource_uri = False
+        queryset = Obsolete.objects.all()
