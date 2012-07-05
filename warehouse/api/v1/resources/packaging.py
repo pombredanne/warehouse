@@ -25,7 +25,7 @@ class ProjectResource(ModelResource):
     normalized = fields.CharField(attribute="normalized", readonly=True)
 
     # related fields
-    versions = fields.ToManyField("warehouse.api.v1.resources.VersionResource", handle_yanked)
+    versions = fields.ToManyField("warehouse.api.v1.resources.VersionResource", handle_yanked, null=True, blank=True)
 
     class Meta:
         resource_name = "projects"
