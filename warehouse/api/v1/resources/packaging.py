@@ -9,6 +9,8 @@ from warehouse.models import Project, Version
 # @@@ Allow creating a new version of a project if user has permission
 # @@@ Allow editing a version of a project if user has permission
 #         - Should restrict which fields can be edited based on user
+# @@@ Hydrate classifiers into Trove objects
+#         - We should not allow new Trove objects to be created
 
 
 def handle_yanked(bundle):
