@@ -11,6 +11,7 @@ from warehouse.models import Project, Version
 #         - Should restrict which fields can be edited based on user
 # @@@ Hydrate classifiers into Trove objects
 #         - We should not allow new Trove objects to be created
+# @@@ Add an __all__
 
 
 def handle_yanked(bundle):
