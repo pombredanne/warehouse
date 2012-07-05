@@ -92,3 +92,8 @@ INSTALLED_APPS = (
 EMAIL_SUBJECT_PREFIX = "[Warehouse] "
 
 STATIC_URL = "/site_media/static/"
+
+WEB_HOST = "0.0.0.0"
+WEB_PORT = "8000"
+
+WEB_OPTIONS = {}
