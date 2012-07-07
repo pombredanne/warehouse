@@ -16,7 +16,7 @@ from warehouse.models import Require, Provide, Obsolete
 # @@@ Add an __all__
 
 
-def handle_yanked(bundle):
+def handle_yanked_versions(bundle):
     if not bundle.request.GET.get("show_yanked", "no").lower() in ["yes", "on", "true", "t", "1"]:
         return bundle.obj.versions.filter(yanked=False)
     return bundle.obj.versions.all()
@@ -30,7 +30,7 @@ class ProjectResource(ModelResource):
     normalized = fields.CharField(attribute="normalized", readonly=True)
 
     # related fields
-    versions = fields.ToManyField("warehouse.api.v1.resources.VersionResource", handle_yanked, null=True, blank=True)
+    versions = fields.ToManyField("warehouse.api.v1.resources.VersionResource", handle_yanked_versions, null=True, blank=True)
 
     class Meta:
         resource_name = "projects"
