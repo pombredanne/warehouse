@@ -92,6 +92,9 @@ class Version(models.Model):
     # Trove Classifiers
     classifiers = models.ManyToManyField("warehouse.Classifier", related_name="releases", blank=True)
 
+    # De normalization
+    downloads = models.PositiveIntegerField(default=0)
+
     # Manager
     objects = hstore.HStoreManager()
 
@@ -125,14 +128,15 @@ class VersionFile(models.Model):
     type = models.CharField(max_length=25, choices=TYPES)
 
     file = models.FileField(upload_to=version_file_upload_path, storage=package_storage, max_length=512)
-    python_version = models.CharField(max_length=25)
-    digests = hstore.DictionaryField()
+    python_version = models.CharField(max_length=25, blank=True)
+    digests = hstore.DictionaryField(default={})
 
     comment = models.TextField(blank=True)
 
     # De normalization
     filename = models.CharField(max_length=200)
     filesize = models.PositiveIntegerField(default=0)
+    downloads = models.PositiveIntegerField(default=0)
 
     # Manager
     objects = hstore.HStoreManager()
