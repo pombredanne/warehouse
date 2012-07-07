@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from warehouse.models import Project, Version
+from warehouse.models import Project, Version, VersionFile
 
 
 __all__ = ["ProjectAdmin"]
@@ -26,5 +26,13 @@ class VersionAdmin(admin.ModelAdmin):
     raw_id_fields = ["project"]
 
 
+class VersionFileAdmin(admin.ModelAdmin):
+    list_display = ["version", "type", "python_version", "downloads", "comment", "created", "modified"]
+    list_filter = ["type", "created", "modified"]
+    search_fields = ["version__project__name", "filename"]
+    raw_id_fields = ["version"]
+
+
 admin.site.register(Project, ProjectAdmin)
 admin.site.register(Version, VersionAdmin)
+admin.site.register(VersionFile, VersionFileAdmin)
