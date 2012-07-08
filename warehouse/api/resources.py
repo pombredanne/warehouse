@@ -9,7 +9,7 @@ __all__ = ["ModelResource"]
 
 
 def _get_model_attr(obj, prefix, attr):
-    for level in prefix.split("__"):
+    for level in prefix:
         obj = getattr(obj, level)
 
     return getattr(obj, attr)
@@ -26,12 +26,16 @@ class ModelResource(TastypieModelResource):
         parent = getattr(self._meta, "parent_resource", None)
         child = self
 
+        prefix = []
+
         while parent is not None:
             p = parent()
             include_pattern = patterns("", *urls)
 
+            prefix.append(child._meta.parent_resource_uri_prefix)
+
             urls = [
-                url(r"^%s/(?P<%s__%s>[^/]+)/" % (p._meta.resource_name, child._meta.parent_resource_uri_prefix, p._meta.detail_uri_name), include(include_pattern)),
+                url(r"^%s/(?P<%s>[^/]+)/" % (p._meta.resource_name, "__".join(prefix[:] + [p._meta.detail_uri_name])), include(include_pattern)),
             ]
 
             child = parent
@@ -50,15 +54,15 @@ class ModelResource(TastypieModelResource):
         parent = getattr(self._meta, "parent_resource", None)
         child = self
 
-        prefix = ""
+        prefix = []
 
         while parent is not None:
             p = parent()
 
-            prefix = prefix + child._meta.parent_resource_uri_prefix
+            prefix.append(child._meta.parent_resource_uri_prefix)
 
             uri_kwargs.update({
-                "%s__%s" % (prefix, p._meta.detail_uri_name): _get_model_attr(obj, prefix, p._meta.detail_uri_name)
+                "__".join(prefix[:] + [p._meta.detail_uri_name]): _get_model_attr(obj, prefix, p._meta.detail_uri_name),
             })
 
             child = parent
