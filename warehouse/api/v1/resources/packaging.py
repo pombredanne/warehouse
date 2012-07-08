@@ -3,7 +3,7 @@ from tastypie.constants import ALL, ALL_WITH_RELATIONS
 from tastypie.resources import ModelResource as TastypieModelResource
 
 from warehouse.api.resources import ModelResource
-from warehouse.models import Project, Version
+from warehouse.models import Project, Version, VersionFile
 from warehouse.models import Require, Provide, Obsolete
 
 
@@ -20,6 +20,12 @@ def handle_yanked_versions(bundle):
     if not bundle.request.GET.get("show_yanked", "no").lower() in ["yes", "on", "true", "t", "1"]:
         return bundle.obj.versions.filter(yanked=False)
     return bundle.obj.versions.all()
+
+
+def handle_yanked_files(bundle):
+    if not bundle.request.GET.get("show_yanked", "no").lower() in ["yes", "on", "true", "t", "1"]:
+        return bundle.obj.files.filter(yanked=False)
+    return bundle.obj.files.all()
 
 
 class ProjectResource(ModelResource):
@@ -66,6 +72,8 @@ class VersionResource(ModelResource):
     author = fields.DictField()
     maintainer = fields.DictField()
     classifiers = fields.ListField()
+
+    files = fields.ToManyField("warehouse.api.v1.resources.FileResource", handle_yanked_files, null=True, blank=True)
 
     # Requirements
     requires = fields.ToManyField("warehouse.api.v1.resources.RequireResource", "requires", full=True)
@@ -164,3 +172,39 @@ class ObsoleteResource(TastypieModelResource):
         fields = ["name", "version", "environment"]
         include_resource_uri = False
         queryset = Obsolete.objects.all()
+
+
+class FileResource(ModelResource):
+
+    digests = fields.DictField(attribute="digests")
+
+    class Meta:
+        resource_name = "files"
+        detail_uri_name = "filename"
+
+        parent_resource = VersionResource
+        parent_resource_uri_prefix = "version"
+
+        queryset = VersionFile.objects.all()
+        fields = [
+            "version", "created", "modified", "yanked", "type", "file",
+            "python_version", "digests", "comment", "filename", "filesize",
+        ]
+
+        filtering = {
+            "version": ALL_WITH_RELATIONS,
+        }
+
+        list_allowed_methods = ["get"]
+        detail_allowed_methods = ["get"]
+
+    def build_filters(self, filters=None):
+        if filters is None:
+            filters = {}
+
+        orm_filters = super(FileResource, self).build_filters(filters)
+
+        if not filters.get("show_yanked", "no").lower() in ["yes", "on", "true", "t", "1"]:
+            orm_filters["yanked"] = False
+
+        return orm_filters
