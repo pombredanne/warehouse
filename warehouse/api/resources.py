@@ -69,3 +69,31 @@ class ModelResource(TastypieModelResource):
             parent = getattr(p._meta, "parent_resource", None)
 
         return uri_kwargs
+
+    def full_dehydrate(self, bundle):
+        requested = bundle.request.GET.get("fields", "")
+
+        if requested:
+            requested = set(requested.split(",")) or set(self.fields.keys())
+
+        # Dehydrate each field.
+        for field_name, field_object in self.fields.items():
+            if requested and not field_name in requested:
+                continue
+
+            # A touch leaky but it makes URI resolution work.
+            if getattr(field_object, "dehydrated_type", None) == "related":
+                field_object.api_name = self._meta.api_name
+                field_object.resource_name = self._meta.resource_name
+
+            bundle.data[field_name] = field_object.dehydrate(bundle)
+
+            # Check for an optional method to do further dehydration.
+            method = getattr(self, "dehydrate_%s" % field_name, None)
+
+            if method:
+                bundle.data[field_name] = method(bundle)
+
+        bundle = self.dehydrate(bundle)
+
+        return bundle
