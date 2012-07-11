@@ -42,7 +42,7 @@ def handle_yanked_files(bundle):
 class ProjectResource(ModelResource):
 
     # Read only fields
-    created = fields.DateTimeField(attribute="created", readonly=True)
+    created = fields.DateTimeField(attribute="created")  # @@@ Make this Read only
     downloads = fields.IntegerField(attribute="downloads", readonly=True)
     normalized = fields.CharField(attribute="normalized", readonly=True)
 
