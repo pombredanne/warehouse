@@ -8,6 +8,7 @@ from warehouse.models import Project, Version, VersionFile
 from warehouse.models import Require, Provide, Obsolete
 
 
+# @@@ Sort out Permissions
 # @@@ Allow deletion of projects if user has permission
 # @@@ Allow creating a new version of a project if user has permission
 # @@@ Allow editing a version of a project if user has permission
