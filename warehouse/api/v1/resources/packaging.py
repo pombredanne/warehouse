@@ -1,7 +1,10 @@
 from tastypie import fields
+from tastypie.authentication import MultiAuthentication
+from tastypie.authorization import DjangoAuthorization
 from tastypie.constants import ALL, ALL_WITH_RELATIONS
 from tastypie.resources import ModelResource as TastypieModelResource
 
+from warehouse.api.authentication import BasicAuthentication
 from warehouse.api.fields import ConditionalToMany
 from warehouse.api.resources import ModelResource
 from warehouse.models import Project, Version, VersionFile
@@ -15,6 +18,7 @@ from warehouse.models import Require, Provide, Obsolete
 #         - Should restrict which fields can be edited based on user
 # @@@ Hydrate classifiers into Trove objects
 #         - We should not allow new Trove objects to be created
+# @@@ Fix BasicAuthentication Realm
 
 
 __all__ = [
@@ -50,7 +54,7 @@ class ProjectResource(ModelResource):
         detail_uri_name = "normalized"
 
         queryset = Project.objects.all()
-        fields = ["created", "downloads", "name", "normalized", "versions"]
+        fields = ["created", "downloads", "name", "normalized"]
 
         filtering = {
             "name": ALL,
@@ -58,6 +62,9 @@ class ProjectResource(ModelResource):
         }
 
         ordering = ["name", "normalized", "downloads"]
+
+        authentication = MultiAuthentication(BasicAuthentication())
+        authorization = DjangoAuthorization()
 
         list_allowed_methods = ["get", "post"]
         detail_allowed_methods = ["get"]
