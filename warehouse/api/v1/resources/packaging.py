@@ -15,7 +15,12 @@ from warehouse.models import Require, Provide, Obsolete
 #         - Should restrict which fields can be edited based on user
 # @@@ Hydrate classifiers into Trove objects
 #         - We should not allow new Trove objects to be created
-# @@@ Add an __all__
+
+
+__all__ = [
+        "ProjectResource", "VersionResource", "FileResource",
+        "RequireResource", "ObsoleteResource", "ProvideResource",
+    ]
 
 
 def handle_yanked_versions(bundle):
