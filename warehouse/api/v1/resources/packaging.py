@@ -47,7 +47,7 @@ class ProjectResource(ModelResource):
     normalized = fields.CharField(attribute="normalized", readonly=True)
 
     # related fields
-    versions = ConditionalToMany("warehouse.api.v1.resources.VersionResource", handle_yanked_versions, null=True, blank=True)
+    versions = ConditionalToMany("warehouse.api.v1.resources.VersionResource", handle_yanked_versions, readonly=True, null=True)
 
     class Meta:
         resource_name = "projects"
