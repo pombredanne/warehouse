@@ -2,6 +2,7 @@ from tastypie import fields
 from tastypie.constants import ALL, ALL_WITH_RELATIONS
 from tastypie.resources import ModelResource as TastypieModelResource
 
+from warehouse.api.fields import ConditionalToMany
 from warehouse.api.resources import ModelResource
 from warehouse.models import Project, Version, VersionFile
 from warehouse.models import Require, Provide, Obsolete
@@ -36,7 +37,7 @@ class ProjectResource(ModelResource):
     normalized = fields.CharField(attribute="normalized", readonly=True)
 
     # related fields
-    versions = fields.ToManyField("warehouse.api.v1.resources.VersionResource", handle_yanked_versions, null=True, blank=True)
+    versions = ConditionalToMany("warehouse.api.v1.resources.VersionResource", handle_yanked_versions, null=True, blank=True)
 
     class Meta:
         resource_name = "projects"
@@ -73,7 +74,7 @@ class VersionResource(ModelResource):
     maintainer = fields.DictField()
     classifiers = fields.ListField()
 
-    files = fields.ToManyField("warehouse.api.v1.resources.FileResource", handle_yanked_files, null=True, blank=True)
+    files = ConditionalToMany("warehouse.api.v1.resources.FileResource", handle_yanked_files, null=True, blank=True)
 
     # Requirements
     requires = fields.ToManyField("warehouse.api.v1.resources.RequireResource", "requires", full=True)
