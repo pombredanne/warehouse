@@ -73,9 +73,9 @@ class ProjectResource(ModelResource):
 class VersionResource(ModelResource):
 
     # Read Only Fields
-    project = fields.ToOneField("warehouse.api.v1.resources.ProjectResource", "project", readonly=True)
-    version = fields.CharField(attribute="version", readonly=True)
-    yanked = fields.BooleanField(attribute="yanked", readonly=True)
+    project = fields.ToOneField("warehouse.api.v1.resources.ProjectResource", "project")
+    version = fields.CharField(attribute="version")
+    yanked = fields.BooleanField(attribute="yanked")
 
     # Advanced Data Prep
     uris = fields.DictField(attribute="uris")
@@ -87,12 +87,12 @@ class VersionResource(ModelResource):
     maintainer = fields.DictField()
     classifiers = fields.ListField()
 
-    files = ConditionalToMany("warehouse.api.v1.resources.FileResource", handle_yanked_files, null=True, blank=True)
+    files = ConditionalToMany("warehouse.api.v1.resources.FileResource", handle_yanked_files, readonly=True, null=True)
 
     # Requirements
-    requires = fields.ToManyField("warehouse.api.v1.resources.RequireResource", "requires", full=True)
-    provides = fields.ToManyField("warehouse.api.v1.resources.ProvideResource", "provides", full=True)
-    obsoletes = fields.ToManyField("warehouse.api.v1.resources.ObsoleteResource", "obsoletes", full=True)
+    requires = fields.ToManyField("warehouse.api.v1.resources.RequireResource", "requires", null=True, full=True)
+    provides = fields.ToManyField("warehouse.api.v1.resources.ProvideResource", "provides", null=True, full=True)
+    obsoletes = fields.ToManyField("warehouse.api.v1.resources.ObsoleteResource", "obsoletes", null=True, full=True)
 
     class Meta:
         resource_name = "versions"
@@ -115,7 +115,10 @@ class VersionResource(ModelResource):
             "project": ALL_WITH_RELATIONS,
         }
 
-        list_allowed_methods = ["get"]
+        authentication = MultiAuthentication(BasicAuthentication())
+        authorization = DjangoAuthorization()
+
+        list_allowed_methods = ["get", "post"]
         detail_allowed_methods = ["get"]
 
     def build_filters(self, filters=None):
