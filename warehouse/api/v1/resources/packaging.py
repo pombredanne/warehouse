@@ -82,6 +82,7 @@ class VersionResource(ModelResource):
     platforms = fields.ListField(attribute="platforms")
     supported_platforms = fields.ListField(attribute="supported_platforms")
     requires_external = fields.ListField(attribute="requires_external")
+    keywords = fields.ListField(attribute="keywords")
 
     author = fields.DictField()
     maintainer = fields.DictField()
@@ -105,7 +106,7 @@ class VersionResource(ModelResource):
         fields = [
             "created", "project", "version", "yanked",
             "summary", "description", "license", "uris",
-            "author", "maintainer",
+            "author", "maintainer", "keywords",
             "platforms", "supported_platforms",
             "requires_python", "requires_external",
             "requires", "provides", "obsoletes",
