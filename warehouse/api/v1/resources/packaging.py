@@ -193,6 +193,11 @@ class RequireResource(TastypieModelResource):
         include_resource_uri = False
         queryset = Require.objects.all()
 
+    def dehydrate(self, bundle):
+        if "project_version" in bundle.data:
+            del bundle.data["project_version"]
+        return bundle
+
 
 class ProvideResource(TastypieModelResource):
 
