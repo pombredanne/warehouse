@@ -19,7 +19,6 @@ from warehouse.utils.packages import version_file_upload_path, package_storage
 __all__ = [
     "Project", "Version", "VersionFile",
     "Require", "Provide", "Obsolete",
-    "OldRequire", "OldProvide", "OldObsolete",
 ]
 
 
@@ -172,26 +171,22 @@ class BaseRequirement(models.Model):
 class Require(BaseRequirement):
     project_version = models.ForeignKey(Version, related_name="requires")
 
+    class Meta:
+        unique_together = ("project_version", "name")
+
 
 class Provide(BaseRequirement):
     project_version = models.ForeignKey(Version, related_name="provides")
+
+    class Meta:
+        unique_together = ("project_version", "name")
 
 
 class Obsolete(BaseRequirement):
     project_version = models.ForeignKey(Version, related_name="obsoletes")
 
-
-# These are the original version of Requires/Provides/Obsoletes and are mostly useless
-class OldRequire(BaseRequirement):
-    project_version = models.ForeignKey(Version, related_name="old_requires")
-
-
-class OldProvide(BaseRequirement):
-    project_version = models.ForeignKey(Version, related_name="old_provides")
-
-
-class OldObsolete(BaseRequirement):
-    project_version = models.ForeignKey(Version, related_name="old_obsoletes")
+    class Meta:
+        unique_together = ("project_version", "name")
 
 
 @receiver(post_save, sender=Version)
