@@ -79,7 +79,6 @@ class Version(models.Model):
 
     platforms = dbarray.TextArrayField(blank=True)
     supported_platforms = dbarray.TextArrayField(blank=True)
-
     keywords = dbarray.TextArrayField(blank=True)
 
     uris = hstore.DictionaryField(blank=True, default=dict)

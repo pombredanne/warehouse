@@ -1,6 +1,7 @@
 from tastypie import fields
 from tastypie.authentication import MultiAuthentication
 from tastypie.authorization import DjangoAuthorization
+from tastypie.bundle import Bundle
 from tastypie.constants import ALL, ALL_WITH_RELATIONS
 from tastypie.resources import ModelResource as TastypieModelResource
 
@@ -91,7 +92,7 @@ class VersionResource(ModelResource):
     files = ConditionalToMany("warehouse.api.v1.resources.FileResource", handle_yanked_files, readonly=True, null=True)
 
     # Requirements
-    requires = fields.ToManyField("warehouse.api.v1.resources.RequireResource", "requires", null=True, full=True)
+    requires = fields.ToManyField("warehouse.api.v1.resources.RequireResource", "requires", related_name="project_version", null=True, full=True)
     provides = fields.ToManyField("warehouse.api.v1.resources.ProvideResource", "provides", null=True, full=True)
     obsoletes = fields.ToManyField("warehouse.api.v1.resources.ObsoleteResource", "obsoletes", null=True, full=True)
 
@@ -167,8 +168,25 @@ class VersionResource(ModelResource):
 
         return bundle
 
+    def hydrate_requires(self, bundle):
+        data = []
+
+        for x in bundle.data["requires"]:
+            if not isinstance(x, Bundle):
+                _data = x.copy()
+                _data.update({
+                    "project_version": bundle.obj,
+                    })
+                data.append(_data)
+        if data:
+            bundle.data["requires"] = data
+
+        return bundle
+
 
 class RequireResource(TastypieModelResource):
+
+    project_version = fields.ToOneField("warehouse.api.v1.resources.VersionResource", "project_version")
 
     class Meta:
         fields = ["name", "version", "environment"]
