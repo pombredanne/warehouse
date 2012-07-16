@@ -172,6 +172,7 @@ class Require(BaseRequirement):
     project_version = models.ForeignKey(Version, related_name="requires")
 
     class Meta:
+        app_label = "warehouse"
         unique_together = ("project_version", "name")
 
 
@@ -179,6 +180,7 @@ class Provide(BaseRequirement):
     project_version = models.ForeignKey(Version, related_name="provides")
 
     class Meta:
+        app_label = "warehouse"
         unique_together = ("project_version", "name")
 
 
@@ -186,6 +188,7 @@ class Obsolete(BaseRequirement):
     project_version = models.ForeignKey(Version, related_name="obsoletes")
 
     class Meta:
+        app_label = "warehouse"
         unique_together = ("project_version", "name")
 
 
