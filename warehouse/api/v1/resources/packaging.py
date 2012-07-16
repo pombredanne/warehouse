@@ -93,8 +93,8 @@ class VersionResource(ModelResource):
 
     # Requirements
     requires = fields.ToManyField("warehouse.api.v1.resources.RequireResource", "requires", related_name="project_version", null=True, full=True)
-    provides = fields.ToManyField("warehouse.api.v1.resources.ProvideResource", "provides", null=True, full=True)
-    obsoletes = fields.ToManyField("warehouse.api.v1.resources.ObsoleteResource", "obsoletes", null=True, full=True)
+    provides = fields.ToManyField("warehouse.api.v1.resources.ProvideResource", "provides", related_name="project_version", null=True, full=True)
+    obsoletes = fields.ToManyField("warehouse.api.v1.resources.ObsoleteResource", "obsoletes", related_name="project_version", null=True, full=True)
 
     class Meta:
         resource_name = "versions"
@@ -168,20 +168,30 @@ class VersionResource(ModelResource):
 
         return bundle
 
-    def hydrate_requires(self, bundle):
+    def _fix_tastypie_m2m_bug(self, bundle, key, field):
         data = []
 
-        for x in bundle.data["requires"]:
+        for x in bundle.data[key]:
             if not isinstance(x, Bundle):
                 _data = x.copy()
                 _data.update({
-                    "project_version": bundle.obj,
+                        field: bundle.obj,
                     })
                 data.append(_data)
+
         if data:
-            bundle.data["requires"] = data
+            bundle.data[key] = data
 
         return bundle
+
+    def hydrate_requires(self, bundle):
+        return self._fix_tastypie_m2m_bug(bundle, "requires", "project_version")
+
+    def hydrate_provides(self, bundle):
+        return self._fix_tastypie_m2m_bug(bundle, "provides", "project_version")
+
+    def hydrate_obsoletes(self, bundle):
+        return self._fix_tastypie_m2m_bug(bundle, "obsoletes", "project_version")
 
 
 class RequireResource(TastypieModelResource):
@@ -201,18 +211,32 @@ class RequireResource(TastypieModelResource):
 
 class ProvideResource(TastypieModelResource):
 
+    project_version = fields.ToOneField("warehouse.api.v1.resources.VersionResource", "project_version")
+
     class Meta:
         fields = ["name", "version", "environment"]
         include_resource_uri = False
         queryset = Provide.objects.all()
 
+    def dehydrate(self, bundle):
+        if "project_version" in bundle.data:
+            del bundle.data["project_version"]
+        return bundle
+
 
 class ObsoleteResource(TastypieModelResource):
+
+    project_version = fields.ToOneField("warehouse.api.v1.resources.VersionResource", "project_version")
 
     class Meta:
         fields = ["name", "version", "environment"]
         include_resource_uri = False
         queryset = Obsolete.objects.all()
+
+    def dehydrate(self, bundle):
+        if "project_version" in bundle.data:
+            del bundle.data["project_version"]
+        return bundle
 
 
 class FileResource(ModelResource):
