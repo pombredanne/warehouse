@@ -1,5 +1,7 @@
+import hashlib
 import re
 
+from django.conf import settings
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -143,6 +145,24 @@ class VersionFile(models.Model):
 
     def __unicode__(self):
         return self.filename
+
+    def save(self, *args, **kwargs):
+        self.filename = self.file.name
+        self.filesize = self.file.size
+
+        content = self.file.read()
+
+        digest_types = getattr(settings, "WAREHOUSE_DIGEST_TYPES", ["md5", "sha256"])
+
+        self.digests = {}
+
+        for dtype in digest_types:
+            hasher = hashlib.new(dtype)
+            hasher.update(content)
+
+            self.digests[dtype] = hasher.hexdigest()
+
+        return super(VersionFile, self).save(*args, **kwargs)
 
 
 class BaseRequirement(models.Model):
