@@ -115,7 +115,7 @@ class VersionResource(ModelResource):
             "author", "maintainer", "keywords",
             "platforms", "supported_platforms",
             "requires_python", "requires_external",
-            "requires", "provides", "obsoletes",
+            "requires", "provides", "obsoletes", "downloads",
         ]
 
         filtering = {
