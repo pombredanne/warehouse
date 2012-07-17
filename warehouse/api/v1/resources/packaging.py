@@ -6,7 +6,7 @@ from tastypie.constants import ALL, ALL_WITH_RELATIONS
 from tastypie.resources import ModelResource as TastypieModelResource
 
 from warehouse.api.authentication import BasicAuthentication
-from warehouse.api.fields import ConditionalToMany, ConditionalToOne
+from warehouse.api.fields import Base64FileField, ConditionalToMany, ConditionalToOne
 from warehouse.api.resources import ModelResource
 from warehouse.models import Project, Version, VersionFile, Classifier
 from warehouse.models import Require, Provide, Obsolete
@@ -120,6 +120,7 @@ class VersionResource(ModelResource):
 
         filtering = {
             "project": ALL_WITH_RELATIONS,
+            "version": ALL_WITH_RELATIONS,
         }
 
         authentication = MultiAuthentication(BasicAuthentication())
@@ -255,7 +256,10 @@ class ObsoleteResource(TastypieModelResource):
 
 class FileResource(ModelResource):
 
+    version = fields.ToOneField("warehouse.api.v1.resources.VersionResource", "version")
+
     digests = fields.DictField(attribute="digests")
+    file = Base64FileField(attribute="file")
 
     class Meta:
         resource_name = "files"
@@ -274,7 +278,10 @@ class FileResource(ModelResource):
             "version": ALL_WITH_RELATIONS,
         }
 
-        list_allowed_methods = ["get"]
+        authentication = MultiAuthentication(BasicAuthentication())
+        authorization = DjangoAuthorization()
+
+        list_allowed_methods = ["get", "post"]
         detail_allowed_methods = ["get"]
 
     def build_filters(self, filters=None):
