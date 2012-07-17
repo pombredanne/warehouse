@@ -150,7 +150,9 @@ class VersionFile(models.Model):
         self.filename = self.file.name
         self.filesize = self.file.size
 
+        self.file.seek(0)
         content = self.file.read()
+        self.file.seek(0)
 
         digest_types = getattr(settings, "WAREHOUSE_DIGEST_TYPES", ["md5", "sha256"])
 
