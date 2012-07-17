@@ -30,8 +30,8 @@ __all__ = [
 
 def handle_yanked_versions(bundle):
     if not bundle.request.GET.get("show_yanked", "no").lower() in ["yes", "on", "true", "t", "1"]:
-        return bundle.obj.versions.filter(yanked=False)
-    return bundle.obj.versions.all()
+        return bundle.obj.versions.filter(yanked=False).order_by("-order")
+    return bundle.obj.versions.all().order_by("-order")
 
 
 def handle_one_yanked_versions(bundle):
