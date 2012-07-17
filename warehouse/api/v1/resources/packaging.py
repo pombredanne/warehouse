@@ -258,8 +258,12 @@ class FileResource(ModelResource):
 
     version = fields.ToOneField("warehouse.api.v1.resources.VersionResource", "version")
 
-    digests = fields.DictField(attribute="digests")
     file = Base64FileField(attribute="file")
+
+    modified = fields.DateTimeField(attribute="modified", readonly=True)
+    digests = fields.DictField(attribute="digests", readonly=True)
+    filename = fields.CharField(attribute="filename", readonly=True)
+    filesize = fields.IntegerField(attribute="filesize", readonly=True)
 
     class Meta:
         resource_name = "files"
