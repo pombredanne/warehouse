@@ -8,7 +8,7 @@ from tastypie.resources import ModelResource as TastypieModelResource
 from warehouse.api.authentication import BasicAuthentication
 from warehouse.api.fields import ConditionalToMany, ConditionalToOne
 from warehouse.api.resources import ModelResource
-from warehouse.models import Project, Version, VersionFile
+from warehouse.models import Project, Version, VersionFile, Classifier
 from warehouse.models import Require, Provide, Obsolete
 
 
@@ -197,6 +197,15 @@ class VersionResource(ModelResource):
 
     def hydrate_obsoletes(self, bundle):
         return self._fix_tastypie_m2m_bug(bundle, "obsoletes", "project_version")
+
+    def save_m2m(self, bundle):
+        classifiers = bundle.data.get("classifiers", [])
+        if classifiers is not None:
+            # @@@ This needs permissions to go with it
+            classifier_objects = [Classifier.objects.get_or_create(trove=c) for c in classifiers]
+            bundle.obj.classifiers.add(*[x[0] for x in classifier_objects])
+
+        super(VersionResource, self).save_m2m(bundle)
 
 
 class RequireResource(TastypieModelResource):
