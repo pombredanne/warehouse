@@ -6,7 +6,7 @@ from tastypie.constants import ALL, ALL_WITH_RELATIONS
 from tastypie.resources import ModelResource as TastypieModelResource
 
 from warehouse.api.authentication import BasicAuthentication
-from warehouse.api.fields import ConditionalToMany
+from warehouse.api.fields import ConditionalToMany, ConditionalToOne
 from warehouse.api.resources import ModelResource
 from warehouse.models import Project, Version, VersionFile
 from warehouse.models import Require, Provide, Obsolete
@@ -34,6 +34,10 @@ def handle_yanked_versions(bundle):
     return bundle.obj.versions.all()
 
 
+def handle_one_yanked_versions(bundle):
+    return handle_yanked_versions(bundle)[:1]
+
+
 def handle_yanked_files(bundle):
     if not bundle.request.GET.get("show_yanked", "no").lower() in ["yes", "on", "true", "t", "1"]:
         return bundle.obj.files.filter(yanked=False)
@@ -49,6 +53,7 @@ class ProjectResource(ModelResource):
 
     # related fields
     versions = ConditionalToMany("warehouse.api.v1.resources.VersionResource", handle_yanked_versions, readonly=True, null=True)
+    latest = ConditionalToOne("warehouse.api.v1.resources.VersionResource", handle_one_yanked_versions, readonly=True, null=True)
 
     class Meta:
         resource_name = "projects"
