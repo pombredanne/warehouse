@@ -33,6 +33,10 @@ setup(
     install_requires=install_requires,
 
     packages=find_packages(exclude=["tests"]),
+    package_data={"": ["LICENSE"]},
+    package_dir={"warehouse": "warehouse"},
+    include_package_data=True,
+
     zip_safe=False,
 
     entry_points={
