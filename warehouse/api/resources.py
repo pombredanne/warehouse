@@ -1,3 +1,5 @@
+import urllib
+
 from django.conf.urls import include, patterns, url
 
 from tastypie.bundle import Bundle
@@ -67,6 +69,9 @@ class ModelResource(TastypieModelResource):
 
             child = parent
             parent = getattr(p._meta, "parent_resource", None)
+
+        for k in uri_kwargs:
+            uri_kwargs[k] = urllib.quote(uri_kwargs[k], safe="")
 
         return uri_kwargs
 
