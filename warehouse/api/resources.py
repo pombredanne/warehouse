@@ -97,3 +97,8 @@ class ModelResource(TastypieModelResource):
         bundle = self.dehydrate(bundle)
 
         return bundle
+
+    def obj_update(self, bundle, request=None, skip_errors=False, **kwargs):
+        # @@@ Hackish
+        bundle.obj = self.obj_get(request=request, **kwargs)
+        return super(ModelResource, self).obj_update(bundle, request=request, skip_errors=skip_errors, **kwargs)
