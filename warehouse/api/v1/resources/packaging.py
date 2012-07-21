@@ -8,6 +8,7 @@ from tastypie.resources import ModelResource as TastypieModelResource
 from warehouse.api.authentication import BasicAuthentication
 from warehouse.api.fields import Base64FileField, ConditionalToMany, ConditionalToOne
 from warehouse.api.resources import ModelResource
+from warehouse.api.serializers import Serializer
 from warehouse.models import Project, Version, VersionFile, Classifier
 from warehouse.models import Require, Provide, Obsolete
 
@@ -75,6 +76,8 @@ class ProjectResource(ModelResource):
         list_allowed_methods = ["get", "post"]
         detail_allowed_methods = ["get"]
 
+        serializer = Serializer()
+
 
 class VersionResource(ModelResource):
 
@@ -128,6 +131,8 @@ class VersionResource(ModelResource):
 
         list_allowed_methods = ["get", "post"]
         detail_allowed_methods = ["get"]
+
+        serializer = Serializer()
 
     def build_filters(self, filters=None):
         if filters is None:
@@ -218,6 +223,8 @@ class RequireResource(TastypieModelResource):
         include_resource_uri = False
         queryset = Require.objects.all()
 
+        serializer = Serializer()
+
     def dehydrate(self, bundle):
         if "project_version" in bundle.data:
             del bundle.data["project_version"]
@@ -233,6 +240,8 @@ class ProvideResource(TastypieModelResource):
         include_resource_uri = False
         queryset = Provide.objects.all()
 
+        serializer = Serializer()
+
     def dehydrate(self, bundle):
         if "project_version" in bundle.data:
             del bundle.data["project_version"]
@@ -247,6 +256,8 @@ class ObsoleteResource(TastypieModelResource):
         fields = ["name", "version", "environment"]
         include_resource_uri = False
         queryset = Obsolete.objects.all()
+
+        serializer = Serializer()
 
     def dehydrate(self, bundle):
         if "project_version" in bundle.data:
@@ -287,6 +298,8 @@ class FileResource(ModelResource):
 
         list_allowed_methods = ["get", "post"]
         detail_allowed_methods = ["get"]
+
+        serializer = Serializer()
 
     def build_filters(self, filters=None):
         if filters is None:
