@@ -130,7 +130,7 @@ class VersionResource(ModelResource):
         authorization = DjangoAuthorization()
 
         list_allowed_methods = ["get", "post"]
-        detail_allowed_methods = ["get"]
+        detail_allowed_methods = ["get", "put"]
 
         serializer = Serializer()
 
@@ -297,7 +297,7 @@ class FileResource(ModelResource):
         authorization = DjangoAuthorization()
 
         list_allowed_methods = ["get", "post"]
-        detail_allowed_methods = ["get"]
+        detail_allowed_methods = ["get", "put"]
 
         serializer = Serializer()
 
