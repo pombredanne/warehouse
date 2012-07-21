@@ -168,7 +168,7 @@ class VersionResource(ModelResource):
         return person
 
     def dehydrate_classifiers(self, bundle):
-        return [c.trove for c in bundle.obj.classifiers.all()]
+        return [c.trove for c in bundle.obj.classifiers.all().order_by("trove")]
 
     def hydrate(self, bundle):
         bundle.obj.author = bundle.data.get("author", {}).get("name", "")
