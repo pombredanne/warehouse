@@ -1,5 +1,6 @@
 import hashlib
 import re
+import os
 
 from django.conf import settings
 from django.db import models
@@ -147,7 +148,7 @@ class VersionFile(models.Model):
         return self.filename
 
     def save(self, *args, **kwargs):
-        self.filename = self.file.name
+        self.filename = os.path.basename(self.file.name)
         self.filesize = self.file.size
 
         content = self.file.read()
