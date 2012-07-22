@@ -78,7 +78,7 @@ class ProjectResource(ModelResource):
         authorization = DjangoAuthorization()
 
         list_allowed_methods = ["get", "post"]
-        detail_allowed_methods = ["get"]
+        detail_allowed_methods = ["get", "delete"]
 
         serializer = Serializer()
 
