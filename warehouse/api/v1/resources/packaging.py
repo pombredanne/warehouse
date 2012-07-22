@@ -1,4 +1,5 @@
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction
 
 from tastypie import fields
 from tastypie.authentication import MultiAuthentication
@@ -133,7 +134,7 @@ class VersionResource(ModelResource):
         authorization = DjangoAuthorization()
 
         list_allowed_methods = ["get", "post"]
-        detail_allowed_methods = ["get", "put"]
+        detail_allowed_methods = ["get", "put", "delete"]
 
         serializer = Serializer()
 
@@ -174,6 +175,9 @@ class VersionResource(ModelResource):
         return [c.trove for c in bundle.obj.classifiers.all().order_by("trove")]
 
     def hydrate(self, bundle):
+        if bundle.obj.yanked:
+            bundle.obj.yanked = False
+
         bundle.obj.author = bundle.data.get("author", {}).get("name", "")
         bundle.obj.author_email = bundle.data.get("author", {}).get("email", "")
 
@@ -215,6 +219,21 @@ class VersionResource(ModelResource):
             bundle.obj.classifiers.add(*[x[0] for x in classifier_objects])
 
         super(VersionResource, self).save_m2m(bundle)
+
+    def obj_delete(self, request=None, **kwargs):
+        obj = kwargs.pop("_obj", None)
+
+        if not getattr(obj, "pk", None):
+            try:
+                obj = self.obj_get(request, **kwargs)
+            except ObjectDoesNotExist:
+                raise NotFound("A model instance matching the provided arguments could not be found.")
+
+        with transaction.commit_on_success():
+            obj.yanked = True
+            obj.save()
+
+            obj.files.update(yanked=True)
 
 
 class RequireResource(TastypieModelResource):
