@@ -1,8 +1,11 @@
+from django.core.exceptions import ObjectDoesNotExist
+
 from tastypie import fields
 from tastypie.authentication import MultiAuthentication
 from tastypie.authorization import DjangoAuthorization
 from tastypie.bundle import Bundle
 from tastypie.constants import ALL, ALL_WITH_RELATIONS
+from tastypie.exceptions import NotFound
 from tastypie.resources import ModelResource as TastypieModelResource
 
 from warehouse.api.authentication import BasicAuthentication
@@ -311,3 +314,21 @@ class FileResource(ModelResource):
             orm_filters["yanked"] = False
 
         return orm_filters
+
+    def hydrate(self, bundle):
+        if bundle.obj.yanked:
+            bundle.obj.yanked = False
+
+        return bundle
+
+    def obj_delete(self, request=None, **kwargs):
+        obj = kwargs.pop("_obj", None)
+
+        if not getattr(obj, "pk", None):
+            try:
+                obj = self.obj_get(request, **kwargs)
+            except ObjectDoesNotExist:
+                raise NotFound("A model instance matching the provided arguments could not be found.")
+
+        obj.yanked = True
+        obj.save()
