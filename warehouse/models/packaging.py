@@ -164,6 +164,12 @@ class VersionFile(models.Model):
 
         return super(VersionFile, self).save(*args, **kwargs)
 
+    def delete(self, using=None):
+        assert self._get_pk_val() is not None, "%s object can't be deleted because its %s attribute is set to None." % (self._meta.object_name, self._meta.pk.attname)
+
+        self.yanked = True
+        self.save(using=using)
+
 
 class BaseRequirement(models.Model):
 

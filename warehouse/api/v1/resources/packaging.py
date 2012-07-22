@@ -297,7 +297,7 @@ class FileResource(ModelResource):
         authorization = DjangoAuthorization()
 
         list_allowed_methods = ["get", "post"]
-        detail_allowed_methods = ["get", "put"]
+        detail_allowed_methods = ["get", "put", "delete"]
 
         serializer = Serializer()
 
