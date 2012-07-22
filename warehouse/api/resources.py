@@ -1,3 +1,5 @@
+import urllib
+
 from django.conf.urls import include, patterns, url
 
 from tastypie.bundle import Bundle
@@ -102,3 +104,8 @@ class ModelResource(TastypieModelResource):
         # @@@ Hackish
         bundle.obj = self.obj_get(request=request, **kwargs)
         return super(ModelResource, self).obj_update(bundle, request=request, skip_errors=skip_errors, **kwargs)
+
+    def get_via_uri(self, uri, request=None):
+        # @@@ Hackish
+        uri = urllib.unquote(uri)
+        return super(ModelResource, self).get_via_uri(uri, request=request)
