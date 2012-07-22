@@ -164,7 +164,9 @@ class VersionFile(models.Model):
 
         return super(VersionFile, self).save(*args, **kwargs)
 
-    def delete(self, using=None):
+    def delete(self, using=None, force=None):
+        if force:
+            return super(VersionFile, self).delete(using=using)
         assert self._get_pk_val() is not None, "%s object can't be deleted because its %s attribute is set to None." % (self._meta.object_name, self._meta.pk.attname)
 
         self.yanked = True
