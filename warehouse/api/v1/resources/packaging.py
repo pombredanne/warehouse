@@ -10,7 +10,6 @@ from tastypie.exceptions import NotFound
 from tastypie.resources import ModelResource as TastypieModelResource
 
 from warehouse.api.authentication import BasicAuthentication
-from warehouse.api.fields import Base64FileField, ConditionalToMany, ConditionalToOne
 from warehouse.api.resources import ModelResource
 from warehouse.api.serializers import Serializer
 from warehouse.models import Project, Version, VersionFile, Classifier
@@ -61,8 +60,8 @@ class ProjectResource(ModelResource):
     normalized = fields.CharField(attribute="normalized", readonly=True)
 
     # related fields
-    versions = ConditionalToMany("warehouse.api.v1.resources.VersionResource", handle_yanked_versions, readonly=True, null=True)
-    latest = ConditionalToOne("warehouse.api.v1.resources.VersionResource", handle_one_yanked_versions, readonly=True, null=True)
+    versions = fields.ToManyField("warehouse.api.v1.resources.VersionResource", handle_yanked_versions, readonly=True, null=True)
+    latest = fields.ToOneField("warehouse.api.v1.resources.VersionResource", handle_one_yanked_versions, readonly=True, null=True)
 
     class Meta:
         resource_name = "projects"
@@ -105,7 +104,7 @@ class VersionResource(ModelResource):
     maintainer = fields.DictField()
     classifiers = fields.ListField()
 
-    files = ConditionalToMany("warehouse.api.v1.resources.FileResource", handle_yanked_files, readonly=True, null=True)
+    files = fields.ToManyField("warehouse.api.v1.resources.FileResource", handle_yanked_files, readonly=True, null=True)
 
     # Requirements
     requires = fields.ToManyField("warehouse.api.v1.resources.RequireResource", "requires", related_name="project_version", null=True, full=True)
