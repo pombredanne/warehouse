@@ -6,7 +6,7 @@ from tastypie.fields import FileField
 from tastypie.fields import ToManyField, ToOneField
 
 
-__all__ = ["ConditionalToMany", "ConditionalToOne"]
+__all__ = ["ConditionalToMany", "ConditionalToOne", "Base64FileField"]
 
 
 class ConditionalRelated(ToManyField):
