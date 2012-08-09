@@ -33,8 +33,7 @@ setup(
     install_requires=install_requires,
 
     packages=find_packages(exclude=["tests"]),
-    package_data={"": ["LICENSE"]},
-    package_dir={"warehouse": "warehouse"},
+    package_data={"": ["LICENSE"], "warehouse": ["templates/*.html"]},
     include_package_data=True,
 
     zip_safe=False,
