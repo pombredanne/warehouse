@@ -4,7 +4,8 @@ import os
 import os.path
 
 # Constants
-PROJECT_ROOT = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
+PROJECT_ROOT = os.path.join(os.path.dirname(__file__), os.pardir)
+
 
 # Settings
 DEBUG = False
