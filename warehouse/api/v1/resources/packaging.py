@@ -10,6 +10,7 @@ from tastypie.exceptions import NotFound
 from tastypie.resources import ModelResource as TastypieModelResource
 
 from warehouse.api.authentication import BasicAuthentication
+from warehouse.api.fields import Base64FileField
 from warehouse.api.resources import ModelResource
 from warehouse.api.serializers import Serializer
 from warehouse.models import Project, Version, VersionFile, Classifier
