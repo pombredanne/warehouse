@@ -40,7 +40,11 @@ def handle_yanked_versions(bundle):
 
 
 def handle_one_yanked_versions(bundle):
-    return handle_yanked_versions(bundle)[:1]
+    qs = handle_yanked_versions(bundle)[:1]
+    try:
+        return qs.get()
+    except qs.model.DoesNotExist:
+        return None
 
 
 def handle_yanked_files(bundle):
