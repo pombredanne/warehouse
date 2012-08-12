@@ -270,6 +270,14 @@ class VersionResource(ModelResource):
                 for field in f._meta.fields:
                     data[field.name] = getattr(f, field.name)
 
+                    if field.name in set(["version"]):
+                        continue
+
+                    if field.name == "file":
+                        data[field.name] = obj.file.url
+                    else:
+                        data[field.name] = getattr(obj, field.name)
+
                 Event.objects.log(
                                 user=request.user,
                                 project=obj.project.name, version=obj.version, filename=f.filename,
