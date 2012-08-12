@@ -436,6 +436,11 @@ class FileResource(ModelResource):
             if field.name in set(["version"]):
                 continue
 
+            if field.name == "file":
+                data[field.name] = obj.file.url
+            else:
+                data[field.name] = getattr(obj, field.name)
+
             data[field.name] = getattr(obj, field.name)
 
         Event.objects.log(
