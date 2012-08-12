@@ -96,7 +96,7 @@ class ProjectResource(ModelResource):
         return bundle
 
     def obj_delete(self, request=None, **kwargs):
-        obj = kwargs.pop('_obj', None)
+        obj = kwargs.pop("_obj", None)
 
         if obj is None:
             try:
