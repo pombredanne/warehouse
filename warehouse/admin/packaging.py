@@ -3,7 +3,7 @@ from django.contrib import admin
 from warehouse.models import Project, Version, VersionFile
 
 
-__all__ = ["ProjectAdmin"]
+__all__ = ["ProjectAdmin", "VersionAdmin", "VersionFileAdmin"]
 
 
 class ProjectAdmin(admin.ModelAdmin):
