@@ -95,6 +95,23 @@ class ProjectResource(ModelResource):
 
         return bundle
 
+    def obj_delete(self, request=None, **kwargs):
+        obj = kwargs.pop('_obj', None)
+
+        if obj is None:
+            try:
+                obj = self.obj_get(request, **kwargs)
+            except ObjectDoesNotExist:
+                raise NotFound("A model instance matching the provided arguments could not be found.")
+
+        kwargs["_obj"] = obj
+
+        with transaction.commit_on_success():
+            # Log Deletion to History
+            Event.objects.log(user=request.user, project=obj.name, action=Event.ACTIONS.project_deleted)
+
+            super(ProjectResource, self).obj_delete(request=request, **kwargs)
+
 
 class VersionResource(ModelResource):
 
