@@ -268,8 +268,6 @@ class VersionResource(ModelResource):
             for f in obj.files.all():
                 data = {}
                 for field in f._meta.fields:
-                    data[field.name] = getattr(f, field.name)
-
                     if field.name in set(["version"]):
                         continue
 
