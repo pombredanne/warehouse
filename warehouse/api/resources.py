@@ -125,7 +125,7 @@ class ModelResource(TastypieModelResource):
         return bundle
 
     def on_obj_create(self, obj, request=None, **kwargs):
-        NotImplementedError()
+        raise NotImplementedError()
 
     def obj_delete(self, request=None, **kwargs):
         obj = kwargs.pop("_obj", None)
