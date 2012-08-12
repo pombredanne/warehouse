@@ -25,6 +25,12 @@ class Event(TimeStampedModel):
         ("project_created", "Project Created"),
         ("project_updated", "Project Updated"),
         ("project_deleted", "Project Deleted"),
+        ("version_created", "Version Created"),
+        ("version_updated", "Version Updated"),
+        ("version_deleted", "Version Deleted"),
+        ("file_created", "File Created"),
+        ("file_updated", "File Updated"),
+        ("file_deleted", "File Deleted"),
     )
 
     user = models.ForeignKey(User)

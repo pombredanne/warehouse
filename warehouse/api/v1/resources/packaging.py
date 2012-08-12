@@ -248,7 +248,45 @@ class VersionResource(ModelResource):
             obj.yanked = True
             obj.save()
 
+            self.on_obj_delete(obj, request=request, **kwargs)
+
             obj.files.update(yanked=True)
+
+            for f in obj.files:
+                data = {}
+                for field in f._meta.fields():
+                    data[field.name] = getattr(f, field.name)
+
+                Event.objects.log(
+                                user=request.user,
+                                project=obj.project.name, version=obj.version, filename=f.filename,
+                                action=Event.ACTIONS.file_deleted,
+                                data=data
+                            )
+
+    def on_obj_create(self, obj, request=None, **kwargs):
+        data = {}
+        for field in obj._meta.fields():
+            data[field.name] = getattr(obj, field.name)
+
+        Event.objects.log(user=request.user, project=obj.project.name, version=obj.version, action=Event.ACTIONS.version_created, data=data)
+
+    def on_obj_update(self, old_obj, new_obj, request=None, **kwargs):
+        if old_obj.yanked and not new_obj.yanked:
+            self.on_obj_create(new_obj, request=request, **kwargs)
+        else:
+            data = {}
+            for field in new_obj._meta.fields():
+                data[field.name] = getattr(new_obj, field.name)
+
+            Event.objects.log(user=request.user, project=new_obj.project.name, version=new_obj.version, action=Event.ACTIONS.version_updated, data=data)
+
+    def on_obj_delete(self, obj, request=None, **kwargs):
+        data = {}
+        for field in obj._meta.fields():
+            data[field.name] = getattr(obj, field.name)
+
+        Event.objects.log(user=request.user, project=obj.project.name, version=obj.version, action=Event.ACTIONS.version_deleted, data=data)
 
 
 class RequireResource(TastypieModelResource):
