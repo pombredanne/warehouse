@@ -23,6 +23,7 @@ class Event(TimeStampedModel):
 
     ACTIONS = Choices(
         ("project_created", "Project Created"),
+        ("project_updated", "Project Updated"),
         ("project_deleted", "Project Deleted"),
     )
 
