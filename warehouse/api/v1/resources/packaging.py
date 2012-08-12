@@ -280,7 +280,7 @@ class VersionResource(ModelResource):
     def on_obj_create(self, obj, request=None, **kwargs):
         data = {}
         for field in obj._meta.fields:
-            if field in set(["project"]):
+            if field.name in set(["project"]):
                 continue
 
             data[field.name] = getattr(obj, field.name)
@@ -293,7 +293,7 @@ class VersionResource(ModelResource):
         else:
             data = {}
             for field in new_obj._meta.fields:
-                if field in set(["project"]):
+                if field.name in set(["project"]):
                     continue
 
                 data[field.name] = getattr(new_obj, field.name)
@@ -303,7 +303,7 @@ class VersionResource(ModelResource):
     def on_obj_delete(self, obj, request=None, **kwargs):
         data = {}
         for field in obj._meta.fields:
-            if field in set(["project"]):
+            if field.name in set(["project"]):
                 continue
 
             data[field.name] = getattr(obj, field.name)
@@ -433,7 +433,7 @@ class FileResource(ModelResource):
     def on_obj_create(self, obj, request=None, **kwargs):
         data = {}
         for field in obj._meta.fields:
-            if field in set(["version"]):
+            if field.name in set(["version"]):
                 continue
 
             data[field.name] = getattr(obj, field.name)
@@ -451,7 +451,7 @@ class FileResource(ModelResource):
         else:
             data = {}
             for field in new_obj._meta.fields:
-                if field in set(["version"]):
+                if field.name in set(["version"]):
                     continue
 
                 if field.name == "file":
