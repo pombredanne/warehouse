@@ -9,3 +9,5 @@ class WarehouseAppConf(AppConf):
 
     PACKAGE_STORAGE_CLASS = None
     PACKAGE_STORAGE_OPTIONS = {}
+
+    API_HISTORY = True
