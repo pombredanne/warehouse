@@ -444,7 +444,7 @@ class FileResource(ModelResource):
         Event.objects.log(
                         user=request.user,
                         project=obj.version.project.name, version=obj.version.version, filename=obj.filename,
-                        action=Event.ACTIONS.project_created,
+                        action=Event.ACTIONS.file_created,
                         data=data
                     )
 
@@ -465,7 +465,7 @@ class FileResource(ModelResource):
             Event.objects.log(
                             user=request.user,
                             project=new_obj.version.project.name, version=new_obj.version.version, filename=new_obj.filename,
-                            action=Event.ACTIONS.version_updated,
+                            action=Event.ACTIONS.file_updated,
                             data=data
                         )
 
@@ -483,6 +483,6 @@ class FileResource(ModelResource):
         Event.objects.log(
                         user=request.user,
                         project=obj.version.project.name, version=obj.version.version, filename=obj.filename,
-                        action=Event.ACTIONS.project_deleted,
+                        action=Event.ACTIONS.file_deleted,
                         data=data
                     )
