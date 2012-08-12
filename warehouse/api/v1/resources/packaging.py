@@ -441,8 +441,6 @@ class FileResource(ModelResource):
             else:
                 data[field.name] = getattr(obj, field.name)
 
-            data[field.name] = getattr(obj, field.name)
-
         Event.objects.log(
                         user=request.user,
                         project=obj.version.project.name, version=obj.version.version, filename=obj.filename,
