@@ -93,9 +93,7 @@ class ProjectResource(ModelResource):
 
         # Log the Creation to History
         if settings.WAREHOUSE_API_HISTORY:
-            req = request or bundle.request
-            if req.user.is_authenticated():
-                Event.objects.create(user=req.user, project=bundle.obj.name, action=Event.ACTIONS.project_created)
+            Event.objects.create(user=request.user, project=bundle.obj.name, action=Event.ACTIONS.project_created)
 
         return bundle
 
