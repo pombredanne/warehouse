@@ -274,9 +274,9 @@ class VersionResource(ModelResource):
                         continue
 
                     if field.name == "file":
-                        data[field.name] = obj.file.url
+                        data[field.name] = f.file.url
                     else:
-                        data[field.name] = getattr(obj, field.name)
+                        data[field.name] = getattr(f, field.name)
 
                 Event.objects.log(
                                 user=request.user,
