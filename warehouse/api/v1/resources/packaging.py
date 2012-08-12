@@ -278,6 +278,9 @@ class VersionResource(ModelResource):
     def on_obj_create(self, obj, request=None, **kwargs):
         data = {}
         for field in obj._meta.fields:
+            if field in set(["project"]):
+                continue
+
             data[field.name] = getattr(obj, field.name)
 
         Event.objects.log(user=request.user, project=obj.project.name, version=obj.version, action=Event.ACTIONS.version_created, data=data)
@@ -288,6 +291,9 @@ class VersionResource(ModelResource):
         else:
             data = {}
             for field in new_obj._meta.fields:
+                if field in set(["project"]):
+                    continue
+
                 data[field.name] = getattr(new_obj, field.name)
 
             Event.objects.log(user=request.user, project=new_obj.project.name, version=new_obj.version, action=Event.ACTIONS.version_updated, data=data)
@@ -295,6 +301,9 @@ class VersionResource(ModelResource):
     def on_obj_delete(self, obj, request=None, **kwargs):
         data = {}
         for field in obj._meta.fields:
+            if field in set(["project"]):
+                continue
+
             data[field.name] = getattr(obj, field.name)
 
         Event.objects.log(user=request.user, project=obj.project.name, version=obj.version, action=Event.ACTIONS.version_deleted, data=data)
@@ -422,6 +431,9 @@ class FileResource(ModelResource):
     def on_obj_create(self, obj, request=None, **kwargs):
         data = {}
         for field in obj._meta.fields:
+            if field in set(["version"]):
+                continue
+
             data[field.name] = getattr(obj, field.name)
 
         Event.objects.log(
@@ -437,6 +449,9 @@ class FileResource(ModelResource):
         else:
             data = {}
             for field in new_obj._meta.fields:
+                if field in set(["version"]):
+                    continue
+
                 data[field.name] = getattr(new_obj, field.name)
 
             Event.objects.log(
@@ -449,6 +464,9 @@ class FileResource(ModelResource):
     def on_obj_delete(self, obj, request=None, **kwargs):
         data = {}
         for field in obj._meta.fields:
+            if field in set(["version"]):
+                continue
+
             data[field.name] = getattr(obj, field.name)
 
         Event.objects.log(
