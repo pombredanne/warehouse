@@ -1,8 +1,11 @@
 import urllib
 
 from django.conf.urls import include, patterns, url
+from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction
 
 from tastypie.bundle import Bundle
+from tastypie.exceptions import NotFound
 from tastypie.resources import ModelResource as TastypieModelResource
 from tastypie.utils import trailing_slash
 
@@ -109,3 +112,25 @@ class ModelResource(TastypieModelResource):
         # @@@ Hackish
         uri = urllib.unquote(uri)
         return super(ModelResource, self).get_via_uri(uri, request=request)
+
+    def on_obj_delete(self, obj, request=None, **kwargs):
+        raise NotImplementedError()
+
+    def obj_delete(self, request=None, **kwargs):
+        obj = kwargs.pop("_obj", None)
+
+        if obj is None:
+            try:
+                obj = self.obj_get(request, **kwargs)
+            except ObjectDoesNotExist:
+                raise NotFound("A model instance matching the provided arguments could not be found.")
+
+        kwargs["_obj"] = obj
+
+        with transaction.commit_on_success():
+            try:
+                self.on_obj_delete(obj, request=request, **kwargs)
+            except NotImplementedError:
+                pass
+
+            return super(ModelResource, self).obj_delete(request=request, **kwargs)
