@@ -254,7 +254,7 @@ class VersionResource(ModelResource):
 
             for f in obj.files:
                 data = {}
-                for field in f._meta.fields():
+                for field in f._meta.fields:
                     data[field.name] = getattr(f, field.name)
 
                 Event.objects.log(
@@ -266,7 +266,7 @@ class VersionResource(ModelResource):
 
     def on_obj_create(self, obj, request=None, **kwargs):
         data = {}
-        for field in obj._meta.fields():
+        for field in obj._meta.fields:
             data[field.name] = getattr(obj, field.name)
 
         Event.objects.log(user=request.user, project=obj.project.name, version=obj.version, action=Event.ACTIONS.version_created, data=data)
@@ -276,14 +276,14 @@ class VersionResource(ModelResource):
             self.on_obj_create(new_obj, request=request, **kwargs)
         else:
             data = {}
-            for field in new_obj._meta.fields():
+            for field in new_obj._meta.fields:
                 data[field.name] = getattr(new_obj, field.name)
 
             Event.objects.log(user=request.user, project=new_obj.project.name, version=new_obj.version, action=Event.ACTIONS.version_updated, data=data)
 
     def on_obj_delete(self, obj, request=None, **kwargs):
         data = {}
-        for field in obj._meta.fields():
+        for field in obj._meta.fields:
             data[field.name] = getattr(obj, field.name)
 
         Event.objects.log(user=request.user, project=obj.project.name, version=obj.version, action=Event.ACTIONS.version_deleted, data=data)
