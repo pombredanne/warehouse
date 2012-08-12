@@ -6,14 +6,24 @@ from django_hstore import hstore
 from model_utils import Choices
 from model_utils.models import TimeStampedModel
 
+from warehouse.conf import settings
+
 
 __all__ = ["Event"]
+
+
+class EventManager(hstore.HStoreManager):
+
+    def log(self, **kwargs):
+        if settings.WAREHOUSE_API_HISTORY:
+            return self.create(**kwargs)
 
 
 class Event(TimeStampedModel):
 
     ACTIONS = Choices(
         ("project_created", "Project Created"),
+        ("project_deleted", "Project Deleted"),
     )
 
     user = models.ForeignKey(User)
@@ -27,7 +37,7 @@ class Event(TimeStampedModel):
     data = hstore.DictionaryField(blank=True, default=dict)
 
     # Manager
-    objects = hstore.HStoreManager()
+    objects = EventManager()
 
     class Meta:
         app_label = "warehouse"
