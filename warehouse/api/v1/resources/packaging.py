@@ -88,14 +88,25 @@ class ProjectResource(ModelResource):
         serializer = Serializer()
 
     def on_obj_create(self, obj, request=None, **kwargs):
-        Event.objects.log(user=request.user, project=obj.name, action=Event.ACTIONS.project_created)
+        data = {}
+        for field in obj._meta.fields:
+            data[field.name] = getattr(obj, field.name)
+
+        Event.objects.log(user=request.user, project=obj.name, action=Event.ACTIONS.project_created, data=data)
 
     def on_obj_update(self, old_obj, new_obj, request=None, **kwargs):
-        data = {"name": new_obj.name, "downloads": new_obj.downloads}
+        data = {}
+        for field in new_obj._meta.fields:
+            data[field.name] = getattr(new_obj, field.name)
+
         Event.objects.log(user=request.user, project=new_obj.name, action=Event.ACTIONS.project_updated, data=data)
 
     def on_obj_delete(self, obj, request=None, **kwargs):
-        Event.objects.log(user=request.user, project=obj.name, action=Event.ACTIONS.project_deleted)
+        data = {}
+        for field in obj._meta.fields:
+            data[field.name] = getattr(obj, field.name)
+
+        Event.objects.log(user=request.user, project=obj.name, action=Event.ACTIONS.project_deleted, data=data)
 
 
 class VersionResource(ModelResource):
