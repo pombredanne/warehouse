@@ -1,3 +1,5 @@
+import json
+
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 
@@ -278,6 +280,9 @@ class VersionResource(ModelResource):
     def on_obj_create(self, obj, request=None, **kwargs):
         data = {}
         for field in obj._meta.fields:
+            if field.name in set(["project"]):
+                continue
+
             data[field.name] = getattr(obj, field.name)
 
         Event.objects.log(user=request.user, project=obj.project.name, version=obj.version, action=Event.ACTIONS.version_created, data=data)
@@ -288,6 +293,9 @@ class VersionResource(ModelResource):
         else:
             data = {}
             for field in new_obj._meta.fields:
+                if field.name in set(["project"]):
+                    continue
+
                 data[field.name] = getattr(new_obj, field.name)
 
             Event.objects.log(user=request.user, project=new_obj.project.name, version=new_obj.version, action=Event.ACTIONS.version_updated, data=data)
@@ -295,6 +303,9 @@ class VersionResource(ModelResource):
     def on_obj_delete(self, obj, request=None, **kwargs):
         data = {}
         for field in obj._meta.fields:
+            if field.name in set(["project"]):
+                continue
+
             data[field.name] = getattr(obj, field.name)
 
         Event.objects.log(user=request.user, project=obj.project.name, version=obj.version, action=Event.ACTIONS.version_deleted, data=data)
@@ -422,12 +433,18 @@ class FileResource(ModelResource):
     def on_obj_create(self, obj, request=None, **kwargs):
         data = {}
         for field in obj._meta.fields:
-            data[field.name] = getattr(obj, field.name)
+            if field.name in set(["version"]):
+                continue
+
+            if field.name == "file":
+                data[field.name] = obj.file.url
+            else:
+                data[field.name] = getattr(obj, field.name)
 
         Event.objects.log(
                         user=request.user,
                         project=obj.version.project.name, version=obj.version.version, filename=obj.filename,
-                        action=Event.ACTIONS.project_created,
+                        action=Event.ACTIONS.file_created,
                         data=data
                     )
 
@@ -437,23 +454,35 @@ class FileResource(ModelResource):
         else:
             data = {}
             for field in new_obj._meta.fields:
-                data[field.name] = getattr(new_obj, field.name)
+                if field.name in set(["version"]):
+                    continue
+
+                if field.name == "file":
+                    data[field.name] = new_obj.file.url
+                else:
+                    data[field.name] = getattr(new_obj, field.name)
 
             Event.objects.log(
                             user=request.user,
                             project=new_obj.version.project.name, version=new_obj.version.version, filename=new_obj.filename,
-                            action=Event.ACTIONS.version_updated,
+                            action=Event.ACTIONS.file_updated,
                             data=data
                         )
 
     def on_obj_delete(self, obj, request=None, **kwargs):
         data = {}
         for field in obj._meta.fields:
-            data[field.name] = getattr(obj, field.name)
+            if field.name in set(["version"]):
+                continue
+
+            if field.name == "file":
+                data[field.name] = obj.file.url
+            else:
+                data[field.name] = getattr(obj, field.name)
 
         Event.objects.log(
                         user=request.user,
                         project=obj.version.project.name, version=obj.version.version, filename=obj.filename,
-                        action=Event.ACTIONS.project_deleted,
+                        action=Event.ACTIONS.file_deleted,
                         data=data
                     )

@@ -8,12 +8,14 @@ install_requires = [
     "Django>=1.4",
 
     "django-appconf",
+    "django-json-field",
     "django-model-utils>=1.1",
     "django-hstore",
     "django-tastypie",
     "logan",
     "south",
 
+    "python_dateutil >= 1.5, < 2.0",
     "distutils2",
     "psycopg2",
 ]

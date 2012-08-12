@@ -2,7 +2,7 @@ from django.db import models
 
 from django.contrib.auth.models import User
 
-from django_hstore import hstore
+from json_field import JSONField
 from model_utils import Choices
 from model_utils.models import TimeStampedModel
 
@@ -12,7 +12,7 @@ from warehouse.conf import settings
 __all__ = ["Event"]
 
 
-class EventManager(hstore.HStoreManager):
+class EventManager(models.Manager):
 
     def log(self, **kwargs):
         if settings.WAREHOUSE_API_HISTORY:
@@ -41,7 +41,7 @@ class Event(TimeStampedModel):
 
     action = models.CharField(max_length=50, choices=ACTIONS)
 
-    data = hstore.DictionaryField(blank=True, default=dict)
+    data = JSONField()
 
     # Manager
     objects = EventManager()
