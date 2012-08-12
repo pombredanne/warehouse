@@ -90,6 +90,10 @@ class ProjectResource(ModelResource):
     def on_obj_create(self, obj, request=None, **kwargs):
         Event.objects.log(user=request.user, project=obj.name, action=Event.ACTIONS.project_created)
 
+    def on_obj_update(self, obj, request=None, **kwargs):
+        data = {"name": obj.name, "downloads": obj.downloads}
+        Event.objects.log(user=request.user, project=obj.name, action=Event.ACTIONS.project_updated, data=data)
+
     def on_obj_delete(self, obj, request=None, **kwargs):
         Event.objects.log(user=request.user, project=obj.name, action=Event.ACTIONS.project_deleted)
 

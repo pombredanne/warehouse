@@ -103,11 +103,6 @@ class ModelResource(TastypieModelResource):
 
         return bundle
 
-    def obj_update(self, bundle, request=None, skip_errors=False, **kwargs):
-        # @@@ Hackish
-        bundle.obj = self.obj_get(request=request, **kwargs)
-        return super(ModelResource, self).obj_update(bundle, request=request, skip_errors=skip_errors, **kwargs)
-
     def get_via_uri(self, uri, request=None):
         # @@@ Hackish
         uri = urllib.unquote(uri)
@@ -125,6 +120,23 @@ class ModelResource(TastypieModelResource):
         return bundle
 
     def on_obj_create(self, obj, request=None, **kwargs):
+        raise NotImplementedError()
+
+    def obj_update(self, bundle, request=None, skip_errors=False, **kwargs):
+        with transaction.commit_on_success():
+            # Hack to force lookup
+            bundle.obj = self.obj_get(request=request, **kwargs)
+
+            bundle = super(ModelResource, self).obj_update(bundle, request=request, skip_errors=skip_errors, **kwargs)
+
+            try:
+                self.on_obj_update(bundle.obj, request=request, **kwargs)
+            except NotImplementedError:
+                pass
+
+        return bundle
+
+    def on_obj_update(self, obj, request=None, **kwargs):
         raise NotImplementedError()
 
     def obj_delete(self, request=None, **kwargs):
