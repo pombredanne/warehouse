@@ -87,13 +87,8 @@ class ProjectResource(ModelResource):
 
         serializer = Serializer()
 
-    def obj_create(self, bundle, request=None, **kwargs):
-        bundle = super(ProjectResource, self).obj_create(bundle, request=request, **kwargs)
-
-        # Log the Creation to History
-        Event.objects.log(user=request.user, project=bundle.obj.name, action=Event.ACTIONS.project_created)
-
-        return bundle
+    def on_obj_create(self, obj, request=None, **kwargs):
+        Event.objects.log(user=request.user, project=obj.name, action=Event.ACTIONS.project_created)
 
     def on_obj_delete(self, obj, request=None, **kwargs):
         Event.objects.log(user=request.user, project=obj.name, action=Event.ACTIONS.project_deleted)

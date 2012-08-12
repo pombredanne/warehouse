@@ -113,6 +113,20 @@ class ModelResource(TastypieModelResource):
         uri = urllib.unquote(uri)
         return super(ModelResource, self).get_via_uri(uri, request=request)
 
+    def obj_create(self, bundle, request=None, **kwargs):
+        with transaction.commit_on_success():
+            bundle = super(ModelResource, self).obj_create(bundle, request=request, **kwargs)
+
+            try:
+                self.on_obj_create(bundle.obj, request=request, **kwargs)
+            except NotImplementedError:
+                pass
+
+        return bundle
+
+    def on_obj_create(self, obj, request=None, **kwargs):
+        NotImplementedError()
+
     def obj_delete(self, request=None, **kwargs):
         obj = kwargs.pop("_obj", None)
 
