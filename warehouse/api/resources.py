@@ -113,9 +113,6 @@ class ModelResource(TastypieModelResource):
         uri = urllib.unquote(uri)
         return super(ModelResource, self).get_via_uri(uri, request=request)
 
-    def on_obj_delete(self, obj, request=None, **kwargs):
-        raise NotImplementedError()
-
     def obj_delete(self, request=None, **kwargs):
         obj = kwargs.pop("_obj", None)
 
@@ -134,3 +131,6 @@ class ModelResource(TastypieModelResource):
                 pass
 
             return super(ModelResource, self).obj_delete(request=request, **kwargs)
+
+    def on_obj_delete(self, obj, request=None, **kwargs):
+        raise NotImplementedError()
