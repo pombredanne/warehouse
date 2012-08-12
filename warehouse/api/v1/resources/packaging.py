@@ -13,6 +13,8 @@ from warehouse.api.authentication import BasicAuthentication
 from warehouse.api.fields import Base64FileField
 from warehouse.api.resources import ModelResource
 from warehouse.api.serializers import Serializer
+from warehouse.conf import settings
+from warehouse.models import Event
 from warehouse.models import Project, Version, VersionFile, Classifier
 from warehouse.models import Require, Provide, Obsolete
 
@@ -85,6 +87,17 @@ class ProjectResource(ModelResource):
         detail_allowed_methods = ["get", "delete"]
 
         serializer = Serializer()
+
+    def obj_create(self, bundle, request=None, **kwargs):
+        bundle = super(ProjectResource, self).obj_create(bundle, request=request, **kwargs)
+
+        # Log the Creation to History
+        if settings.WAREHOUSE_API_HISTORY:
+            req = request or bundle.request
+            if req.user.is_authenticated():
+                Event.objects.create(user=req.user, project=bundle.obj.name, action=Event.ACTIONS.project_created)
+
+        return bundle
 
 
 class VersionResource(ModelResource):
