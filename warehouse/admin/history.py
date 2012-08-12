@@ -7,8 +7,8 @@ __all__ = ["EventAdmin"]
 
 
 class EventAdmin(admin.ModelAdmin):
-    list_display = ["created", "user", "project", "version", "filename", "data"]
-    list_filter = ["created"]
+    list_display = ["created", "user", "project", "version", "filename", "action", "data"]
+    list_filter = ["action", "created"]
     search_fields = ["user__username", "project", "version", "filename"]
 
 
