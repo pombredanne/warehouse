@@ -263,7 +263,7 @@ class VersionResource(ModelResource):
 
             obj.files.update(yanked=True)
 
-            for f in obj.files:
+            for f in obj.files.all():
                 data = {}
                 for field in f._meta.fields:
                     data[field.name] = getattr(f, field.name)
