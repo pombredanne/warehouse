@@ -1,3 +1,5 @@
+import json
+
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 
@@ -90,21 +92,21 @@ class ProjectResource(ModelResource):
     def on_obj_create(self, obj, request=None, **kwargs):
         data = {}
         for field in obj._meta.fields:
-            data[field.name] = getattr(obj, field.name)
+            data[field.name] = str(getattr(obj, field.name))
 
         Event.objects.log(user=request.user, project=obj.name, action=Event.ACTIONS.project_created, data=data)
 
     def on_obj_update(self, old_obj, new_obj, request=None, **kwargs):
         data = {}
         for field in new_obj._meta.fields:
-            data[field.name] = getattr(new_obj, field.name)
+            data[field.name] = str(getattr(new_obj, field.name))
 
         Event.objects.log(user=request.user, project=new_obj.name, action=Event.ACTIONS.project_updated, data=data)
 
     def on_obj_delete(self, obj, request=None, **kwargs):
         data = {}
         for field in obj._meta.fields:
-            data[field.name] = getattr(obj, field.name)
+            data[field.name] = str(getattr(obj, field.name))
 
         Event.objects.log(user=request.user, project=obj.name, action=Event.ACTIONS.project_deleted, data=data)
 
@@ -281,7 +283,12 @@ class VersionResource(ModelResource):
             if field in set(["project"]):
                 continue
 
-            data[field.name] = getattr(obj, field.name)
+            if field.name in set(["uris", "keywords", "platforms", "supported_platforms", "requires_external"]):
+                    val = json.dumps(getattr(obj, field.name))
+            else:
+                val = getattr(obj, field.name)
+
+            data[field.name] = str(val)
 
         Event.objects.log(user=request.user, project=obj.project.name, version=obj.version, action=Event.ACTIONS.version_created, data=data)
 
@@ -294,7 +301,12 @@ class VersionResource(ModelResource):
                 if field in set(["project"]):
                     continue
 
-                data[field.name] = getattr(new_obj, field.name)
+                if field.name in set(["uris", "keywords", "platforms", "supported_platforms", "requires_external"]):
+                    val = json.dumps(getattr(new_obj, field.name))
+                else:
+                    val = getattr(new_obj, field.name)
+
+                data[field.name] = str(val)
 
             Event.objects.log(user=request.user, project=new_obj.project.name, version=new_obj.version, action=Event.ACTIONS.version_updated, data=data)
 
@@ -304,7 +316,12 @@ class VersionResource(ModelResource):
             if field in set(["project"]):
                 continue
 
-            data[field.name] = getattr(obj, field.name)
+            if field.name in set(["uris", "keywords", "platforms", "supported_platforms", "requires_external"]):
+                val = json.dumps(getattr(obj, field.name))
+            else:
+                val = getattr(obj, field.name)
+
+            data[field.name] = str(val)
 
         Event.objects.log(user=request.user, project=obj.project.name, version=obj.version, action=Event.ACTIONS.version_deleted, data=data)
 
@@ -434,7 +451,14 @@ class FileResource(ModelResource):
             if field in set(["version"]):
                 continue
 
-            data[field.name] = getattr(obj, field.name)
+            if field.name == "file":
+                val = obj.file.url
+            elif field.name == "digests":
+                val = json.dumps(obj.digests)
+            else:
+                val = getattr(obj, field.name)
+
+            data[field.name] = str(val)
 
         Event.objects.log(
                         user=request.user,
@@ -452,7 +476,14 @@ class FileResource(ModelResource):
                 if field in set(["version"]):
                     continue
 
-                data[field.name] = getattr(new_obj, field.name)
+                if field.name == "file":
+                    val = new_obj.file.url
+                elif field.name == "digests":
+                    val = json.dumps(new_obj.digests)
+                else:
+                    val = getattr(new_obj, field.name)
+
+                data[field.name] = str(val)
 
             Event.objects.log(
                             user=request.user,
@@ -464,10 +495,17 @@ class FileResource(ModelResource):
     def on_obj_delete(self, obj, request=None, **kwargs):
         data = {}
         for field in obj._meta.fields:
-            if field in set(["version"]):
+            if field.name in set(["version"]):
                 continue
 
-            data[field.name] = getattr(obj, field.name)
+            if field.name == "file":
+                val = obj.file.url
+            elif field.name == "digests":
+                val = json.dumps(obj.digests)
+            else:
+                val = getattr(obj, field.name)
+
+            data[field.name] = str(val)
 
         Event.objects.log(
                         user=request.user,
