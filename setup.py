@@ -34,6 +34,10 @@ setup(
 
     install_requires=install_requires,
 
+    extras_require={
+        "test": ["pytest", "pytest-django"]
+    },
+
     packages=find_packages(exclude=["tests"]),
     package_data={"": ["LICENSE"], "warehouse": ["templates/*.html"]},
     include_package_data=True,
