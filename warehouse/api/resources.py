@@ -1,3 +1,4 @@
+import copy
 import urllib
 
 from django.conf.urls import include, patterns, url
@@ -126,7 +127,7 @@ class ModelResource(TastypieModelResource):
         with transaction.commit_on_success():
             # Hack to force lookup
             bundle.obj = self.obj_get(request=request, **kwargs)
-            current = bundle.obj
+            current = copy.copy(bundle.obj)
 
             bundle = super(ModelResource, self).obj_update(bundle, request=request, skip_errors=skip_errors, **kwargs)
 
