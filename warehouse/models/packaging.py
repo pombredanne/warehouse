@@ -1,8 +1,8 @@
 import hashlib
 import re
 import os
+import urlparse
 
-from django.conf import settings
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -15,6 +15,7 @@ from model_utils.models import TimeStampedModel
 
 from distutils2 import version as verlib
 
+from warehouse.conf import settings
 from warehouse.fields import dbarray
 from warehouse.utils.packages import version_file_upload_path, package_storage
 
@@ -164,6 +165,16 @@ class VersionFile(models.Model):
             self.digests[dtype] = hasher.hexdigest()
 
         return super(VersionFile, self).save(*args, **kwargs)
+
+    @property
+    def hashed_url(self):
+        url = self.file.url
+
+        if settings.WAREHOUSE_SIMPLE_HASH in self.digests:
+            parts = list(urlparse.urlparse(url))[:5] + ["{0}={1}".format(settings.WAREHOUSE_SIMPLE_HASH, self.digests[settings.WAREHOUSE_SIMPLE_HASH])]
+            url = urlparse.urlunparse(parts)
+
+        return url
 
 
 class BaseRequirement(models.Model):

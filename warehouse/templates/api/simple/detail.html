@@ -1,0 +1,19 @@
+<html>
+  <head>
+    <title>Links for {{ object.name }}</title>
+    <style>
+      a { display: block; }
+    </style>
+  </head>
+  <body>
+    <h1>Links for {{ object.name }}</h1>
+    {% for version in versions %}{% for file in version.files.all %}<a href="{{ file.hashed_url }}">{{ file.filename }}</a>
+    {% endfor %}{% endfor %}
+
+    {% for version in versions %}{% for label, uri in version.uris.iteritems %}<a href="{{ uri }}">{{ version.version }} {{ label }}</a>
+    {% endfor %}{% endfor %}
+
+    {% for uri in object.uris %}<a href="{{ uri }}">{{ uri }}</a>
+    {% endfor %}
+  </body>
+</html>
