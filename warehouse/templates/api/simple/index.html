@@ -6,7 +6,12 @@
     </style>
   </head>
   <body>
-    {% for object in object_list %}<a href="{% url api_simple_detail slug=object.name %}">{{ object.name }}</a>
-    {% endfor %}
+    {% if not restricted %}
+        {% for object in object_list %}<a href="{% url api_simple_detail slug=object.name %}">{{ object.name }}</a>
+        {% endfor %}
+    {% else %}
+        {% for object in object_list %}<a href="{% url api_resticted_detail slug=object.name %}">{{ object.name }}</a>
+        {% endfor %}
+    {% endif %}
   </body>
 </html>

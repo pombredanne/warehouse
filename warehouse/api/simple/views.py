@@ -14,6 +14,15 @@ class ProjectIndex(ListView):
     queryset = Project.objects.all().order_by("name")
     template_name = "api/simple/index.html"
 
+    def get_context_data(self, **kwargs):
+        ctx = super(ProjectIndex, self).get_context_data(**kwargs)
+
+        ctx.update({
+            "restricted": self.restricted,
+        })
+
+        return ctx
+
 
 class ProjectDetail(DetailView):
 
