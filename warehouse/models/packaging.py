@@ -6,6 +6,7 @@ import urlparse
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.utils.encoding import smart_str
 from django.utils.translation import ugettext_lazy as _
 
 from django_hstore import hstore
@@ -13,7 +14,10 @@ from model_utils import Choices
 from model_utils.fields import AutoCreatedField, AutoLastModifiedField
 from model_utils.models import TimeStampedModel
 
+import lxml.html
+
 from distutils2 import version as verlib
+from docutils.core import publish_string
 
 from warehouse.conf import settings
 from warehouse.fields import dbarray
@@ -246,3 +250,34 @@ def version_ordering(sender, **kwargs):
         for i, v in enumerate(dated + versions):
             if v.order != i:
                 Version.objects.filter(pk=v.pk).update(order=i)
+
+
+@receiver(post_save, sender=Version)
+def extract_project_urls(sender, **kwargs):
+    instance = kwargs.get("instance")
+    if instance is not None:
+        # Pull out the uris from the description and save them to the project
+        docutils_settings = getattr(settings, "RESTRUCTUREDTEXT_FILTER_SETTINGS", {})
+        docutils_settings.update({"warning_stream": os.devnull})
+
+        uris = set(instance.project.uris)
+
+        try:
+            html_string = publish_string(source=smart_str(instance.description), writer_name="html4css1", settings_overrides=docutils_settings)
+            if html_string.strip():
+                html = lxml.html.fromstring(html_string)
+
+                for link in html.xpath("//a/@href"):
+                    try:
+                        if any(urlparse.urlparse(link)[:5]):
+                            uris.add(link)
+                    except ValueError:
+                        pass
+        except Exception:
+            # @@@ We Swallow Exceptions here, but it's the best way that I can think of atm.
+            pass
+
+        if set(instance.project.uris) != uris:
+            uris = sorted(uris)
+            instance.project.uris = uris
+            instance.project.save()

@@ -17,7 +17,9 @@ install_requires = [
 
     "python_dateutil >= 1.5, < 2.0",
     "distutils2",
+    "docutils",
     "psycopg2",
+    "lxml",
 ]
 
 setup(
