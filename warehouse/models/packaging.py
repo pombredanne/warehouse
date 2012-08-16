@@ -279,5 +279,4 @@ def extract_project_urls(sender, **kwargs):
 
         if set(instance.project.uris) != uris:
             uris = sorted(uris)
-            instance.project.uris = uris
-            instance.project.save()
+            Project.objects.filter(pk=instance.project.pk).update(uris=uris)
