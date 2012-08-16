@@ -6,7 +6,7 @@
     </style>
   </head>
   <body>
-    {% for object in object_list %}<a href="">{{ object.name }}</a>
+    {% for object in object_list %}<a href="{% url api_simple_detail slug=object.name %}">{{ object.name }}</a>
     {% endfor %}
   </body>
 </html>
