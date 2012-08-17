@@ -1,4 +1,5 @@
 from distutils2 import version as verlib
+from distutils2 import markers
 
 from django import forms
 from django.db.models import Q
@@ -30,6 +31,10 @@ class VersionForm(BaseForm):
     uris = forms.Field(error_messages=ERROR_MESSAGES, required=False)
     author = forms.Field(error_messages=ERROR_MESSAGES, required=False)
     maintainer = forms.Field(error_messages=ERROR_MESSAGES, required=False)
+
+    requires = forms.Field(required=False)
+    obsoletes = forms.Field(required=False)
+    provides = forms.Field(required=False)
 
     def clean_version(self):
         data = self.cleaned_data["version"]
@@ -74,6 +79,48 @@ class VersionForm(BaseForm):
 
         return maintainer
 
+    def clean_requires(self):
+        requires = self.cleaned_data["requires"]
+
+        if requires is None:
+            return
+
+        for require in requires:
+            form = RequireForm(data=require)
+
+            if not form.is_valid():
+                raise forms.ValidationError("invalid")
+
+        return requires
+
+    def clean_obsoletes(self):
+        obsoletes = self.cleaned_data["obsoletes"]
+
+        if obsoletes is None:
+            return
+
+        for obsolete in obsoletes:
+            form = RequireForm(data=obsolete)
+
+            if not form.is_valid():
+                raise forms.ValidationError("invalid")
+
+        return obsoletes
+
+    def clean_provides(self):
+        provides = self.cleaned_data["provides"]
+
+        if provides is None:
+            return
+
+        for provide in provides:
+            form = RequireForm(data=provide)
+
+            if not form.is_valid():
+                raise forms.ValidationError("invalid")
+
+        return provides
+
     def clean(self):
         cleaned_data = super(VersionForm, self).clean()
 
@@ -81,3 +128,31 @@ class VersionForm(BaseForm):
             raise forms.ValidationError("already_exists")
 
         return cleaned_data
+
+
+class RequireForm(BaseForm):
+    name = forms.CharField(max_length=150, error_messages=ERROR_MESSAGES)
+    version = forms.CharField(error_messages=ERROR_MESSAGES, required=False)
+    environment = forms.CharField(error_messages=ERROR_MESSAGES, required=False)
+
+    def clean_version(self):
+        data = self.cleaned_data["version"]
+
+        if data:
+            suggested = verlib.suggest_normalized_version(data)
+
+            if suggested is None or suggested != data:
+                raise forms.ValidationError("invalid")
+
+        return data
+
+    def clean_environment(self):
+        environment = self.cleaned_data["environment"]
+
+        if environment:
+            try:
+                markers.interpret(environment)
+            except Exception:
+                raise forms.ValidationError("invalid")
+
+        return environment
