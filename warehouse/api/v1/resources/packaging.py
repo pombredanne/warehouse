@@ -59,7 +59,6 @@ def handle_yanked_files(bundle):
 class ProjectResource(ModelResource):
 
     # Read only fields
-    created = fields.DateTimeField(attribute="created")  # @@@ Make this Read only
     downloads = fields.IntegerField(attribute="downloads", readonly=True)
     normalized = fields.CharField(attribute="normalized", readonly=True)
 
@@ -113,7 +112,8 @@ class ProjectResource(ModelResource):
 
 class VersionResource(ModelResource):
 
-    # Read Only Fields
+    # Read only fields
+    downloads = fields.IntegerField(attribute="downloads", readonly=True)
     project = fields.ToOneField("warehouse.api.v1.resources.ProjectResource", "project")
     version = fields.CharField(attribute="version")
     yanked = fields.BooleanField(attribute="yanked")
@@ -129,9 +129,9 @@ class VersionResource(ModelResource):
     maintainer = fields.DictField()
     classifiers = fields.ListField()
 
+    # Related fields
     files = fields.ToManyField("warehouse.api.v1.resources.FileResource", handle_yanked_files, readonly=True, null=True)
 
-    # Requirements
     requires = fields.ToManyField("warehouse.api.v1.resources.RequireResource", "requires", related_name="project_version", null=True, full=True)
     provides = fields.ToManyField("warehouse.api.v1.resources.ProvideResource", "provides", related_name="project_version", null=True, full=True)
     obsoletes = fields.ToManyField("warehouse.api.v1.resources.ObsoleteResource", "obsoletes", related_name="project_version", null=True, full=True)
@@ -334,6 +334,7 @@ class VersionResource(ModelResource):
 
 class RequireResource(TastypieModelResource):
 
+    # Related fields
     project_version = fields.ToOneField("warehouse.api.v1.resources.VersionResource", "project_version")
 
     class Meta:
@@ -351,6 +352,7 @@ class RequireResource(TastypieModelResource):
 
 class ProvideResource(TastypieModelResource):
 
+    # Related fields
     project_version = fields.ToOneField("warehouse.api.v1.resources.VersionResource", "project_version")
 
     class Meta:
@@ -368,6 +370,7 @@ class ProvideResource(TastypieModelResource):
 
 class ObsoleteResource(TastypieModelResource):
 
+    # Related fields
     project_version = fields.ToOneField("warehouse.api.v1.resources.VersionResource", "project_version")
 
     class Meta:
@@ -385,14 +388,18 @@ class ObsoleteResource(TastypieModelResource):
 
 class FileResource(ModelResource):
 
-    version = fields.ToOneField("warehouse.api.v1.resources.VersionResource", "version")
-
-    file = Base64FileField(attribute="file")
-
+    # Read only fields
     modified = fields.DateTimeField(attribute="modified", readonly=True)
+    downloads = fields.IntegerField(attribute="downloads", readonly=True)
     digests = fields.DictField(attribute="digests", readonly=True)
     filename = fields.CharField(attribute="filename", readonly=True)
     filesize = fields.IntegerField(attribute="filesize", readonly=True)
+
+    # Related fields
+    version = fields.ToOneField("warehouse.api.v1.resources.VersionResource", "version")
+
+    # Advanced data prep fields
+    file = Base64FileField(attribute="file")
 
     class Meta:
         resource_name = "files"
