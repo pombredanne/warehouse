@@ -15,7 +15,7 @@ from tastypie.utils import trailing_slash
 
 from warehouse.api.authentication import BasicAuthentication
 from warehouse.api.fields import Base64FileField
-from warehouse.api.resources import ModelResource, NestedModelResource
+from warehouse.api.resources import ModelResource
 from warehouse.api.serializers import Serializer
 from warehouse.models import Event
 from warehouse.models import Project, Version, VersionFile, Classifier
