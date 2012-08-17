@@ -7,7 +7,7 @@ from tastypie import fields
 from tastypie.resources import ModelResource
 
 from warehouse.api.authentication import BasicAuthentication
-from warehouse.models import Download, UserAgent
+from warehouse.models import Download, UserAgent, VersionFile
 from warehouse.utils.paths import splitext
 
 
@@ -44,12 +44,8 @@ class DownloadResource(ModelResource):
         return bundle.obj.user_agent.agent
 
     def hydrate_version(self, bundle):
-        if not bundle.data.get("version"):
-            package_name, ext = splitext(bundle.data["filename"])
-            matches = _package_to_requirement.search(package_name)
-
-            if matches and matches.group(1) == bundle.data["project"]:
-                bundle.data["version"] = matches.group(2)
+        version_file = VersionFile.objects.filter(version__project__name=bundle.data["project"], filename=bundle.data["filename"])
+        bundle.data["version"] = version_file.version.version
 
         return bundle
 
