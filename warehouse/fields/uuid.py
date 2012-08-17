@@ -5,6 +5,8 @@ import uuid
 
 from django.db import models
 
+from south.modelsinspector import add_introspection_rules
+
 # Register the adapter so we can use UUID objects.
 psycopg2.extras.register_uuid()
 
@@ -13,6 +15,7 @@ class UUIDField(models.CharField):
     __metaclass__ = models.SubfieldBase
 
     def __init__(self, *args, **kwargs):
+        kwargs["max_length"] = 36
         kwargs.setdefault("default", uuid.uuid4)
         kwargs.setdefault("editable", not kwargs.get("primary_key", False))
 
@@ -30,3 +33,6 @@ class UUIDField(models.CharField):
         if not isinstance(value, uuid.UUID):
             value = uuid.UUID(value)
         return value
+
+
+add_introspection_rules([], ["^warehouse\.fields\.uuid\.UUIDField"])
