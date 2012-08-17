@@ -1,9 +1,11 @@
 import copy
+import json
 import urllib
 
 from django.conf.urls import url
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
+from django.views.decorators.csrf import csrf_exempt
 
 from tastypie.exceptions import NotFound
 from tastypie.resources import ModelResource as TastypieModelResource
@@ -14,6 +16,20 @@ __all__ = ["ModelResource"]
 
 
 class CleanErrors(object):
+
+    def wrap_view(self, view):
+        @csrf_exempt
+        def wrapper(request, *args, **kwargs):
+            resp = super(CleanErrors, self).wrap_view(view)(request, *args, **kwargs)
+
+            if resp.status_code == 400:
+                # @@@ Errors should not assume JSON?
+                resp.content = json.dumps({"message": resp.content})
+                resp["Content-Type"] = "application/json"
+
+            return resp
+
+        return wrapper
 
     def is_valid(self, bundle, request=None):
         """
