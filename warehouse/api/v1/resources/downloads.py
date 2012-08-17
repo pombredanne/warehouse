@@ -44,8 +44,15 @@ class DownloadResource(ModelResource):
         return bundle.obj.user_agent.agent
 
     def hydrate_version(self, bundle):
-        version_file = VersionFile.objects.filter(version__project__name=bundle.data["project"], filename=bundle.data["filename"]).get()
-        bundle.data["version"] = version_file.version.version
+        try:
+            version_file = VersionFile.objects.filter(version__project__name=bundle.data["project"], filename=bundle.data["filename"]).get()
+        except VersionFile.DoesNotExist:
+            if "filename" in bundle.data:
+                del bundle.data["filename"]
+
+            return bundle
+        else:
+            bundle.data["version"] = version_file.version.version
 
         return bundle
 
