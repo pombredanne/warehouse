@@ -16,7 +16,7 @@ from warehouse.api.fields import Base64FileField
 from warehouse.api.resources import ModelResource
 from warehouse.api.serializers import Serializer
 from warehouse.api.validation import FormValidation
-from warehouse.api.v1.forms.packaging import ProjectForm, VersionForm
+from warehouse.api.v1.forms.packaging import ProjectForm, VersionForm, VersionFileForm
 from warehouse.models import Event
 from warehouse.models import Project, Version, VersionFile, Classifier
 from warehouse.models import Require, Provide, Obsolete
@@ -425,6 +425,7 @@ class FileResource(ModelResource):
         detail_allowed_methods = ["get", "put", "delete"]
 
         serializer = Serializer(formats=["json", "jsonp"])
+        validation = FormValidation(form_class=VersionFileForm)
 
     def build_filters(self, filters=None):
         if filters is None:

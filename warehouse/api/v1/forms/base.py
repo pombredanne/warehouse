@@ -62,7 +62,7 @@ class RelatedResourceField(forms.Field):
         return self.resource_from_uri(self.to_class()(), value)
 
 
-class BaseForm(forms.Form):
+class BaseForm(forms.ModelForm):
 
     def __init__(self, user=None, *args, **kwargs):
         self.user = user

@@ -1,3 +1,5 @@
+import os
+
 from distutils2 import version as verlib
 from distutils2 import markers
 
@@ -6,7 +8,7 @@ from django.db.models import Q
 
 from warehouse.api.v1.forms.base import BaseForm, RelatedResourceField
 from warehouse.api.validation import ERROR_MESSAGES
-from warehouse.models import Project, Version
+from warehouse.models import Project, Version, VersionFile
 from warehouse.models.packaging import _normalize_regex
 
 
@@ -156,3 +158,20 @@ class RequireForm(BaseForm):
                 raise forms.ValidationError("invalid")
 
         return environment
+
+
+class VersionFileForm(BaseForm):
+
+    class Meta:
+        model = VersionFile
+        fields = ["type", "python_version", "comment", "file"]
+
+    def clean_file(self):
+        f = self.cleaned_data["file"]
+
+        filename = os.path.basename(f.file.name)
+
+        if VersionFile.objects.filter(filename=filename).exists():
+            raise forms.ValidationError("already_exists")
+
+        return f
