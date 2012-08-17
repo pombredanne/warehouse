@@ -132,7 +132,7 @@ class VersionForm(BaseForm):
         return cleaned_data
 
 
-class RequireForm(BaseForm):
+class RequireForm(forms.Form):
     name = forms.CharField(max_length=150, error_messages=ERROR_MESSAGES)
     version = forms.CharField(error_messages=ERROR_MESSAGES, required=False)
     environment = forms.CharField(error_messages=ERROR_MESSAGES, required=False)
