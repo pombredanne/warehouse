@@ -390,6 +390,7 @@ class FileResource(ModelResource):
         fields = [
             "version", "created", "modified", "yanked", "type", "file",
             "python_version", "digests", "comment", "filename", "filesize",
+            "downloads",
         ]
 
         filtering = {
