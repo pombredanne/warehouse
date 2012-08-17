@@ -13,7 +13,29 @@ from tastypie.utils import trailing_slash
 __all__ = ["ModelResource"]
 
 
-class ModelResource(TastypieModelResource):
+class CleanErrors(object):
+
+    def is_valid(self, bundle, request=None):
+        """
+        Handles checking if the data provided by the user is valid.
+
+        Mostly a hook, this uses class assigned to ``validation`` from
+        ``Resource._meta``.
+
+        If validation fails, an error is raised with the error messages
+        serialized inside it.
+        """
+        errors = self._meta.validation.is_valid(bundle, request)
+
+        if errors:
+            bundle.errors["message"] = "Validation Error"
+            bundle.errors["errors"] = [dict(resource=self._meta.resource_name, **e) for e in errors]
+            return False
+
+        return True
+
+
+class ModelResource(CleanErrors, TastypieModelResource):
 
     def base_urls(self):
         """

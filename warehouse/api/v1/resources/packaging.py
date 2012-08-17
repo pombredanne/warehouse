@@ -10,12 +10,12 @@ from tastypie.constants import ALL, ALL_WITH_RELATIONS
 from tastypie.exceptions import NotFound
 from tastypie.resources import ModelResource as TastypieModelResource
 from tastypie.utils import trailing_slash
-from tastypie.validation import FormValidation
 
 from warehouse.api.authentication import BasicAuthentication
 from warehouse.api.fields import Base64FileField
 from warehouse.api.resources import ModelResource
 from warehouse.api.serializers import Serializer
+from warehouse.api.validation import FormValidation
 from warehouse.api.v1.forms.packaging import ProjectForm
 from warehouse.models import Event
 from warehouse.models import Project, Version, VersionFile, Classifier
