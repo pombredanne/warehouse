@@ -119,7 +119,7 @@ class VersionResource(ModelResource):
     downloads = fields.IntegerField(attribute="downloads", readonly=True)
     project = fields.ToOneField("warehouse.api.v1.resources.ProjectResource", "project")
     version = fields.CharField(attribute="version")
-    yanked = fields.BooleanField(attribute="yanked")
+    yanked = fields.BooleanField(attribute="yanked", readonly=True)
 
     # Advanced Data Prep
     uris = fields.DictField(attribute="uris")
