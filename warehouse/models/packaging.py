@@ -30,12 +30,6 @@ __all__ = [
 ]
 
 
-METADATA_VERSIONS = [
-    ("1.0", "1.0"),
-    ("1.1", "1.1"),
-    ("1.2", "1.2"),
-]
-
 _normalize_regex = re.compile(r"[^A-Za-z0-9.]+")
 
 
@@ -69,9 +63,6 @@ class Version(models.Model):
 
     order = models.IntegerField(default=0, db_index=True)
     yanked = models.BooleanField(default=False)
-
-    # Meta data
-    metadata_version = models.CharField(max_length=5, choices=METADATA_VERSIONS)
 
     summary = models.TextField(blank=True)
     description = models.TextField(blank=True)
