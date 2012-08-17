@@ -1,4 +1,5 @@
 import copy
+import hashlib
 import urllib
 
 from django.conf.urls import url
@@ -98,8 +99,14 @@ class Conditional(object):
                 if hasattr(obj, "modified"):
                     return obj.modified
 
+        def etag(request, *args, **kwargs):
+            last_modified = lmodified(request, *args, **kwargs)
+
+            if last_modified is not None:
+                return hashlib.sha224(last_modified.isoformat()).hexdigest()
+
         @csrf_exempt
-        @condition(last_modified_func=lmodified)
+        @condition(etag_func=etag, last_modified_func=lmodified)
         def wrapper(request, *args, **kwargs):
             return super(Conditional, self).wrap_view(view)(request, *args, **kwargs)
 
