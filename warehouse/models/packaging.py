@@ -7,7 +7,6 @@ from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils.encoding import smart_str
-from django.utils.translation import ugettext_lazy as _
 
 from django_hstore import hstore
 from model_utils import Choices
@@ -105,13 +104,14 @@ class Version(models.Model):
 class VersionFile(models.Model):
 
     TYPES = Choices(
-        ("sdist", _("Source")),
+        ("sdist", "Source"),
         ("bdist_egg", "Egg"),
         ("bdist_msi", "MSI"),
         ("bdist_dmg", "DMG"),
         ("bdist_rpm", "RPM"),
-        ("bdist_dumb", _("Dumb Binary Distribution")),
-        ("bdist_wininst", _("Windows Installer Binary Distribution")),
+        ("bdist_dumb", "Dumb Binary Distribution"),
+        ("bdist_wininst", "Windows Installer Binary Distribution"),
+        ("bdist_wheel", "Wheel"),
     )
 
     version = models.ForeignKey(Version, related_name="files")
