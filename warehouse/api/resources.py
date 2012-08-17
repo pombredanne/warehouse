@@ -1,5 +1,4 @@
 import copy
-import json
 import urllib
 
 from django.conf.urls import url
