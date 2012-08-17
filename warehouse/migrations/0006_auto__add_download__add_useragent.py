@@ -11,7 +11,7 @@ class Migration(SchemaMigration):
         # Adding model 'Download'
         db.create_table('warehouse_download', (
             ('id', self.gf('uuidfield.fields.UUIDField')(unique=True, max_length=32, primary_key=True)),
-            ('datetime', self.gf('django.db.models.fields.DateTimeField')()),
+            ('date', self.gf('django.db.models.fields.DateField')()),
             ('user_agent', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['warehouse.UserAgent'])),
             ('project', self.gf('django.db.models.fields.CharField')(max_length=150)),
             ('version', self.gf('django.db.models.fields.CharField')(max_length=512)),
@@ -80,7 +80,7 @@ class Migration(SchemaMigration):
         },
         'warehouse.download': {
             'Meta': {'object_name': 'Download'},
-            'datetime': ('django.db.models.fields.DateTimeField', [], {}),
+            'date': ('django.db.models.fields.DateField', [], {}),
             'downloads': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
             'filename': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
             'id': ('uuidfield.fields.UUIDField', [], {'unique': 'True', 'max_length': '32', 'primary_key': 'True'}),

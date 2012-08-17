@@ -16,7 +16,7 @@ class UserAgent(models.Model):
 class Download(models.Model):
     id = UUIDField(auto=True, primary_key=True)
 
-    datetime = models.DateTimeField()
+    date = models.DateField()
     user_agent = models.ForeignKey(UserAgent)
 
     project = models.CharField(max_length=150)
