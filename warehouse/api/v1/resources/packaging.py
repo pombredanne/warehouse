@@ -16,7 +16,7 @@ from warehouse.api.fields import Base64FileField
 from warehouse.api.resources import ModelResource
 from warehouse.api.serializers import Serializer
 from warehouse.api.validation import FormValidation
-from warehouse.api.v1.forms.packaging import ProjectForm
+from warehouse.api.v1.forms.packaging import ProjectForm, VersionForm
 from warehouse.models import Event
 from warehouse.models import Project, Version, VersionFile, Classifier
 from warehouse.models import Require, Provide, Obsolete
@@ -165,6 +165,7 @@ class VersionResource(ModelResource):
         detail_allowed_methods = ["get", "put", "delete"]
 
         serializer = Serializer(formats=["json", "jsonp"])
+        validation = FormValidation(form_class=VersionForm)
 
     def base_urls(self):
         return [
