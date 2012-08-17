@@ -13,13 +13,6 @@ from tastypie.utils import trailing_slash
 __all__ = ["ModelResource"]
 
 
-def _get_model_attr(obj, prefix, attr):
-    for level in prefix:
-        obj = getattr(obj, level)
-
-    return getattr(obj, attr)
-
-
 class ModelResource(TastypieModelResource):
 
     def base_urls(self):
