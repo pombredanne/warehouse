@@ -13,7 +13,7 @@ from tastypie.resources import ModelResource as TastypieModelResource
 
 from warehouse.api.authentication import BasicAuthentication
 from warehouse.api.fields import Base64FileField
-from warehouse.api.resources import ModelResource
+from warehouse.api.resources import ModelResource, NestedModelResource
 from warehouse.api.serializers import Serializer
 from warehouse.models import Event
 from warehouse.models import Project, Version, VersionFile, Classifier
@@ -56,7 +56,7 @@ def handle_yanked_files(bundle):
     return bundle.obj.files.all()
 
 
-class ProjectResource(ModelResource):
+class ProjectResource(NestedModelResource):
 
     # Read only fields
     created = fields.DateTimeField(attribute="created")  # @@@ Make this Read only
@@ -111,7 +111,7 @@ class ProjectResource(ModelResource):
         Event.objects.log(user=request.user, project=obj.name, action=Event.ACTIONS.project_deleted, data=data)
 
 
-class VersionResource(ModelResource):
+class VersionResource(NestedModelResource):
 
     # Read Only Fields
     project = fields.ToOneField("warehouse.api.v1.resources.ProjectResource", "project")
@@ -382,9 +382,6 @@ class FileResource(ModelResource):
     class Meta:
         resource_name = "files"
         detail_uri_name = "filename"
-
-        parent_resource = VersionResource
-        parent_resource_uri_prefix = "version"
 
         queryset = VersionFile.objects.all()
         fields = [
