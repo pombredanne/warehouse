@@ -58,7 +58,7 @@ def handle_yanked_files(bundle):
     return bundle.obj.files.all()
 
 
-class ProjectResource(NestedModelResource):
+class ProjectResource(ModelResource):
 
     # Read only fields
     created = fields.DateTimeField(attribute="created")  # @@@ Make this Read only
