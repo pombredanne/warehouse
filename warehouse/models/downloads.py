@@ -27,3 +27,4 @@ class Download(models.Model):
 
     class Meta:
         app_label = "warehouse"
+        unique_together = ("date", "user_agent", "project", "version", "filename")
