@@ -7,9 +7,12 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.views.decorators.csrf import csrf_exempt
 
-from tastypie.exceptions import NotFound
+from tastypie.exceptions import NotFound, ImmediateHttpResponse
 from tastypie.resources import ModelResource as TastypieModelResource
 from tastypie.utils import trailing_slash
+from tastypie.utils.mime import build_content_type
+
+from warehouse.api.http import HttpUnprocessableEntity
 
 
 __all__ = ["ModelResource"]
@@ -30,6 +33,16 @@ class CleanErrors(object):
             return resp
 
         return wrapper
+
+    def error_response(self, errors, request):
+        if request:
+            desired_format = self.determine_format(request)
+        else:
+            desired_format = self._meta.default_format
+
+        serialized = self.serialize(request, errors, desired_format)
+        response = HttpUnprocessableEntity(content=serialized, content_type=build_content_type(desired_format))
+        raise ImmediateHttpResponse(response=response)
 
     def is_valid(self, bundle, request=None):
         """
