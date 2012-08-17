@@ -6,6 +6,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.utils.cache import patch_cache_control, patch_vary_headers
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import condition
 
 from tastypie.exceptions import NotFound, ImmediateHttpResponse
 from tastypie.resources import ModelResource as TastypieModelResource
@@ -81,7 +82,31 @@ class ClientCache(object):
         return response
 
 
-class ModelResource(CleanErrors, ClientCache, TastypieModelResource):
+class Conditional(object):
+
+    def wrap_view(self, view):
+
+        def lmodified(request, *args, **kwargs):
+            lookup_kwargs = self.remove_api_resource_names(kwargs)
+
+            if lookup_kwargs:
+                try:
+                    obj = self.obj_get(request=request, **lookup_kwargs)
+                except self._meta.queryset.model.DoesNotExist:
+                    return
+
+                if hasattr(obj, "modified"):
+                    return obj.modified
+
+        @csrf_exempt
+        @condition(last_modified_func=lmodified)
+        def wrapper(request, *args, **kwargs):
+            return super(Conditional, self).wrap_view(view)(request, *args, **kwargs)
+
+        return wrapper
+
+
+class ModelResource(CleanErrors, ClientCache, Conditional, TastypieModelResource):
 
     def base_urls(self):
         """
