@@ -24,7 +24,7 @@ class DownloadResource(ModelResource):
             "project": ALL,
             "version": ALL,
             "filename": ALL,
-            "datetime": ALL,
+            "date": ALL,
         }
 
         authentication = MultiAuthentication(BasicAuthentication())
