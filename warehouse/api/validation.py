@@ -4,7 +4,7 @@ from tastypie.validation import FormValidation as TastypieFormValidation
 __all__ = ["FormValidation"]
 
 ERROR_MESSAGES = {
-    "required": "missing_field",
+    "required": "required",
     "invalid": "invalid",
     "already_exists": "already_exists",
 }
