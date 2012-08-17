@@ -5,7 +5,7 @@ from tastypie import fields
 from tastypie.resources import ModelResource
 
 from warehouse.api.authentication import BasicAuthentication
-from warehouse.models import Download
+from warehouse.models import Download, UserAgent
 
 
 __all__ = ["DownloadResource"]
@@ -35,3 +35,12 @@ class DownloadResource(ModelResource):
 
     def dehydrate_user_agent(self, bundle):
         return bundle.obj.user_agent.agent
+
+    def save_related(self, bundle):
+        agent = bundle.data.get("user_agent", None)
+
+        if agent is not None:
+            user_agent, _ = UserAgent.objects.get_or_create(agent=agent)
+            bundle.obj.user_agent = user_agent
+
+        return super(DownloadResource, self).save_related(bundle)
