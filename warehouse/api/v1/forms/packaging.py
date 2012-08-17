@@ -18,6 +18,10 @@ __all__ = ["ProjectForm"]
 class ProjectForm(BaseForm):
     name = forms.CharField(max_length=150, error_messages=ERROR_MESSAGES)
 
+    class Meta:
+        model = Project
+        fields = ["name"]
+
     def clean_name(self):
         data = self.cleaned_data["name"]
 
