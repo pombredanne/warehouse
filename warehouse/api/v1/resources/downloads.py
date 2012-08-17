@@ -53,6 +53,19 @@ class DownloadResource(ModelResource):
 
         return bundle
 
+    def build_filters(self, filters=None):
+        if filters is None:
+            filters = {}
+
+        user_agent = filters.pop("user_agent", None)
+
+        orm_filters = super(DownloadResource, self).build_filters(filters)
+
+        if user_agent is not None:
+            orm_filters["user_agent__agent"] = user_agent[0]
+
+        return orm_filters
+
     def save_related(self, bundle):
         agent = bundle.data.get("user_agent", None)
 
