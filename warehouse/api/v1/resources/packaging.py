@@ -1,5 +1,6 @@
 import json
 
+from django.conf.urls import url
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 
@@ -10,6 +11,7 @@ from tastypie.bundle import Bundle
 from tastypie.constants import ALL, ALL_WITH_RELATIONS
 from tastypie.exceptions import NotFound
 from tastypie.resources import ModelResource as TastypieModelResource
+from tastypie.utils import trailing_slash
 
 from warehouse.api.authentication import BasicAuthentication
 from warehouse.api.fields import Base64FileField
@@ -111,7 +113,7 @@ class ProjectResource(NestedModelResource):
         Event.objects.log(user=request.user, project=obj.name, action=Event.ACTIONS.project_deleted, data=data)
 
 
-class VersionResource(NestedModelResource):
+class VersionResource(ModelResource):
 
     # Read Only Fields
     project = fields.ToOneField("warehouse.api.v1.resources.ProjectResource", "project")
@@ -140,9 +142,6 @@ class VersionResource(NestedModelResource):
         resource_name = "versions"
         detail_uri_name = "version"
 
-        parent_resource = ProjectResource
-        parent_resource_uri_prefix = "project"
-
         queryset = Version.objects.all()
         fields = [
             "created", "project", "version", "yanked",
@@ -165,6 +164,24 @@ class VersionResource(NestedModelResource):
         detail_allowed_methods = ["get", "put", "delete"]
 
         serializer = Serializer()
+
+    def base_urls(self):
+        return [
+            url(r"^(?P<resource_name>%s)%s$" % (self._meta.resource_name, trailing_slash()), self.wrap_view('dispatch_list'), name="api_dispatch_list"),
+            url(r"^(?P<resource_name>%s)/schema%s$" % (self._meta.resource_name, trailing_slash()), self.wrap_view('get_schema'), name="api_get_schema"),
+            url(r"^(?P<resource_name>%s)/set/(?P<%s_list>\w[\w/;-]*)%s$" % (self._meta.resource_name, self._meta.detail_uri_name, trailing_slash()), self.wrap_view('get_multiple'), name="api_get_multiple"),
+            url(r"^(?P<resource_name>%s)/(?P<project__normalized>[^/]+)/(?P<%s>[^/]+)%s$" % (self._meta.resource_name, self._meta.detail_uri_name, trailing_slash()), self.wrap_view('dispatch_detail'), name="api_dispatch_detail"),
+        ]
+
+    def detail_uri_kwargs(self, bundle_or_obj):
+        obj = bundle_or_obj.obj if isinstance(bundle_or_obj, Bundle) else bundle_or_obj
+
+        uri_kwargs = super(ModelResource, self).detail_uri_kwargs(bundle_or_obj)
+        uri_kwargs.update({
+            "project__normalized": obj.project.normalized,
+        })
+
+        return uri_kwargs
 
     def build_filters(self, filters=None):
         if filters is None:
