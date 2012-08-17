@@ -26,9 +26,13 @@ class CleanErrors(object):
             resp = super(CleanErrors, self).wrap_view(view)(request, *args, **kwargs)
 
             if resp.status_code == 400:
-                # @@@ Errors should not assume JSON?
-                resp.content = json.dumps({"message": resp.content})
-                resp["Content-Type"] = "application/json"
+                if request:
+                    desired_format = self.determine_format(request)
+                else:
+                    desired_format = self._meta.default_format
+
+                resp.content = self.serialize(request, {"message": resp.content}, desired_format)
+                resp["Content-Type"] = build_content_type(desired_format)
 
             return resp
 
