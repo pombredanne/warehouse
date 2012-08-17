@@ -1,6 +1,12 @@
 from django.db import models
+from django.db.models import F
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 from uuidfield import UUIDField
+
+from warehouse.models.packaging import Project, Version, VersionFile
+from warehouse.utils.track_data import track_data
 
 
 __all__ = ["UserAgent", "Download"]
@@ -13,6 +19,7 @@ class UserAgent(models.Model):
         app_label = "warehouse"
 
 
+@track_data("downloads")
 class Download(models.Model):
     id = UUIDField(auto=True, primary_key=True)
 
@@ -28,3 +35,26 @@ class Download(models.Model):
     class Meta:
         app_label = "warehouse"
         unique_together = ("date", "user_agent", "project", "version", "filename")
+
+
+@receiver(post_save, sender=Download)
+def update_downloads(sender, created, instance, **kwargs):
+    if created:
+        amount = instance.downloads
+    else:
+        amount = instance.downloads - instance.old_value("downloads")
+
+    Project.objects.filter(
+                        name=instance.project
+                    ).update(downloads=F("downloads") + amount)
+
+    Version.objects.filter(
+                        project__name=instance.project,
+                        version=instance.version
+                    ).update(downloads=F("downloads") + amount)
+
+    VersionFile.objects.filter(
+                            version__project__name=instance.project,
+                            version__version=instance.version,
+                            filename=instance.filename
+                        ).update(downloads=F("downloads") + amount)
