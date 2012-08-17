@@ -38,6 +38,10 @@ class VersionForm(BaseForm):
     obsoletes = forms.Field(required=False)
     provides = forms.Field(required=False)
 
+    class Meta:
+        model = Version
+        fields = ["project", "version", "uris", "author", "maintainer", "requires", "obsoletes", "provides"]
+
     def clean_version(self):
         data = self.cleaned_data["version"]
 
