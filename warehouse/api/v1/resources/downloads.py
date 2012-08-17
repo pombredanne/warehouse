@@ -8,7 +8,6 @@ from tastypie.resources import ModelResource
 
 from warehouse.api.authentication import BasicAuthentication
 from warehouse.models import Download, UserAgent, VersionFile
-from warehouse.utils.paths import splitext
 
 
 __all__ = ["DownloadResource"]
