@@ -280,3 +280,9 @@ def extract_project_urls(sender, **kwargs):
         if set(instance.project.uris) != uris:
             uris = sorted(uris)
             Project.objects.filter(pk=instance.project.pk).update(uris=uris)
+
+
+@receiver(post_save, sender=Version)
+def check_project_age(sender, instance, **kwargs):
+    if instance.created < instance.project.created:
+        Project.objects.filter(pk=instance.project.pk).update(created=instance.created)
