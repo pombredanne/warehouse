@@ -12,6 +12,7 @@ install_requires = [
     "django-model-utils>=1.1",
     "django-hstore",
     "django-tastypie",
+    "django-uuidfield",
     "logan",
     "south",
 

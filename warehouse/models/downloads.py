@@ -1,6 +1,6 @@
 from django.db import models
 
-from warehouse.fields.uuid import UUIDField
+from uuidfield import UUIDField
 
 
 __all__ = ["UserAgent", "Download"]
@@ -14,7 +14,7 @@ class UserAgent(models.Model):
 
 
 class Download(models.Model):
-    id = UUIDField(primary_key=True)
+    id = UUIDField(auto=True, primary_key=True)
 
     datetime = models.DateTimeField()
     user_agent = models.ForeignKey(UserAgent)
