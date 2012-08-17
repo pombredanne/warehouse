@@ -31,6 +31,7 @@ class DownloadResource(ModelResource):
             "version": ALL,
             "filename": ALL,
             "date": ALL,
+            "user_agent": ALL,
         }
 
         authentication = MultiAuthentication(BasicAuthentication())
