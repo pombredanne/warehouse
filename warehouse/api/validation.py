@@ -7,6 +7,7 @@ ERROR_MESSAGES = {
     "required": "required",
     "invalid": "invalid",
     "already_exists": "already_exists",
+    "max_length": "invalid",
 }
 
 
