@@ -14,6 +14,7 @@ from tastypie.utils import trailing_slash
 from warehouse.api.authentication import BasicAuthentication
 from warehouse.api.fields import Base64FileField
 from warehouse.api.resources import ModelResource
+from warehouse.api.serializers import Serializer
 from warehouse.models import Event
 from warehouse.models import Project, Version, VersionFile, Classifier
 from warehouse.models import Require, Provide, Obsolete
@@ -86,6 +87,8 @@ class ProjectResource(ModelResource):
         list_allowed_methods = ["get", "post"]
         detail_allowed_methods = ["get", "put", "delete"]
 
+        serializer = Serializer(formats=["json", "jsonp"])
+
     def on_obj_create(self, obj, request=None, **kwargs):
         data = {}
         for field in obj._meta.fields:
@@ -157,6 +160,8 @@ class VersionResource(ModelResource):
 
         list_allowed_methods = ["get", "post"]
         detail_allowed_methods = ["get", "put", "delete"]
+
+        serializer = Serializer(formats=["json", "jsonp"])
 
     def base_urls(self):
         return [
@@ -336,6 +341,8 @@ class RequireResource(TastypieModelResource):
         include_resource_uri = False
         queryset = Require.objects.all()
 
+        serializer = Serializer(formats=["json", "jsonp"])
+
     def dehydrate(self, bundle):
         if "project_version" in bundle.data:
             del bundle.data["project_version"]
@@ -351,6 +358,8 @@ class ProvideResource(TastypieModelResource):
         include_resource_uri = False
         queryset = Provide.objects.all()
 
+        serializer = Serializer(formats=["json", "jsonp"])
+
     def dehydrate(self, bundle):
         if "project_version" in bundle.data:
             del bundle.data["project_version"]
@@ -365,6 +374,8 @@ class ObsoleteResource(TastypieModelResource):
         fields = ["name", "version", "environment"]
         include_resource_uri = False
         queryset = Obsolete.objects.all()
+
+        serializer = Serializer(formats=["json", "jsonp"])
 
     def dehydrate(self, bundle):
         if "project_version" in bundle.data:
@@ -403,6 +414,8 @@ class FileResource(ModelResource):
 
         list_allowed_methods = ["get", "post"]
         detail_allowed_methods = ["get", "put", "delete"]
+
+        serializer = Serializer(formats=["json", "jsonp"])
 
     def build_filters(self, filters=None):
         if filters is None:
