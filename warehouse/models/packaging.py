@@ -139,7 +139,7 @@ class VersionFile(models.Model):
     comment = models.TextField(blank=True)
 
     # De normalization
-    filename = models.CharField(max_length=200)
+    filename = models.CharField(max_length=200, unique=True)
     filesize = models.PositiveIntegerField(default=0)
     downloads = models.PositiveIntegerField(default=0)
 
