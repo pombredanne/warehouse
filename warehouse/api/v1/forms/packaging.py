@@ -16,6 +16,6 @@ class ProjectForm(forms.Form):
         data = self.cleaned_data["name"]
 
         if Project.objects.filter(Q(name=data) | Q(normalized__iexact=_normalize_regex.sub("-", data).lower())).exists():
-            raise forms.ValidationError(self.error_messages.get("already_exists", "already_exists"))
+            raise forms.ValidationError("already_exists")
 
         return data
