@@ -23,7 +23,7 @@ class Download(models.Model):
     version = models.CharField(max_length=512)
     filename = models.CharField(max_length=200)
 
-    downloads = models.PositiveInteger(default=0)
+    downloads = models.PositiveIntegerField(default=0)
 
     class Meta:
         app_label = "warehouse"
