@@ -7,6 +7,7 @@ from tastypie import fields
 from tastypie.resources import ModelResource
 
 from warehouse.api.authentication import BasicAuthentication
+from warehouse.api.serializers import Serializer
 from warehouse.models import Download, UserAgent, VersionFile
 
 
@@ -40,6 +41,8 @@ class DownloadResource(ModelResource):
         detail_allowed_methods = ["get"]
 
         cache_control = {"public": True, "max_age": 60, "s_maxage": 60}
+
+        serializer = Serializer(formats=["json", "jsonp"])
 
     def dehydrate_user_agent(self, bundle):
         return bundle.obj.user_agent.agent
