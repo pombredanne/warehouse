@@ -4,7 +4,7 @@ import urllib
 from django.conf.urls import url
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
-from django.utils.cache import patch_cache_control
+from django.utils.cache import patch_cache_control, patch_vary_headers
 from django.views.decorators.csrf import csrf_exempt
 
 from tastypie.exceptions import NotFound, ImmediateHttpResponse
@@ -75,6 +75,8 @@ class ClientCache(object):
         if request.method == "GET" and response.status_code == 200 and hasattr(self._meta, "cache_control"):
             cache_control = self._meta.cache_control.copy()
             patch_cache_control(response, **cache_control)
+
+        patch_vary_headers(response, ["Accept"])
 
         return response
 
