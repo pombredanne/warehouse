@@ -1,5 +1,3 @@
-import json
-
 from django.conf.urls import url
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
