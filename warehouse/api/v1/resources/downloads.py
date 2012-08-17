@@ -39,6 +39,8 @@ class DownloadResource(ModelResource):
         list_allowed_methods = ["get", "post"]
         detail_allowed_methods = ["get"]
 
+        cache_control = {"public": True, "max_age": 60, "s_maxage": 60}
+
     def dehydrate_user_agent(self, bundle):
         return bundle.obj.user_agent.agent
 

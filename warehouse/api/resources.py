@@ -4,6 +4,7 @@ import urllib
 from django.conf.urls import url
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
+from django.utils.cache import patch_cache_control
 from django.views.decorators.csrf import csrf_exempt
 
 from tastypie.exceptions import NotFound, ImmediateHttpResponse
@@ -67,7 +68,18 @@ class CleanErrors(object):
         return True
 
 
-class ModelResource(CleanErrors, TastypieModelResource):
+class ClientCache(object):
+    def create_response(self, request, data, **response_kwargs):
+        response = super(ClientCache, self).create_response(request, data, **response_kwargs)
+
+        if request.method == "GET" and response.status_code == 200 and hasattr(self._meta, "cache_control"):
+            cache_control = self._meta.cache_control.copy()
+            patch_cache_control(response, **cache_control)
+
+        return response
+
+
+class ModelResource(CleanErrors, ClientCache, TastypieModelResource):
 
     def base_urls(self):
         """
