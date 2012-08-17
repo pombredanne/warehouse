@@ -234,7 +234,7 @@ class VersionResource(ModelResource):
     def _fix_tastypie_m2m_bug(self, bundle, key, field):
         data = []
 
-        for x in bundle.data[key]:
+        for x in bundle.data.get(key, []):
             if not isinstance(x, Bundle):
                 _data = x.copy()
                 _data.update({
