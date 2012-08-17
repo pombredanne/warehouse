@@ -1,6 +1,6 @@
 from django.conf.urls import patterns, include, url
 
-from tastypie.api import Api
+from warehouse.api import Api
 
 import warehouse.api.v1.resources
 
