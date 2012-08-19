@@ -6,7 +6,7 @@ import urlparse
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from django.utils.encoding import smart_str
+from django.utils.encoding import smart_str, smart_unicode
 
 from django_hstore import hstore
 from model_utils import Choices
@@ -261,7 +261,7 @@ def extract_project_urls(sender, **kwargs):
                 for link in html.xpath("//a/@href"):
                     try:
                         if any(urlparse.urlparse(link)[:5]):
-                            uris.add(link)
+                            uris.add(smart_unicode(link))
                     except ValueError:
                         pass
         except Exception:
