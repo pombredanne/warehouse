@@ -26,8 +26,12 @@ class ProjectForm(BaseForm):
     def clean_name(self):
         data = self.cleaned_data["name"]
 
-        if Project.objects.filter(Q(name=data) | Q(normalized__iexact=_normalize_regex.sub("-", data).lower())).exists():
-            raise forms.ValidationError("already_exists")
+        if self.instance:
+            if self.instance.name != data:
+                raise forms.ValidationError("invalid")
+        else:
+            if Project.objects.filter(Q(name=data) | Q(normalized__iexact=_normalize_regex.sub("-", data).lower())).exists():
+                raise forms.ValidationError("already_exists")
 
         return data
 
@@ -136,8 +140,14 @@ class VersionForm(BaseForm):
     def clean(self):
         cleaned_data = super(VersionForm, self).clean()
 
-        if Version.objects.filter(project=cleaned_data.get("project"), version=cleaned_data.get("version")).exists():
-            raise forms.ValidationError("already_exists")
+        if self.instance:
+            if self.instance.project.name != cleaned_data.get("project"):
+                raise forms.ValidationError("invalid")
+            if self.instance.version != cleaned_data.get("version"):
+                raise forms.ValidationError("invalid")
+        else:
+            if Version.objects.filter(project=cleaned_data.get("project"), version=cleaned_data.get("version")).exists():
+                raise forms.ValidationError("already_exists")
 
         return cleaned_data
 
@@ -181,7 +191,11 @@ class VersionFileForm(BaseForm):
 
         filename = os.path.basename(f.file.name)
 
-        if VersionFile.objects.filter(filename=filename).exists():
-            raise forms.ValidationError("already_exists")
+        if self.instance:
+            if self.instance.filename != filename:
+                raise forms.ValidationError("invalid")
+        else:
+            if VersionFile.objects.filter(filename=filename).exists():
+                raise forms.ValidationError("already_exists")
 
         return f
