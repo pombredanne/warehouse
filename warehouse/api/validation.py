@@ -12,8 +12,23 @@ ERROR_MESSAGES = {
 
 class FormValidation(TastypieFormValidation):
 
-    def is_valid(self, *args, **kwargs):
-        _errors = super(FormValidation, self).is_valid(*args, **kwargs)
+    def is_valid(self, bundle, request=None):
+        """
+        Performs a check on ``bundle.data``to ensure it is valid.
+
+        If the form is valid, an empty list (all valid) will be returned. If
+        not, a list of errors will be returned.
+        """
+        form_kwargs = self.form_args(bundle)
+        form_kwargs.update({"user": request.user if request is not None else bundle.request.user})
+        form = self.form_class(**form_kwargs)
+
+        if form.is_valid():
+            return {}
+
+        # The data is invalid. Let's collect all the error messages & return
+        # them.
+        _errors = form.errors
 
         errors = []
 
