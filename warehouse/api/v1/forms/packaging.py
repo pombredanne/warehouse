@@ -26,7 +26,7 @@ class ProjectForm(BaseForm):
     def clean_name(self):
         data = self.cleaned_data["name"]
 
-        if self.instance:
+        if self.instance.pk:
             if self.instance.name != data:
                 raise forms.ValidationError("invalid")
         else:
@@ -140,7 +140,7 @@ class VersionForm(BaseForm):
     def clean(self):
         cleaned_data = super(VersionForm, self).clean()
 
-        if self.instance:
+        if self.instance.pk:
             if self.instance.project != cleaned_data.get("project"):
                 raise forms.ValidationError("invalid")
             if self.instance.version != cleaned_data.get("version"):
@@ -191,16 +191,7 @@ class VersionFileForm(BaseForm):
 
         filename = os.path.basename(f.file.name)
 
-        print "1", self.instance, "2", filename, "3", self.instance.filename
-        print "4", bool(self.instance)
-        print "5", f
-        print "6", f.file
-        print "7", f.file.name
-        print "8", type(self.instance)
-        print "9", dir(self.instance)
-        print "10", self.instance.pk
-
-        if self.instance:
+        if self.instance.pk:
             if self.instance.filename != filename:
                 raise forms.ValidationError("invalid")
         else:
