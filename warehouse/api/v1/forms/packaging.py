@@ -192,6 +192,7 @@ class VersionFileForm(BaseForm):
         filename = os.path.basename(f.file.name)
 
         print self.instance, filename, self.instance.filename
+        print bool(self.instance)
 
         if self.instance:
             if self.instance.filename != filename:
