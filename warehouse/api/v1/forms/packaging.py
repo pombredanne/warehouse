@@ -164,6 +164,8 @@ class RequireForm(forms.Form):
             elif data.startswith(("<", ">")):
                 version = data[1:]
 
+            version = version.strip()
+
             suggested = verlib.suggest_normalized_version(version)
 
             if suggested is None or suggested != version:
