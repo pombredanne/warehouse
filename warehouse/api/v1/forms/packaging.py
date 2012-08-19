@@ -141,7 +141,7 @@ class VersionForm(BaseForm):
         cleaned_data = super(VersionForm, self).clean()
 
         if self.instance:
-            if self.instance.project.name != cleaned_data.get("project"):
+            if self.instance.project != cleaned_data.get("project"):
                 raise forms.ValidationError("invalid")
             if self.instance.version != cleaned_data.get("version"):
                 raise forms.ValidationError("invalid")
