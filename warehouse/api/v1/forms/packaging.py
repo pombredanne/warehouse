@@ -192,7 +192,7 @@ class VersionFileForm(BaseForm):
         filename = os.path.basename(f.file.name)
 
         if self.instance.file:
-            if self.instance.filename != filename:
+            if os.path.basename(self.instance.file.name) != filename:
                 raise forms.ValidationError("invalid")
         else:
             if VersionFile.objects.filter(filename=filename).exists():
