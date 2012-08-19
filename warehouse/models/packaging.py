@@ -6,7 +6,7 @@ import urlparse
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from django.utils.encoding import smart_str, smart_unicode
+from django.utils.encoding import smart_str, smart_unicode, iri_to_uri
 
 from django_hstore import hstore
 from model_utils import Choices
@@ -269,7 +269,7 @@ def extract_project_urls(sender, **kwargs):
             pass
 
         if set(instance.project.uris) != uris:
-            uris = sorted(uris)
+            uris = sorted([iri_to_uri(x) for x in uris])
             Project.objects.filter(pk=instance.project.pk).update(uris=uris)
 
 
