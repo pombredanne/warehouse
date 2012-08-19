@@ -130,8 +130,6 @@ class VersionResource(ModelResource):
     requires_external = fields.ListField(attribute="requires_external")
     keywords = fields.ListField(attribute="keywords")
 
-    author = fields.DictField()
-    maintainer = fields.DictField()
     classifiers = fields.ListField()
 
     # Related fields
@@ -149,8 +147,8 @@ class VersionResource(ModelResource):
         fields = [
             "created", "project", "version", "yanked",
             "summary", "description", "license", "uris",
-            "author", "maintainer", "keywords",
-            "platforms", "supported_platforms",
+            "author", "author_email", "maintainer", "maintainer_email",
+            "keywords", "platforms", "supported_platforms",
             "requires_python", "requires_external",
             "requires", "provides", "obsoletes", "downloads",
         ]
@@ -198,40 +196,12 @@ class VersionResource(ModelResource):
 
         return orm_filters
 
-    def dehydrate_author(self, bundle):
-        person = {}
-
-        if bundle.obj.author:
-            person.update({"name": bundle.obj.author})
-
-        if bundle.obj.author_email:
-            person.update({"email": bundle.obj.author_email})
-
-        return person
-
-    def dehydrate_maintainer(self, bundle):
-        person = {}
-
-        if bundle.obj.maintainer:
-            person.update({"name": bundle.obj.maintainer})
-
-        if bundle.obj.maintainer_email:
-            person.update({"email": bundle.obj.maintainer_email})
-
-        return person
-
     def dehydrate_classifiers(self, bundle):
         return [c.trove for c in bundle.obj.classifiers.all().order_by("trove")]
 
     def hydrate(self, bundle):
         if bundle.obj.yanked:
             bundle.obj.yanked = False
-
-        bundle.obj.author = bundle.data.get("author", {}).get("name", "")
-        bundle.obj.author_email = bundle.data.get("author", {}).get("email", "")
-
-        bundle.obj.maintainer = bundle.data.get("maintainer", {}).get("name", "")
-        bundle.obj.maintainer_email = bundle.data.get("maintainer", {}).get("email", "")
 
         return bundle
 

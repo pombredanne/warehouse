@@ -40,8 +40,6 @@ class VersionForm(BaseForm):
     project = RelatedResourceField("warehouse.api.v1.resources.packaging.ProjectResource", error_messages=ERROR_MESSAGES)
     version = forms.CharField(error_messages=ERROR_MESSAGES)
     uris = forms.Field(error_messages=ERROR_MESSAGES, required=False)
-    author = forms.Field(error_messages=ERROR_MESSAGES, required=False)
-    maintainer = forms.Field(error_messages=ERROR_MESSAGES, required=False)
 
     requires = forms.Field(required=False)
     obsoletes = forms.Field(required=False)
@@ -49,7 +47,7 @@ class VersionForm(BaseForm):
 
     class Meta:
         model = Version
-        fields = ["project", "version", "uris", "author", "maintainer", "requires", "obsoletes", "provides"]
+        fields = ["project", "version", "uris", "author", "author_email", "maintainer", "maintainer_email", "requires", "obsoletes", "provides"]
 
     def clean_version(self):
         data = self.cleaned_data["version"]
