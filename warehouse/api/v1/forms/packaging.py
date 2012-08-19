@@ -8,6 +8,7 @@ from django.db.models import Q
 
 from warehouse.api.v1.forms.base import BaseForm, RelatedResourceField
 from warehouse.api.validation import ERROR_MESSAGES
+from warehouse.conf import settings
 from warehouse.models import Project, Version, VersionFile
 from warehouse.models.packaging import _normalize_regex
 
@@ -52,7 +53,8 @@ class VersionForm(BaseForm):
         suggested = verlib.suggest_normalized_version(data)
 
         if suggested is None or suggested != data:
-            raise forms.ValidationError("invalid")
+            if not self.user.username in settings.WAREHOUSE_SYNC_USERS:
+                raise forms.ValidationError("invalid")
 
         return data
 
