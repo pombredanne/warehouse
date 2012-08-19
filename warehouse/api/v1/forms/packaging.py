@@ -196,6 +196,8 @@ class VersionFileForm(BaseForm):
         print "5", f
         print "6", f.file
         print "7", f.file.name
+        print "8", type(self.instance)
+        print "9", dir(self.instance)
 
         if self.instance:
             if self.instance.filename != filename:
