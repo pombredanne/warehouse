@@ -159,9 +159,9 @@ class RequireForm(forms.Form):
         data = self.cleaned_data["version"]
 
         if data:
-            if data.startswith(["<=", ">=", "==", "!="]):
+            if data.startswith(("<=", ">=", "==", "!=")):
                 version = data[2:]
-            elif data.startswith(["<", ">"]):
+            elif data.startswith(("<", ">")):
                 version = data[1:]
 
             suggested = verlib.suggest_normalized_version(version)
