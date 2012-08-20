@@ -1,5 +1,7 @@
 import re
 
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
+
 from tastypie import fields
 from tastypie.authentication import MultiAuthentication
 from tastypie.authorization import DjangoAuthorization
@@ -110,7 +112,7 @@ class DownloadResource(ModelResource):
                 bundle = self.full_dehydrate(bundle)
                 bundle = self.alter_detail_data_to_serialize(request, bundle)
                 self.update_in_place(request, bundle, data)
-            except (self._meta.queryset.model.DoesNotExist, self._meta.queryset.model.MultipleObjectsReturned):
+            except (ObjectDoesNotExist, MultipleObjectsReturned):
                 # The object referenced by resource_uri doesn't exist,
                 # so this is a create-by-PUT equivalent.
                 data = self.alter_deserialized_detail_data(request, data)
