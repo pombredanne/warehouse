@@ -16,7 +16,7 @@ install_requires = [
     "logan",
     "south",
 
-    "python_dateutil >= 1.5, < 2.0",
+    "python_dateutil>=2.1",
     "distutils2",
     "docutils",
     "psycopg2",
