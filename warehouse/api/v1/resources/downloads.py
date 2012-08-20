@@ -1,10 +1,13 @@
 import re
 
+from tastypie import fields
 from tastypie.authentication import MultiAuthentication
 from tastypie.authorization import DjangoAuthorization
 from tastypie.constants import ALL
-from tastypie import fields
-from tastypie.resources import ModelResource
+from tastypie.exceptions import BadRequest, ImmediateHttpResponse
+from tastypie import http
+from tastypie.resources import ModelResource, convert_post_to_patch
+from tastypie.utils import dict_strip_unicode_keys
 
 from warehouse.api.authentication import BasicAuthentication
 from warehouse.api.serializers import Serializer
@@ -81,3 +84,37 @@ class DownloadResource(ModelResource):
             bundle.obj.user_agent = user_agent
 
         return super(DownloadResource, self).save_related(bundle)
+
+    def patch_list(self, request, **kwargs):
+        request = convert_post_to_patch(request)
+        deserialized = self.deserialize(request, request.raw_post_data, format=request.META.get("CONTENT_TYPE", "application/json"))
+
+        if "objects" not in deserialized:
+            raise BadRequest("Invalid data sent.")
+
+        if len(deserialized["objects"]) and "put" not in self._meta.detail_allowed_methods:
+            raise ImmediateHttpResponse(response=http.HttpMethodNotAllowed())
+
+        for data in deserialized["objects"]:
+            # Assume the object exists until told otherwise
+            try:
+                lookup_kwargs = {}
+                for k, v in data.items():
+                    if k in ["project", "filename", "date", "user_agent"]:
+                        lookup_kwargs[k] = v
+
+                obj = self.obj_get(request=request, **lookup_kwargs)
+
+                # The object does exist, so this is an update-in-place.
+                bundle = self.build_bundle(obj=obj, request=request)
+                bundle = self.full_dehydrate(bundle)
+                bundle = self.alter_detail_data_to_serialize(request, bundle)
+                self.update_in_place(request, bundle, data)
+            except (self._meta.queryset.model.DoesNotExist, self._meta.queryset.model.MultipleObjectsReturned):
+                # The object referenced by resource_uri doesn't exist,
+                # so this is a create-by-PUT equivalent.
+                data = self.alter_deserialized_detail_data(request, data)
+                bundle = self.build_bundle(data=dict_strip_unicode_keys(data), request=request)
+                self.obj_create(bundle, request=request)
+
+        return http.HttpAccepted()
