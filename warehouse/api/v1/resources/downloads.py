@@ -40,7 +40,7 @@ class DownloadResource(ModelResource):
         authentication = MultiAuthentication(BasicAuthentication())
         authorization = DjangoAuthorization()
 
-        list_allowed_methods = ["get", "post"]
+        list_allowed_methods = ["get", "post", "patch"]
         detail_allowed_methods = ["get", "put"]
 
         cache_control = {"public": True, "max_age": 60, "s_maxage": 60}
