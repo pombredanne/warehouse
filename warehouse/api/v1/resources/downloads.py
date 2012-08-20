@@ -105,6 +105,8 @@ class DownloadResource(ModelResource):
                     if k in ["project", "filename", "date", "user_agent"]:
                         lookup_kwargs[k] = v
 
+                print lookup_kwargs
+
                 obj = self.obj_get(request=request, **lookup_kwargs)
 
                 # The object does exist, so this is an update-in-place.
