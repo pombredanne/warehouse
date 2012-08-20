@@ -20,6 +20,8 @@ install_requires = [
     "distutils2",
     "docutils",
     "psycopg2",
+    "redis",
+    "rq",
     "lxml",
 ]
 
