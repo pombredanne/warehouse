@@ -102,8 +102,13 @@ class DownloadResource(ModelResource):
             try:
                 lookup_kwargs = {}
                 for k, v in data.items():
-                    if k in ["project", "filename", "date", "user_agent"]:
+                    if k in ["project", "filename", "user_agent"]:
                         lookup_kwargs[k] = v
+                    elif k in ["date"]:
+                        year, month, day = [int(x) for x in v.split("-")]
+                        lookup_kwargs["date__year"] = year
+                        lookup_kwargs["date__month"] = month
+                        lookup_kwargs["date__day"] = day
 
                 print lookup_kwargs
 
