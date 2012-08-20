@@ -38,7 +38,7 @@ class DownloadResource(ModelResource):
         authorization = DjangoAuthorization()
 
         list_allowed_methods = ["get", "post"]
-        detail_allowed_methods = ["get"]
+        detail_allowed_methods = ["get", "put"]
 
         cache_control = {"public": True, "max_age": 60, "s_maxage": 60}
 
