@@ -3,6 +3,8 @@ from optparse import make_option
 import redis
 import rq
 
+from logbook.compat import LoggingHandler
+
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
@@ -66,6 +68,7 @@ class Command(BaseCommand):
 
             conn = redis.Redis(host=host, port=port, db=db, password=password)
 
-        with rq.Connection(conn):
-            worker = rq.Worker([rq.Queue(q) for q in args], name=options.get("name", getattr(settings, "RQ_NAME", None)))
-            worker.work(burst=options.get("burst"))
+        with LoggingHandler():
+            with rq.Connection(conn):
+                worker = rq.Worker([rq.Queue(q) for q in args], name=options.get("name", getattr(settings, "RQ_NAME", None)))
+                worker.work(burst=options.get("burst"))
