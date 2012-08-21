@@ -34,23 +34,37 @@ class Command(LabelCommand):
             dest="password",
             help="The password for Redis"
         ),
+        make_option("--queue", "-q",
+            action="store",
+            dest="queue",
+            default="low",
+            help="RQ queue to send the job to"
+        ),
+        make_option("--url",
+            action="store",
+            dest="url",
+            help="specify an url to a Redis instance"
+        )
     )
 
-    def handle_label(label, **options):
-        host = options.get("host", None) or getattr(settings, "RQ_REDIS_HOST", "localhost")
-        port = options.get("port", None) or getattr(settings, "RQ_REDIS_PORT", 6379)
-        password = options.get("password", None) or getattr(settings, "RQ_REDIS_PASSWORD", None)
-        db = options.get("db", None) or getattr(settings, "RQ_REDIS_DB", 0)
+    def handle_label(self, label, **options):
+        if options.get("url", None):
+            conn = redis.from_url(options["url"])
+        else:
+            host = options.get("host", None) or getattr(settings, "RQ_REDIS_HOST", "localhost")
+            port = options.get("port", None) or getattr(settings, "RQ_REDIS_PORT", 6379)
+            password = options.get("password", None) or getattr(settings, "RQ_REDIS_PASSWORD", None)
+            db = options.get("db", None) or getattr(settings, "RQ_REDIS_DB", 0)
 
-        conn = redis.Redis(host=host, port=port, db=db, password=password)
+            conn = redis.Redis(host=host, port=port, db=db, password=password)
 
         if not label in settings.WAREHOUSE_DOWNLOAD_SOURCES:
             raise CommandError("No download source identified by the %s label" % label)
 
-        module_name, func_name = settings.WAREHOUSE_DOWNLOAD_SOURCES[label].rsplit(".", 1)
+        module_name = settings.WAREHOUSE_DOWNLOAD_SOURCES[label]
         mod = importlib.import_module(module_name)
-        func = getattr(mod, func_name)
+        func = getattr(mod, "downloads")
 
         with rq.Connection(conn):
-            q = rq.Queue("downloads")
+            q = rq.Queue(options["queue"])
             q.enqueue_call(func=func, args=(label,), timeout=3600)
