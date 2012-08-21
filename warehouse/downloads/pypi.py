@@ -54,9 +54,7 @@ def downloads(label):
         data = bz2.decompress(resp.content)
         csv_r = csv.DictReader(io.BytesIO(data), ["project", "filename", "user_agent", "downloads"])
 
-        for i, row in enumerate(csv_r):
-            print i
-
+        for row in csv_r:
             row["date"] = date
             row["downloads"] = int(row["downloads"])
 
@@ -79,11 +77,7 @@ def downloads(label):
                 dload.downloads = row["downloads"]
                 dload.save()
 
-        break
-
         if "Last-Modified" in resp.headers:
             r.set(last_modified_key, resp.headers["Last-Modified"])
         else:
             r.delete(last_modified_key)
-
-        break
