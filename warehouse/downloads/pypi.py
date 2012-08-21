@@ -81,3 +81,5 @@ def downloads(label):
             r.set(last_modified_key, resp.headers["Last-Modified"])
         else:
             r.delete(last_modified_key)
+
+        break
