@@ -49,7 +49,8 @@ class Command(LabelCommand):
 
     def handle_label(self, label, **options):
         if options.get("url", None):
-            conn = redis.from_url(options["url"])
+            db = options.get("db", None) or getattr(settings, "RQ_REDIS_DB", 0)
+            conn = redis.from_url(options["url"], db=db)
         else:
             host = options.get("host", None) or getattr(settings, "RQ_REDIS_HOST", "localhost")
             port = options.get("port", None) or getattr(settings, "RQ_REDIS_PORT", 6379)
