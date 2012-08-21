@@ -15,3 +15,5 @@ class WarehouseAppConf(AppConf):
     SYNC_USERS = []
 
     API_HISTORY = True
+
+    DOWNLOAD_SOURCES = {}
