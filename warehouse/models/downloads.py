@@ -23,6 +23,8 @@ class UserAgent(models.Model):
 class Download(models.Model):
     id = UUIDField(auto=True, primary_key=True)
 
+    label = models.CharField(max_length=25)
+
     date = models.DateField()
     user_agent = models.ForeignKey(UserAgent)
 
@@ -34,7 +36,7 @@ class Download(models.Model):
 
     class Meta:
         app_label = "warehouse"
-        unique_together = ("date", "user_agent", "project", "version", "filename")
+        unique_together = ("label", "date", "project", "version", "filename", "user_agent")
 
 
 @receiver(post_save, sender=Download)
