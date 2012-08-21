@@ -8,7 +8,6 @@ v1_api = Api(api_name="v1")
 v1_api.register(warehouse.api.v1.resources.ProjectResource())
 v1_api.register(warehouse.api.v1.resources.VersionResource())
 v1_api.register(warehouse.api.v1.resources.FileResource())
-v1_api.register(warehouse.api.v1.resources.DownloadResource())
 
 urlpatterns = patterns("",
     url(r"^simple/", include("warehouse.api.simple.urls")),
