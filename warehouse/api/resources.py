@@ -4,6 +4,7 @@ import urllib
 
 from django.conf.urls import url
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.signals import got_request_exception
 from django.db import transaction
 from django.utils.cache import patch_cache_control, patch_vary_headers
 from django.views.decorators.csrf import csrf_exempt
@@ -113,7 +114,14 @@ class Conditional(object):
         return wrapper
 
 
-class ModelResource(CleanErrors, ClientCache, Conditional, TastypieModelResource):
+class FixExceptionHandling(object):
+
+    def _handle_500(self, request, exception):
+        got_request_exception.send(sender=self.__class__, request=request)
+        return super(FixExceptionHandling, self)._handle_500(request, exception)
+
+
+class ModelResource(CleanErrors, ClientCache, Conditional, FixExceptionHandling, TastypieModelResource):
 
     def base_urls(self):
         """
