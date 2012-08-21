@@ -3,8 +3,9 @@ from optparse import make_option
 import redis
 import rq
 
-from django.conf import settings
 from django.core.management.base import BaseCommand
+
+from warehouse.conf import settings
 
 
 class Command(BaseCommand):
