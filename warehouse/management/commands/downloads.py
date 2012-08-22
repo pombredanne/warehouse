@@ -41,4 +41,4 @@ class Command(LabelCommand):
         func = getattr(mod, "downloads")
 
         q = rq.Queue(options["queue"], connection=conn)
-        q.enqueue_call(func=func, args=(label,), timeout=3600)
+        q.enqueue_call(func=func, args=(label,), timeout=5400)
