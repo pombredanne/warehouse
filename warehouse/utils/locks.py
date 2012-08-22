@@ -28,7 +28,7 @@ class Lock(object):
         self.timeout = timeout
         self.expires = expires
         self.using = using
-        self.datastore = redis.StrictRedis(dict([(k.lower(), v) for k, v in settings.REDIS[self.using].items()]))
+        self.datastore = redis.StrictRedis(**dict([(k.lower(), v) for k, v in settings.REDIS[self.using].items()]))
         self._expiration = None
 
     def __enter__(self):
