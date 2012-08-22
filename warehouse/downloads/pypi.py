@@ -11,6 +11,7 @@ import requests
 
 from warehouse.conf import settings
 from warehouse.models import Download, UserAgent, VersionFile
+from warehouse.utils import locks
 
 
 logger = logging.getLogger(__name__)
@@ -54,37 +55,41 @@ def downloads(label):
 
         resp.raise_for_status()
 
-        logger.info("Computing download counts from %s", statfile)
+        try:
+            with locks.Lock("pypi:locks:%s" % statfile, using="pypi"):
+                logger.info("Computing download counts from %s", statfile)
 
-        data = bz2.decompress(resp.content)
-        csv_r = csv.DictReader(io.BytesIO(data), ["project", "filename", "user_agent", "downloads"])
+                data = bz2.decompress(resp.content)
+                csv_r = csv.DictReader(io.BytesIO(data), ["project", "filename", "user_agent", "downloads"])
 
-        for row in csv_r:
-            row["date"] = date
-            row["downloads"] = int(row["downloads"])
+                for row in csv_r:
+                    row["date"] = date
+                    row["downloads"] = int(row["downloads"])
 
-            ua, _ = UserAgent.objects.get_or_create(agent=row["user_agent"])
+                    ua, _ = UserAgent.objects.get_or_create(agent=row["user_agent"])
 
-            try:
-                f = VersionFile.objects.filter(filename=row["filename"]).select_related("version")[:1].get()
-            except VersionFile.DoesNotExist:
-                pass
-            else:
-                row["version"] = f.version.version
+                    try:
+                        f = VersionFile.objects.filter(filename=row["filename"]).select_related("version")[:1].get()
+                    except VersionFile.DoesNotExist:
+                        pass
+                    else:
+                        row["version"] = f.version.version
 
-            kwargs = row.copy()
-            kwargs.update({"label": label, "user_agent": ua, "defaults": {"downloads": row["downloads"]}})
-            del kwargs["downloads"]
+                    kwargs = row.copy()
+                    kwargs.update({"label": label, "user_agent": ua, "defaults": {"downloads": row["downloads"]}})
+                    del kwargs["downloads"]
 
-            dload, created = Download.objects.get_or_create(**kwargs)
+                    dload, created = Download.objects.get_or_create(**kwargs)
 
-            if not created:
-                dload.downloads = row["downloads"]
-                dload.save()
+                    if not created:
+                        dload.downloads = row["downloads"]
+                        dload.save()
 
-        if "Last-Modified" in resp.headers:
-            r.set(last_modified_key, resp.headers["Last-Modified"])
-        else:
-            r.delete(last_modified_key)
+                if "Last-Modified" in resp.headers:
+                    r.set(last_modified_key, resp.headers["Last-Modified"])
+                else:
+                    r.delete(last_modified_key)
+        except locks.LockTimeout:
+            continue
 
         break
