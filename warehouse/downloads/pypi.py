@@ -35,7 +35,9 @@ def downloads(label):
     html = lxml.html.fromstring(resp.content)
     urls = [(urlparse.urljoin(stats_url, x), x) for x in html.xpath("//a/@href")]
 
-    for url, statfile in urls:
+    total = len(urls)
+
+    for i, (url, statfile) in enumerate(urls):
         if not url.endswith(".bz2"):
             continue
 
@@ -50,14 +52,14 @@ def downloads(label):
         resp = session.get(url, headers=headers, prefetch=True)
 
         if resp.status_code == 304:
-            logger.info("Skipping %s, it has not been modified since %s", statfile, last_modified)
+            logger.debug("Skipping %s, it has not been modified since %s", statfile, last_modified)
             continue
 
         resp.raise_for_status()
 
         try:
             with locks.Lock("pypi:locks:%s" % statfile, expires=11100, using="pypi"):
-                logger.info("Computing download counts from %s", statfile)
+                logger.info("Computing download counts from %s (%s/%s)", statfile, i + 1, total)
 
                 data = bz2.decompress(resp.content)
                 csv_r = csv.DictReader(io.BytesIO(data), ["project", "filename", "user_agent", "downloads"])
