@@ -20,7 +20,12 @@ def downloads(label):
     stats_url = getattr(settings, "PYPI_STATS_URL", "https://pypi.python.org/stats/days/")
 
     session = requests.session(verify=getattr(settings, "PYPI_SSL_CERT", os.path.join(os.path.dirname(__file__), "pypi.crt")))
-    r = redis.StrictRedis(host=getattr(settings, "REDIS_HOST", "localhost"), port=getattr(settings, "REDIS_PORT", 6379), password=getattr(settings, "REDIS_PASSWORD", None), db=getattr(settings, "PYPI_REDIS_DATABASE", 0))
+
+    redis_db = "pypi" if "pypi" in settings.REDIS else "default"
+
+    config = settings.REDIS[redis_db]
+    kwargs = dict([(k.lower(), v) for k, v in config.items()])
+    r = redis.StrictRedis(**kwargs)
 
     # Get a listing of all the Files
     resp = session.get(stats_url)
