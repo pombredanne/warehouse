@@ -14,25 +14,11 @@ class Command(LabelCommand):
     help = "Spawns download counting jobs"
 
     option_list = LabelCommand.option_list + (
-        make_option("--host", "-H",
+        make_option("--redis", "-r",
             action="store",
-            dest="host",
-            help="The Redis hostname (default: localhost)"
-        ),
-        make_option("--port", "-p",
-            action="store",
-            dest="port",
-            help="The Redis port number (default: 6379)"
-        ),
-        make_option("--db", "-d",
-            action="store",
-            dest="db",
-            help="The Redis database (default: 0)"
-        ),
-        make_option("--password", "-P",
-            action="store",
-            dest="password",
-            help="The password for Redis"
+            dest="redis",
+            default="default",
+            help="Which REDIS key to use (default: default)"
         ),
         make_option("--queue", "-q",
             action="store",
@@ -40,27 +26,15 @@ class Command(LabelCommand):
             default="low",
             help="RQ queue to send the job to"
         ),
-        make_option("--url",
-            action="store",
-            dest="url",
-            help="specify an url to a Redis instance"
-        )
     )
 
     def handle_label(self, label, **options):
-        if options.get("url", None):
-            db = options.get("db", None) or getattr(settings, "RQ_REDIS_DB", 0)
-            conn = redis.from_url(options["url"], db=db)
-        else:
-            host = options.get("host", None) or getattr(settings, "RQ_REDIS_HOST", "localhost")
-            port = options.get("port", None) or getattr(settings, "RQ_REDIS_PORT", 6379)
-            password = options.get("password", None) or getattr(settings, "RQ_REDIS_PASSWORD", None)
-            db = options.get("db", None) or getattr(settings, "RQ_REDIS_DB", 0)
-
-            conn = redis.Redis(host=host, port=port, db=db, password=password)
-
         if not label in settings.WAREHOUSE_DOWNLOAD_SOURCES:
             raise CommandError("No download source identified by the %s label" % label)
+
+        config = settings.REDIS[options["redis"]]
+        kwargs = dict([(k.lower(), v) for k, v in config.items()])
+        conn = redis.Redis(**kwargs)
 
         module_name = settings.WAREHOUSE_DOWNLOAD_SOURCES[label]
         mod = importlib.import_module(module_name)
