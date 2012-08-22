@@ -56,7 +56,7 @@ def downloads(label):
         resp.raise_for_status()
 
         try:
-            with locks.Lock("pypi:locks:%s" % statfile, using="pypi"):
+            with locks.Lock("pypi:locks:%s" % statfile, expires=11100, using="pypi"):
                 logger.info("Computing download counts from %s", statfile)
 
                 data = bz2.decompress(resp.content)
