@@ -390,6 +390,7 @@ class FileResource(ModelResource):
 
         filtering = {
             "version": ALL_WITH_RELATIONS,
+            "filename": ALL,
         }
 
         authentication = MultiAuthentication(BasicAuthentication())
