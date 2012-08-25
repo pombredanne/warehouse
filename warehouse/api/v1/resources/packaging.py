@@ -85,8 +85,8 @@ class ProjectResource(ModelResource):
         authentication = MultiAuthentication(BasicAuthentication())
         authorization = DjangoAuthorization()
 
-        list_allowed_methods = ["get", "post"]
-        detail_allowed_methods = ["get", "put", "delete"]
+        list_allowed_methods = ["get", "post", "patch"]
+        detail_allowed_methods = ["get", "put", "delete", "patch"]
 
         cache_control = {"public": True, "max_age": 60, "s_maxage": 60}
 
@@ -161,8 +161,8 @@ class VersionResource(ModelResource):
         authentication = MultiAuthentication(BasicAuthentication())
         authorization = DjangoAuthorization()
 
-        list_allowed_methods = ["get", "post"]
-        detail_allowed_methods = ["get", "put", "delete"]
+        list_allowed_methods = ["get", "post", "patch"]
+        detail_allowed_methods = ["get", "put", "delete", "patch"]
 
         cache_control = {"public": True, "max_age": 60, "s_maxage": 60}
 
@@ -395,8 +395,8 @@ class FileResource(ModelResource):
         authentication = MultiAuthentication(BasicAuthentication())
         authorization = DjangoAuthorization()
 
-        list_allowed_methods = ["get", "post"]
-        detail_allowed_methods = ["get", "put", "delete"]
+        list_allowed_methods = ["get", "post", "patch"]
+        detail_allowed_methods = ["get", "put", "delete", "patch"]
 
         cache_control = {"public": True, "max_age": 60, "s_maxage": 60}
 
