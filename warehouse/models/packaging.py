@@ -277,5 +277,5 @@ def extract_project_urls(sender, **kwargs):
 def check_project_age(sender, instance, **kwargs):
     if instance.created < instance.version.created:
         Version.objects.filter(pk=instance.version.pk).update(created=instance.created)
-    if instance.crated < instance.version.project.created:
+    if instance.created < instance.version.project.created:
         Project.objects.filter(pk=instance.version.project.pk).update(created=instance.created)
