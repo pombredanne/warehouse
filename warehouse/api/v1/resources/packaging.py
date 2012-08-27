@@ -6,6 +6,7 @@ from tastypie import fields
 from tastypie.authentication import MultiAuthentication
 from tastypie.authorization import DjangoAuthorization
 from tastypie.bundle import Bundle
+from tastypie.cache import SimpleCache
 from tastypie.constants import ALL, ALL_WITH_RELATIONS
 from tastypie.exceptions import NotFound
 from tastypie.resources import ModelResource as TastypieModelResource
@@ -88,6 +89,7 @@ class ProjectResource(ModelResource):
         list_allowed_methods = ["get", "post", "patch"]
         detail_allowed_methods = ["get", "put", "delete", "patch"]
 
+        cache = SimpleCache(timeout=60)
         cache_control = {"public": True, "max_age": 60, "s_maxage": 60}
 
         serializer = Serializer(formats=["json", "jsonp"])
@@ -164,6 +166,7 @@ class VersionResource(ModelResource):
         list_allowed_methods = ["get", "post", "patch"]
         detail_allowed_methods = ["get", "put", "delete", "patch"]
 
+        cache = SimpleCache(timeout=60)
         cache_control = {"public": True, "max_age": 60, "s_maxage": 60}
 
         serializer = Serializer(formats=["json", "jsonp"])
@@ -318,6 +321,8 @@ class RequireResource(TastypieModelResource):
         include_resource_uri = False
         queryset = Require.objects.all()
 
+        cache = SimpleCache(timeout=60)
+
         serializer = Serializer(formats=["json", "jsonp"])
 
     def dehydrate(self, bundle):
@@ -336,6 +341,8 @@ class ProvideResource(TastypieModelResource):
         include_resource_uri = False
         queryset = Provide.objects.all()
 
+        cache = SimpleCache(timeout=60)
+
         serializer = Serializer(formats=["json", "jsonp"])
 
     def dehydrate(self, bundle):
@@ -353,6 +360,8 @@ class ObsoleteResource(TastypieModelResource):
         fields = ["name", "version", "environment"]
         include_resource_uri = False
         queryset = Obsolete.objects.all()
+
+        cache = SimpleCache(timeout=60)
 
         serializer = Serializer(formats=["json", "jsonp"])
 
@@ -399,6 +408,7 @@ class FileResource(ModelResource):
         list_allowed_methods = ["get", "post", "patch"]
         detail_allowed_methods = ["get", "put", "delete", "patch"]
 
+        cache = SimpleCache(timeout=60)
         cache_control = {"public": True, "max_age": 60, "s_maxage": 60}
 
         serializer = Serializer(formats=["json", "jsonp"])
