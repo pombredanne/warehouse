@@ -128,7 +128,7 @@ class ModelResource(CleanErrors, ClientCache, Conditional, FixExceptionHandling,
         """
         Turn the string ``value`` into a python object.
         """
-        if self._meta.fields[field_name].dehydrated_type == "string":
+        if self.fields[field_name].dehydrated_type == "string":
             value = value
         elif value in ["true", "True", True]:
             value = True
