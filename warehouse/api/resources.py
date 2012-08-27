@@ -123,6 +123,32 @@ class FixExceptionHandling(object):
 
 class ModelResource(CleanErrors, ClientCache, Conditional, FixExceptionHandling, TastypieModelResource):
 
+    def filter_value_to_python(self, value, field_name, filters, filter_expr,
+            filter_type):
+        """
+        Turn the string ``value`` into a python object.
+        """
+        if self._meta.fields[field_name].dehydrated_type == "string":
+            value = value
+        elif value in ["true", "True", True]:
+            value = True
+        elif value in ["false", "False", False]:
+            value = False
+        elif value in ["nil", "none", "None", None]:
+            value = None
+
+        # Split on ',' if not empty string and either an in or range filter.
+        if filter_type in ('in', 'range') and len(value):
+            if hasattr(filters, 'getlist'):
+                value = []
+
+                for part in filters.getlist(filter_expr):
+                    value.extend(part.split(','))
+            else:
+                value = value.split(',')
+
+        return value
+
     def base_urls(self):
         """
         The standard URLs this ``Resource`` should respond to.
