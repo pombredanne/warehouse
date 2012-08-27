@@ -22,6 +22,7 @@ class EventManager(models.Manager):
 class Event(TimeStampedModel):
 
     ACTIONS = Choices(
+        ("history_started", "History Started"),
         ("project_created", "Project Created"),
         ("project_updated", "Project Updated"),
         ("project_deleted", "Project Deleted"),
