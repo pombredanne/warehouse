@@ -1,9 +1,18 @@
+import base64
+import datetime
+
+import redis
+
 from django.core.urlresolvers import reverse
 from django.db.models import Q
-from django.http import HttpResponsePermanentRedirect, Http404
+from django.http import HttpResponse, HttpResponsePermanentRedirect, Http404
+from django.views.decorators.http import require_http_methods
 from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
 
+from django.contrib.auth import authenticate
+
+from warehouse.conf import settings
 from warehouse.models import Project
 from warehouse.models.packaging import _normalize_regex
 
@@ -80,3 +89,46 @@ class ProjectDetail(DetailView):
 
         context = self.get_context_data(object=self.object)
         return self.render_to_response(context)
+
+
+@require_http_methods(["HEAD", "GET", "POST", "PUT"])
+def last_modified(request):
+    if settings.WAREHOUSE_ALWAYS_MODIFIED_NOW:
+        return HttpResponse(datetime.datetime.utcnow().isoformat(), content_type="text/plain")
+
+    redis_settings = settings.REDIS["default"]
+    datastore = redis.StrictRedis(dict([(k.lower(), v) for k, v in redis_settings.items()]))
+
+    if request.method in ["POST", "PUT"]:
+        if not request.META.get("HTTP_AUTHORIZATION"):
+            return HttpResponse("Unauthorized", status=401)
+
+        try:
+            (auth_type, data) = request.META['HTTP_AUTHORIZATION'].split()
+            if auth_type.lower() != 'basic':
+                return HttpResponse("Unauthorized", status=401)
+            user_pass = base64.b64decode(data)
+        except Exception:
+            return HttpResponse("Unauthorized", status=401)
+
+        bits = user_pass.split(':', 1)
+
+        if len(bits) != 2:
+            return HttpResponse("Unauthorized", status=401)
+
+        user = authenticate(username=bits[0], password=bits[1])
+
+        if user is None or not user.is_active:
+            return HttpResponse("Unauthorized", status=401)
+
+        if request.user.is_authenticated() and request.user.has_perm("warehouse.set_last_modified"):
+            return HttpResponse("", status=204)
+        else:
+            return HttpResponse("Unauthorized", status=401)
+    else:
+        modified = datastore.get("warehouse:api:simple:last_modified")
+
+        if modified:
+            return HttpResponse(modified, content_type="text/plain")
+
+        raise Http404("API has not been synchronized")

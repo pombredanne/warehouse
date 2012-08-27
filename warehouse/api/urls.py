@@ -10,6 +10,7 @@ v1_api.register(warehouse.api.v1.resources.VersionResource())
 v1_api.register(warehouse.api.v1.resources.FileResource())
 
 urlpatterns = patterns("",
+    url(r"^last-modified/?$", "warehouse.api.simple.views.last_modified", name="last_modified"),
     url(r"^simple/", include("warehouse.api.simple.urls")),
     url(r"^restricted/", include("warehouse.api.simple.restricted")),
     url(r"", include(v1_api.urls)),
