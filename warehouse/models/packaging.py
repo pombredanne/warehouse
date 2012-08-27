@@ -3,7 +3,7 @@ import re
 import os
 import urlparse
 
-from django.db import models, transaction
+from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils.encoding import smart_str, smart_unicode, iri_to_uri
@@ -275,11 +275,7 @@ def extract_project_urls(sender, **kwargs):
 
 @receiver(post_save, sender=VersionFile)
 def check_project_age(sender, instance, **kwargs):
-    with transaction.commit_on_success():
-        version = Version.objects.filter(pk=instance.version_id).select_for_update().get()
-        project = Project.objects.filter(pk=version.project_id).select_for_update().get()
-
-        if instance.created < version.created:
-            Version.objects.filter(pk=version.pk).update(created=instance.created)
-        if instance.created < project.created:
-            Project.objects.filter(pk=project.pk).update(created=instance.created)
+    if instance.created < instance.version.created:
+        Version.objects.filter(pk=instance.version.pk).update(created=instance.created)
+    if instance.created < instance.version.project.created:
+        Project.objects.filter(pk=instance.version.project.pk).update(created=instance.created)
