@@ -16,4 +16,6 @@ class WarehouseAppConf(AppConf):
 
     API_HISTORY = True
 
+    ALWAYS_MODIFIED_NOW = True
+
     DOWNLOAD_SOURCES = {}

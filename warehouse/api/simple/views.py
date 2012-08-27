@@ -5,7 +5,7 @@ import redis
 
 from django.core.urlresolvers import reverse
 from django.db.models import Q
-from django.http import HttpResponse, HttpResponsePermanentRedirect, Http404
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponsePermanentRedirect, Http404
 from django.views.decorators.http import require_http_methods
 from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
@@ -91,7 +91,7 @@ class ProjectDetail(DetailView):
         return self.render_to_response(context)
 
 
-@require_http_methods(["HEAD", "GET", "POST", "PUT"])
+@require_http_methods(["HEAD", "GET", "POST"])
 def last_modified(request):
     if settings.WAREHOUSE_ALWAYS_MODIFIED_NOW:
         return HttpResponse(datetime.datetime.utcnow().isoformat(), content_type="text/plain")
@@ -99,7 +99,7 @@ def last_modified(request):
     redis_settings = settings.REDIS["default"]
     datastore = redis.StrictRedis(dict([(k.lower(), v) for k, v in redis_settings.items()]))
 
-    if request.method in ["POST", "PUT"]:
+    if request.method in ["POST"]:
         if not request.META.get("HTTP_AUTHORIZATION"):
             return HttpResponse("Unauthorized", status=401)
 
@@ -122,7 +122,10 @@ def last_modified(request):
             return HttpResponse("Unauthorized", status=401)
 
         if request.user.is_authenticated() and request.user.has_perm("warehouse.set_last_modified"):
-            return HttpResponse("", status=204)
+            if request.POST.get("date"):
+                datastore.set("warehouse:api:simple:last_modified", request.POST["date"])
+                return HttpResponse("", status=204)
+            return HttpResponseBadRequest("No date supplied")
         else:
             return HttpResponse("Unauthorized", status=401)
     else:
