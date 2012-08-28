@@ -6,6 +6,7 @@ import redis
 from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponsePermanentRedirect, Http404
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
@@ -91,6 +92,7 @@ class ProjectDetail(DetailView):
         return self.render_to_response(context)
 
 
+@csrf_exempt
 @require_http_methods(["HEAD", "GET", "POST"])
 def last_modified(request):
     if settings.WAREHOUSE_ALWAYS_MODIFIED_NOW:
@@ -116,9 +118,9 @@ def last_modified(request):
         if len(bits) != 2:
             return HttpResponse("Unauthorized", status=401)
 
-        user = authenticate(username=bits[0], password=bits[1])
+        request.user = authenticate(username=bits[0], password=bits[1])
 
-        if user is None or not user.is_active:
+        if request.user is None or not request.user.is_active:
             return HttpResponse("Unauthorized", status=401)
 
         if request.user.is_authenticated() and request.user.has_perm("warehouse.set_last_modified"):
