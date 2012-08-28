@@ -97,7 +97,7 @@ def last_modified(request):
         return HttpResponse(datetime.datetime.utcnow().isoformat(), content_type="text/plain")
 
     redis_settings = settings.REDIS["default"]
-    datastore = redis.StrictRedis(dict([(k.lower(), v) for k, v in redis_settings.items()]))
+    datastore = redis.StrictRedis(**dict([(k.lower(), v) for k, v in redis_settings.items()]))
 
     if request.method in ["POST"]:
         if not request.META.get("HTTP_AUTHORIZATION"):
