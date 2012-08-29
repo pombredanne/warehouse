@@ -16,7 +16,7 @@
     {% if not restricted %}
         {% for version in versions %}
             {% for label, uri in version.uris.iteritems %}
-                {% if label|lower == "download"}
+                {% if label|lower == "download" %}
                     <a href="{{ uri }}" rel="download">{{ version.version }} download_url</a>
                 {% endif %}
                 {% if label|lower == "home page" or label|lower == "homepage" %}
