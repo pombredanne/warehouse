@@ -7,15 +7,27 @@
   </head>
   <body>
     <h1>Links for {{ object.name }}</h1>
-    {% for version in versions %}{% for file in version.files.all %}<a href="{{ file.hashed_url }}">{{ file.filename }}</a>
-    {% endfor %}{% endfor %}
+    {% for version in versions %}
+        {% for file in version.files.all %}
+            <a href="{{ file.hashed_url }}">{{ file.filename }}</a>
+        {% endfor %}
+    {% endfor %}
 
     {% if not restricted %}
-    {% for version in versions %}{% for label, uri in version.uris.iteritems %}<a href="{{ uri }}">{{ version.version }} {{ label }}</a>
-    {% endfor %}{% endfor %}
+        {% for version in versions %}
+            {% for label, uri in version.uris.iteritems %}
+                {% if label|lower == "download"}
+                    <a href="{{ uri }}" rel="download">{{ version.version }} download_url</a>
+                {% endif %}
+                {% if label|lower == "home page" or label|lower == "homepage" %}
+                    <a href="{{ uri }}" rel="homepage">{{ version.version }} home_page</a>
+                {% endif %}
+            {% endfor %}
+        {% endfor %}
 
-    {% for uri in object.uris %}<a href="{{ uri }}">{{ uri }}</a>
-    {% endfor %}
+        {% for uri in object.uris %}
+            <a href="{{ uri }}">{{ uri }}</a>
+        {% endfor %}
     {% endif %}
   </body>
 </html>
