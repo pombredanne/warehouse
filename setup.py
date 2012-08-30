@@ -8,9 +8,10 @@ install_requires = [
     "Django>=1.4",
 
     "django-appconf",
+    "django-haystack",
+    "django-hstore",
     "django-json-field",
     "django-model-utils>=1.1",
-    "django-hstore",
     "django-tastypie",
     "django-uuidfield",
     "logan",
