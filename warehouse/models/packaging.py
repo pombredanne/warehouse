@@ -52,6 +52,15 @@ class Project(TimeStampedModel):
         self.normalized = _normalize_regex.sub("-", self.name).lower()
         return super(Project, self).save(*args, **kwargs)
 
+    @property
+    def latest(self):
+        if not hasattr(self, "_latest"):
+            try:
+                self._latest = self.versions.latest("created")
+            except Version.DoesNotExist:
+                self._latest = None
+        return self._latest
+
 
 class Version(models.Model):
     project = models.ForeignKey(Project, related_name="versions")
