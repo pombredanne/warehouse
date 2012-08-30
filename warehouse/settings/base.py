@@ -83,6 +83,7 @@ INSTALLED_APPS = (
     "django.contrib.staticfiles",
 
     # External
+    "haystack",
     "json_field",
     "south",
     "tastypie",
