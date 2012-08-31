@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import connection, models
 from django.db.models import F
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -37,6 +37,22 @@ class Download(models.Model):
     class Meta:
         app_label = "warehouse"
         unique_together = ("label", "date", "project", "version", "filename", "user_agent")
+
+    @staticmethod
+    def update_counts(project, version, filename, changed):
+        # Get the database cursor
+        cursor = connection.cursor()
+
+        # Update Project
+        if project:
+            cursor.execute("UPDATE warehouse_project SET downloads = downloads + %s WHERE name = %s RETURNING id", [changed, project])
+            pid = cursor.fetchall()[0][0]
+
+        if project and version:
+            cursor.execute("UPDATE warehouse_version SET downloads = downloads + %s WHERE version = %s AND project_id = %s", [changed, version, pid])
+
+        if project and version and filename:
+            cursor.execute("UPDATE warehouse_versionfile SET downloads = downloads + %s WHERE filename = %s", [changed, filename])
 
 
 @receiver(post_save, sender=Download)
