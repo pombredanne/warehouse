@@ -43,6 +43,9 @@ class Download(models.Model):
         # Get the database cursor
         cursor = connection.cursor()
 
+        if not changed:
+            return
+
         # Update Project
         if project:
             cursor.execute("UPDATE warehouse_project SET downloads = downloads + %s WHERE name = %s RETURNING id", [changed, project])
