@@ -46,7 +46,7 @@ setup(
     },
 
     packages=find_packages(exclude=["tests"]),
-    package_data={"": ["LICENSE"], "warehouse": ["templates/*.html", "downloads/*.crt"]},
+    package_data={"": ["LICENSE"], "warehouse": ["templates/*.html", "templates/search/indexes/warehouse/*.txt", "downloads/*.crt"]},
     include_package_data=True,
 
     zip_safe=False,

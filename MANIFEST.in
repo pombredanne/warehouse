@@ -1,3 +1,4 @@
 include README.rst LICENSE
 recursive-include warehouse/templates *.html
+recursive-include warehouse/templates/search/indexes/warehouse *.txt
 recursive-include warehouse/downloads *.crt
