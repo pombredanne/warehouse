@@ -48,9 +48,11 @@ class Download(models.Model):
             cursor.execute("UPDATE warehouse_project SET downloads = downloads + %s WHERE name = %s RETURNING id", [changed, project])
             pid = cursor.fetchall()[0][0]
 
+        # Update Version
         if project and version:
             cursor.execute("UPDATE warehouse_version SET downloads = downloads + %s WHERE version = %s AND project_id = %s", [changed, version, pid])
 
+        # Update VersionFile
         if project and version and filename:
             cursor.execute("UPDATE warehouse_versionfile SET downloads = downloads + %s WHERE filename = %s", [changed, filename])
 
