@@ -13,6 +13,7 @@ import requests
 from django.db import connection, transaction, IntegrityError
 
 from warehouse.conf import settings
+from warehouse.models import Download
 from warehouse.utils import locks
 
 
@@ -74,6 +75,7 @@ def downloads(label):
                 csv_r = csv.DictReader(io.BytesIO(data), ["project", "filename", "user_agent", "downloads"])
 
                 user_agents = {}
+                download_counts = {}
 
                 cursor.execute("SELECT id, agent FROM warehouse_useragent")
 
@@ -115,26 +117,37 @@ def downloads(label):
 
                             sid = transaction.savepoint()
 
+                            changed_downloads = 0
+
                             try:
                                 cursor.execute("""
                                     INSERT INTO warehouse_download (id, label, date, user_agent_id, project, version, filename, downloads)
                                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                                 """, [str(uuid.uuid4()), label, date, ua, row["project"], row.get("version", ""), row["filename"], row["downloads"]])
+                                changed_downloads = row["downloads"]
                             except IntegrityError:
                                 transaction.savepoint_rollback(sid)
 
                                 cursor.execute("""
-                                    UPDATE warehouse_download
-                                    SET downloads = %s
+                                    SELECT id, downloads
                                     WHERE label = %s
                                         AND date = %s
                                         AND user_agent_id = %s
                                         AND project = %s
                                         AND version = %s
                                         AND filename = %s
-                                """, [row["downloads"], label, date, ua, row["project"], row.get("version", ""), row["filename"]])
+                                    LIMIT 1
+                                """, [label, date, ua, row["project"], row.get("version", ""), row["filename"]])
+                                d = cursor.fetchall()[0]
+
+                                changed_downloads = row["downloads"] - d[1]
+
+                                cursor.execute("UPDATE warehouse_download SET downloads =  %s WHERE id = %s", [row["downloads"], d[0]])
                             finally:
                                 transaction.savepoint_commit(sid)
+
+                            key = (row["project"], row.get("version", ""), row["filename"])
+                            download_counts[key] = download_counts.get(key, 0) + changed_downloads
 
                             if not i % ROWS_PER_TRANSACTION:
                                 transaction.commit()
@@ -143,6 +156,18 @@ def downloads(label):
                         raise
                     else:
                         transaction.commit()
+
+                try:
+                    for i, ((project, version, filename), changed) in enumerate(download_counts.iteritems()):
+                        Download.update_counts(project, version, filename, changed)
+
+                        if not i % ROWS_PER_TRANSACTION:
+                            transaction.commit()
+                except:
+                    transaction.rollback()
+                    raise
+                else:
+                    transaction.commit()
 
                 if "Last-Modified" in resp.headers:
                     r.set(last_modified_key, resp.headers["Last-Modified"])
