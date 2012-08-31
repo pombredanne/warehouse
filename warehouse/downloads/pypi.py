@@ -73,20 +73,31 @@ def downloads(label):
                 data = bz2.decompress(resp.content)
                 csv_r = csv.DictReader(io.BytesIO(data), ["project", "filename", "user_agent", "downloads"])
 
+                user_agents = {}
+
+                cursor.execute("SELECT id, agent FROM warehouse_useragent")
+
+                for i, agent in cursor.fetchall():
+                    user_agents[agent] = i
+
                 with transaction.commit_manually():
                     try:
                         for i, row in enumerate(csv_r):
                             row["date"] = date
                             row["downloads"] = int(row["downloads"])
 
-                            cursor.execute("SELECT id FROM warehouse_useragent WHERE agent = %s LIMIT 1", [row["user_agent"]])
-                            uas = cursor.fetchall()
+                            ua = user_agents.get(row["user_agent"], None)
 
-                            if not uas:
-                                cursor.execute("INSERT INTO warehouse_useragent (agent) VALUES (%s) RETURNING id", [row["user_agent"]])
+                            if ua is None:
+                                cursor.execute("SELECT id FROM warehouse_useragent WHERE agent = %s LIMIT 1", [row["user_agent"]])
                                 uas = cursor.fetchall()
 
-                            ua = uas[0][0]
+                                if not uas:
+                                    cursor.execute("INSERT INTO warehouse_useragent (agent) VALUES (%s) RETURNING id", [row["user_agent"]])
+                                    uas = cursor.fetchall()
+
+                                ua = uas[0][0]
+                                user_agents[row["user_agent"]] = ua
 
                             cursor.execute("""
                                 SELECT warehouse_version.version
