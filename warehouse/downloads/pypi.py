@@ -16,6 +16,10 @@ from warehouse.conf import settings
 from warehouse.utils import locks
 
 
+# Number of rows to include in a transaction
+ROWS_PER_TRANSACTION = 50
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -71,7 +75,7 @@ def downloads(label):
 
                 with transaction.commit_manually():
                     try:
-                        for row in csv_r:
+                        for i, row in enumerate(csv_r):
                             row["date"] = date
                             row["downloads"] = int(row["downloads"])
 
@@ -120,6 +124,9 @@ def downloads(label):
                                 """, [row["downloads"], label, date, ua, row["project"], row.get("version", ""), row["filename"]])
                             finally:
                                 transaction.savepoint_commit(sid)
+
+                            if not i % ROWS_PER_TRANSACTION:
+                                transaction.commit()
                     except:
                         transaction.rollback()
                         raise
