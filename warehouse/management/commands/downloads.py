@@ -4,7 +4,6 @@ import redis
 import rq
 
 from django.core.management.base import LabelCommand, CommandError
-from django.utils import importlib
 
 from warehouse.conf import settings
 
@@ -36,9 +35,7 @@ class Command(LabelCommand):
         kwargs = dict([(k.lower(), v) for k, v in config.items()])
         conn = redis.Redis(**kwargs)
 
-        module_name = settings.WAREHOUSE_DOWNLOAD_SOURCES[label]
-        mod = importlib.import_module(module_name)
-        func = getattr(mod, "downloads")
+        function = settings.WAREHOUSE_DOWNLOAD_SOURCES[label]
 
         q = rq.Queue(options["queue"], connection=conn)
-        q.enqueue_call(func=func, args=(label,), timeout=15 * 60)
+        q.enqueue_call(func=function, args=(label,), timeout=15 * 60)
