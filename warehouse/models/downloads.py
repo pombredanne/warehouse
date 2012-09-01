@@ -1,3 +1,5 @@
+import redis
+
 from django.db import connection, models
 from django.db.models import F
 from django.db.models.signals import post_save
@@ -5,6 +7,7 @@ from django.dispatch import receiver
 
 from uuidfield import UUIDField
 
+from warehouse.conf import settings
 from warehouse.models.packaging import Project, Version, VersionFile
 from warehouse.utils.track_data import track_data
 
@@ -61,6 +64,10 @@ class Download(models.Model):
         # Update VersionFile
         if project and version and filename and vid is not None:
             cursor.execute("UPDATE warehouse_versionfile SET downloads = downloads + %s WHERE filename = %s AND version_id = %s", [changed, filename, vid])
+
+        # Update total in Redis
+        datastore = redis.StrictRedis(**dict([(k.lower(), v) for k, v in settings.REDIS.get("default", {}).items()]))
+        datastore.incrby("warehouse:stats:downloads", changed)
 
 
 @receiver(post_save, sender=Download)

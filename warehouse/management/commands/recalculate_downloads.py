@@ -1,8 +1,11 @@
 import logging
 
+import redis
+
 from django.core.management.base import NoArgsCommand
 from django.db.models import Sum
 
+from warehouse.conf import settings
 from warehouse.models import Project, Version, VersionFile, Download
 from warehouse.utils.query import RangeQuerySetWrapper
 
@@ -55,3 +58,13 @@ class Command(NoArgsCommand):
                 VersionFile.objects.filter(pk=vf.pk).update(downloads=downloads)
             else:
                 logger.debug("Skipping recalculation of downloads for VersionFile %s (now: %s)", vf.filename, downloads)
+
+        logger.info("Recalculating download totals")
+
+        total_downloads = Download.objects.all().aggregate(Sum("downloads")).get("downloads__sum", None)
+
+        if total_downloads is None:
+            total_downloads = 0
+
+        datastore = redis.StrictRedis(**dict([(k.lower(), v) for k, v in settings.REDIS.get("default", {}).items()]))
+        datastore.set("warehouse:stats:downloads", total_downloads)
