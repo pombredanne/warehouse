@@ -16,36 +16,42 @@ class Command(NoArgsCommand):
     def handle_noargs(self, **options):
         logger.info("Recalculating downloads for Projects")
 
-        for p in RangeQuerySetWrapper(Project.objects.all().only("pk", "name")):
+        for p in RangeQuerySetWrapper(Project.objects.all().only("pk", "name", "downloads")):
             downloads = Download.objects.filter(project=p.name).aggregate(Sum("downloads")).get("downloads__sum", None)
 
             if downloads is None:
                 downloads = 0
 
-            logger.debug("Recalculating downloads for Project %s (now: %s)", p.name, downloads)
-
-            Project.objects.filter(pk=p.pk).update(downloads=downloads)
+            if downloads != p.downloads:
+                logger.debug("Recalculating downloads for Project %s (now: %s)", p.name, downloads)
+                Project.objects.filter(pk=p.pk).update(downloads=downloads)
+            else:
+                logger.debug("Skipping recalculation of downloads for Project %s (now: %s)", p.name, downloads)
 
         logger.info("Recalculating downloads for Versions")
 
-        for v in RangeQuerySetWrapper(Version.objects.all().select_related("project").only("pk", "project__name", "version")):
+        for v in RangeQuerySetWrapper(Version.objects.all().select_related("project").only("pk", "project__name", "version", "downloads")):
             downloads = Download.objects.filter(project=v.project.name, version=v.version).aggregate(Sum("downloads")).get("downloads__sum", None)
 
             if downloads is None:
                 downloads = 0
 
-            logger.debug("Recalculating downloads for Version %s %s (now: %s)", v.version, v.project.name, downloads)
-
-            Version.objects.filter(pk=v.pk).update(downloads=downloads)
+            if downloads != v.downloads:
+                logger.debug("Recalculating downloads for Version %s %s (now: %s)", v.version, v.project.name, downloads)
+                Version.objects.filter(pk=v.pk).update(downloads=downloads)
+            else:
+                logger.debug("Skipping recalculation of downloads for Version %s %s (now: %s)", v.version, v.project.name, downloads)
 
         logger.info("Recalculating downloads for VersionFiles")
 
-        for vf in RangeQuerySetWrapper(VersionFile.objects.all().select_related("version", "version__project").only("pk", "version__project__name", "version__version", "filename")):
+        for vf in RangeQuerySetWrapper(VersionFile.objects.all().select_related("version", "version__project").only("pk", "version__project__name", "version__version", "filename", "downloads")):
             downloads = Download.objects.filter(project=vf.version.project.name, version=vf.version.version, filename=vf.filename).aggregate(Sum("downloads")).get("downloads__sum", None)
 
             if downloads is None:
                 downloads = 0
 
-            logger.debug("Recalculating downloads for VersionFile %s (now: %s)", vf.filename, downloads)
-
-            VersionFile.objects.filter(pk=vf.pk).update(downloads=downloads)
+            if vf.downloads:
+                logger.debug("Recalculating downloads for VersionFile %s (now: %s)", vf.filename, downloads)
+                VersionFile.objects.filter(pk=vf.pk).update(downloads=downloads)
+            else:
+                logger.debug("Skipping recalculation of downloads for VersionFile %s (now: %s)", vf.filename, downloads)
