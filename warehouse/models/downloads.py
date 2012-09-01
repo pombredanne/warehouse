@@ -1,13 +1,10 @@
-import redis
-
-from django.db import connection, models
+from django.db import models
 from django.db.models import F
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 from uuidfield import UUIDField
 
-from warehouse.conf import settings
 from warehouse.models.packaging import Project, Version, VersionFile
 from warehouse.utils.track_data import track_data
 
