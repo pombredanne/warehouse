@@ -130,6 +130,7 @@ def downloads(label):
 
                                 cursor.execute("""
                                     SELECT id, downloads
+                                    FROM warehouse_download
                                     WHERE label = %s
                                         AND date = %s
                                         AND user_agent_id = %s
