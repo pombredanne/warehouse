@@ -38,4 +38,4 @@ class Command(LabelCommand):
         function = settings.WAREHOUSE_DOWNLOAD_SOURCES[label]
 
         q = rq.Queue(options["queue"], connection=conn)
-        q.enqueue_call(func=function, args=(label,), timeout=15 * 60)
+        q.enqueue_call(func=function, args=(label,), timeout=30 * 60)
