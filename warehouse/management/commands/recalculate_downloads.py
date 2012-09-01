@@ -17,7 +17,7 @@ class Command(NoArgsCommand):
         logger.info("Recalculating downloads for Projects")
 
         for p in RangeQuerySetWrapper(Project.objects.all().only("pk", "name")):
-            downloads = Download.objects.filter(project=p.name).aggregate(Sum("downloads")).get("dowloads__sum", None)
+            downloads = Download.objects.filter(project=p.name).aggregate(Sum("downloads")).get("downloads__sum", None)
 
             if downloads is None:
                 downloads = 0
@@ -29,7 +29,7 @@ class Command(NoArgsCommand):
         logger.info("Recalculating downloads for Versions")
 
         for v in RangeQuerySetWrapper(Version.objects.all().select_related("project").only("pk", "project__name", "version")):
-            downloads = Download.objects.filter(project=v.project.name, version=v.version).aggregate(Sum("downloads")).get("dowloads__sum", None)
+            downloads = Download.objects.filter(project=v.project.name, version=v.version).aggregate(Sum("downloads")).get("downloads__sum", None)
 
             if downloads is None:
                 downloads = 0
@@ -41,7 +41,7 @@ class Command(NoArgsCommand):
         logger.info("Recalculating downloads for VersionFiles")
 
         for vf in RangeQuerySetWrapper(VersionFile.objects.all().select_related("version", "version__project").only("pk", "version__project__name", "version__version", "filename")):
-            downloads = Download.objects.filter(project=vf.version.project.name, version=vf.version.version, filename=vf.filename).aggregate(Sum("downloads")).get("dowloads__sum", None)
+            downloads = Download.objects.filter(project=vf.version.project.name, version=vf.version.version, filename=vf.filename).aggregate(Sum("downloads")).get("downloads__sum", None)
 
             if downloads is None:
                 downloads = 0
