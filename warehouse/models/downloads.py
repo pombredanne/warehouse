@@ -67,7 +67,7 @@ class Download(models.Model):
 
         # Update total in Redis
         datastore = redis.StrictRedis(**dict([(k.lower(), v) for k, v in settings.REDIS.get("default", {}).items()]))
-        datastore.incrby("warehouse:stats:downloads", changed)
+        datastore.incr("warehouse:stats:downloads", changed)
 
 
 @receiver(post_save, sender=Download)
