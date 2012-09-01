@@ -41,36 +41,6 @@ class Download(models.Model):
         app_label = "warehouse"
         unique_together = ("label", "date", "project", "version", "filename", "user_agent")
 
-    @staticmethod
-    def update_counts(project, version, filename, changed):
-        # Get the database cursor
-        cursor = connection.cursor()
-
-        if not changed:
-            return
-
-        pid, vid = None, None
-
-        # Update Project
-        if project:
-            cursor.execute("UPDATE warehouse_project SET downloads = downloads + %s WHERE name = %s RETURNING id", [changed, project])
-            pids = cursor.fetchall()
-            pid = pids[0][0] if pids else None
-
-        # Update Version
-        if project and version and pid is not None:
-            cursor.execute("UPDATE warehouse_version SET downloads = downloads + %s WHERE version = %s AND project_id = %s RETURNING id", [changed, version, pid])
-            vids = cursor.fetchall()
-            vid = vids[0][0] if vids else None
-
-        # Update VersionFile
-        if project and version and filename and vid is not None:
-            cursor.execute("UPDATE warehouse_versionfile SET downloads = downloads + %s WHERE filename = %s AND version_id = %s", [changed, filename, vid])
-
-        # Update total in Redis
-        datastore = redis.StrictRedis(**dict([(k.lower(), v) for k, v in settings.REDIS.get("default", {}).items()]))
-        datastore.incr("warehouse:stats:downloads", changed)
-
 
 @receiver(post_save, sender=Download)
 def update_downloads(sender, created, instance, **kwargs):
