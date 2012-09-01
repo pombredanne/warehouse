@@ -143,7 +143,9 @@ def downloads(label):
                                 changed_downloads = row["downloads"] - d[1]
 
                                 cursor.execute("UPDATE warehouse_download SET downloads =  %s WHERE id = %s", [row["downloads"], d[0]])
-                            finally:
+
+                                transaction.savepoint_commit(sid)
+                            else:
                                 transaction.savepoint_commit(sid)
 
                             key = (row["project"], row.get("version", ""), row["filename"])
