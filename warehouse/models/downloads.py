@@ -30,7 +30,7 @@ class Download(models.Model):
 
     project = models.CharField(max_length=150)
     version = models.CharField(max_length=512)
-    filename = models.CharField(max_length=200)
+    filename = models.CharField(max_length=500)
 
     downloads = models.PositiveIntegerField(default=0)
 
