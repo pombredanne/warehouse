@@ -49,15 +49,18 @@ class Download(models.Model):
         # Update Project
         if project:
             cursor.execute("UPDATE warehouse_project SET downloads = downloads + %s WHERE name = %s RETURNING id", [changed, project])
-            pid = cursor.fetchall()[0][0]
+            pids = cursor.fetchall()
+            pid = pids[0][0] if pids else None
 
         # Update Version
-        if project and version:
-            cursor.execute("UPDATE warehouse_version SET downloads = downloads + %s WHERE version = %s AND project_id = %s", [changed, version, pid])
+        if project and version and pid is not None:
+            cursor.execute("UPDATE warehouse_version SET downloads = downloads + %s WHERE version = %s AND project_id = %s RETURNING id", [changed, version, pid])
+            vids = cursor.fetchall()
+            vid = vids[0][0] if vids else None
 
         # Update VersionFile
-        if project and version and filename:
-            cursor.execute("UPDATE warehouse_versionfile SET downloads = downloads + %s WHERE filename = %s", [changed, filename])
+        if project and version and filename and vid is not None:
+            cursor.execute("UPDATE warehouse_versionfile SET downloads = downloads + %s WHERE filename = %s AND version_id = %s", [changed, filename, vid])
 
 
 @receiver(post_save, sender=Download)
