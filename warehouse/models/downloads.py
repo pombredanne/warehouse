@@ -49,6 +49,8 @@ class Download(models.Model):
         if not changed:
             return
 
+        pid, vid = None, None
+
         # Update Project
         if project:
             cursor.execute("UPDATE warehouse_project SET downloads = downloads + %s WHERE name = %s RETURNING id", [changed, project])
