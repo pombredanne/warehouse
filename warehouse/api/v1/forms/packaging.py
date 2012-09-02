@@ -163,6 +163,8 @@ class RequireForm(forms.Form):
                 version = data[2:]
             elif data.startswith(("<", ">")):
                 version = data[1:]
+            else:
+                version = data
 
             version = version.strip()
 
