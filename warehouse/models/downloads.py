@@ -28,9 +28,9 @@ class Download(models.Model):
     date = models.DateField()
     user_agent = models.ForeignKey(UserAgent)
 
-    project = models.CharField(max_length=150)
+    project = models.CharField(max_length=512)
     version = models.CharField(max_length=512)
-    filename = models.CharField(max_length=500)
+    filename = models.CharField(max_length=512)
 
     downloads = models.PositiveIntegerField(default=0)
 
