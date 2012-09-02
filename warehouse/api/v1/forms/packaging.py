@@ -155,25 +155,31 @@ class RequireForm(forms.Form):
     version = forms.CharField(error_messages=ERROR_MESSAGES, required=False)
     environment = forms.CharField(error_messages=ERROR_MESSAGES, required=False)
 
+    def clean_name(self):
+        name = self.cleaned_data["name"]
+        name = name.strip()
+        return name
+
     def clean_version(self):
-        data = self.cleaned_data["version"]
+        version_data = self.cleaned_data["version"]
 
-        if data:
-            if data.startswith(("<=", ">=", "==", "!=")):
-                version = data[2:]
-            elif data.startswith(("<", ">")):
-                version = data[1:]
-            else:
-                version = data
+        if version_data:
+            for data in version_data.split(","):
+                if data.startswith(("<=", ">=", "==", "!=")):
+                    version = data[2:]
+                elif data.startswith(("<", ">")):
+                    version = data[1:]
+                else:
+                    version = data
 
-            version = version.strip()
+                version = version.strip()
 
-            suggested = verlib.suggest_normalized_version(version)
+                suggested = verlib.suggest_normalized_version(version)
 
-            if suggested is None or suggested != version:
-                raise forms.ValidationError("invalid")
+                if suggested is None or suggested != version:
+                    raise forms.ValidationError("invalid")
 
-        return data
+        return version_data
 
     def clean_environment(self):
         environment = self.cleaned_data["environment"]
