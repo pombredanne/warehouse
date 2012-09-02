@@ -1,3 +1,5 @@
+import logging
+
 from tastypie.validation import FormValidation as TastypieFormValidation
 
 
@@ -8,6 +10,9 @@ ERROR_MESSAGES = {
     "invalid": "invalid",
     "max_length": "invalid",
 }
+
+
+logger = logging.getLogger(__name__)
 
 
 class FormValidation(TastypieFormValidation):
@@ -39,5 +44,7 @@ class FormValidation(TastypieFormValidation):
                         "field": k,
                         "code": code,
                     })
+
+        logger.debug("Invalid API Call data(%s) errors(%s)", form_kwargs, errors)
 
         return errors
