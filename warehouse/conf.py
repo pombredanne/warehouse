@@ -19,3 +19,4 @@ class WarehouseAppConf(AppConf):
     ALWAYS_MODIFIED_NOW = True
 
     DOWNLOAD_SOURCES = {}
+    DOWNLOAD_COUNT_TIMEOUT = 15 * 60
