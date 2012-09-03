@@ -48,7 +48,7 @@ class Download(models.Model):
         pid, vid = None, None
 
         if project:
-            cursor.execute("UPDATE warehouse_project SET downloads = downloads + %(changed)s WHERE name = %(project)s RETURNING id", {"changed": changed, "name": project})
+            cursor.execute("UPDATE warehouse_project SET downloads = downloads + %(changed)s WHERE name = %(project)s RETURNING id", {"changed": changed, "project": project})
             pids = cursor.fetchall()
             pid = pids[0][0] if pids else None
 
