@@ -134,8 +134,7 @@ def downloads(label):
                                         AND user_agent_id = %s
                                         AND date = %s
                                         and label = %s
-                                    FOR UPDATE
-                                """, args)  # @@@ Do we need the FOR UPDATE here?
+                                """, args)
 
                                 # There should only ever be 1 here
                                 downloads = cursor.fetchall()
