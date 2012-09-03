@@ -1,13 +1,17 @@
 import logging
+import uuid
 
 import redis
 
 from django.core.management.base import NoArgsCommand
-from django.db.models import Sum
+from django.db import connection, transaction
 
 from warehouse.conf import settings
-from warehouse.models import Project, Version, VersionFile, Download
-from warehouse.utils.query import RangeQuerySetWrapper
+from warehouse.models import Download
+
+
+# Number of rows to include in a transaction
+ROWS_PER_TRANSACTION = 50
 
 
 logger = logging.getLogger(__name__)
@@ -17,54 +21,49 @@ class Command(NoArgsCommand):
     help = "Recalculates the download counts for all objects"
 
     def handle_noargs(self, **options):
-        logger.info("Recalculating downloads for Projects")
+        logger.info("Recalculating downloads")
 
-        for p in RangeQuerySetWrapper(Project.objects.all().only("pk", "name", "downloads")):
-            downloads = Download.objects.filter(project=p.name).aggregate(Sum("downloads")).get("downloads__sum", None)
+        # Get the database cursors
+        cursor = connection.cursor()
+        downloads = connection.cursor(str(uuid.uuid4()))
 
-            if downloads is None:
-                downloads = 0
+        seen = set()
 
-            if downloads != p.downloads:
-                logger.debug("Recalculating downloads for Project %s (now: %s)", p.name, downloads)
-                Project.objects.filter(pk=p.pk).update(downloads=downloads)
-            else:
-                logger.debug("Skipping recalculation of downloads for Project %s (now: %s)", p.name, downloads)
+        total = 0
 
-        logger.info("Recalculating downloads for Versions")
+        try:
+            with transaction.commit_manually():
+                downloads.execute("SELECT project, version, filename, downloads FROM warehouse_download")
 
-        for v in RangeQuerySetWrapper(Version.objects.all().select_related("project").only("pk", "project__name", "version", "downloads")):
-            downloads = Download.objects.filter(project=v.project.name, version=v.version).aggregate(Sum("downloads")).get("downloads__sum", None)
+                for i, record in enumerate(downloads):
+                    # Check if Project has not been seen and set downloads to 0 then
+                    pids, vids = None, None
 
-            if downloads is None:
-                downloads = 0
+                    if not record[0] in seen:
+                        cursor.execute("UPDATE warehouse_project SET downloads = 0 WHERE name = %s RETURNING id", [record[0]])
+                        pids = cursor.fetchall()
 
-            if downloads != v.downloads:
-                logger.debug("Recalculating downloads for Version %s %s (now: %s)", v.version, v.project.name, downloads)
-                Version.objects.filter(pk=v.pk).update(downloads=downloads)
-            else:
-                logger.debug("Skipping recalculation of downloads for Version %s %s (now: %s)", v.version, v.project.name, downloads)
+                        if pids:
+                            cursor.execute("UPDATE warehouse_version SET downloads = 0 WHERE project_id IN %s RETURNING id", [tuple([r[0] for r in pids])])
+                            vids = cursor.fetchall()
 
-        logger.info("Recalculating downloads for VersionFiles")
+                        if vids:
+                            cursor.execute("UPDATE warehouse_versionfile SET downloads = 0 WHERE version_id IN %s", [tuple([r[0] for r in vids])])
 
-        for vf in RangeQuerySetWrapper(VersionFile.objects.all().select_related("version", "version__project").only("pk", "version__project__name", "version__version", "filename", "downloads")):
-            downloads = Download.objects.filter(project=vf.version.project.name, version=vf.version.version, filename=vf.filename).aggregate(Sum("downloads")).get("downloads__sum", None)
+                    # Update download counts
+                    Download.update_counts(record[0], record[1], record[2], record[3])
 
-            if downloads is None:
-                downloads = 0
+                    # Update running total
+                    total += record[3]
 
-            if vf.downloads:
-                logger.debug("Recalculating downloads for VersionFile %s (now: %s)", vf.filename, downloads)
-                VersionFile.objects.filter(pk=vf.pk).update(downloads=downloads)
-            else:
-                logger.debug("Skipping recalculation of downloads for VersionFile %s (now: %s)", vf.filename, downloads)
-
-        logger.info("Recalculating download totals")
-
-        total_downloads = Download.objects.all().aggregate(Sum("downloads")).get("downloads__sum", None)
-
-        if total_downloads is None:
-            total_downloads = 0
+                    # Commit transactions
+                    if not i % ROWS_PER_TRANSACTION:
+                        transaction.commit()
+        except:
+            transaction.rollback()
+            raise
+        else:
+            transaction.commit()
 
         datastore = redis.StrictRedis(**dict([(k.lower(), v) for k, v in settings.REDIS.get("default", {}).items()]))
-        datastore.set("warehouse:stats:downloads", total_downloads)
+        datastore.set("warehouse:stats:downloads", total)
