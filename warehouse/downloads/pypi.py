@@ -65,19 +65,19 @@ def downloads(label):
 
         try:
             with locks.Lock("pypi:locks:%s" % statfile, expires=settings.WAREHOUSE_DOWNLOAD_COUNT_TIMEOUT + 10 * 60, using="pypi"):
-                logger.info("Computing download counts from %s (%s/%s)", statfile, i + 1, total)
-
-                data = bz2.decompress(resp.content)
-                csv_r = csv.DictReader(io.BytesIO(data), ["project", "filename", "user_agent", "downloads"])
-
-                user_agents = {}
-
-                cursor.execute("SELECT id, agent FROM warehouse_useragent")
-
-                for i, agent in cursor.fetchall():
-                    user_agents[agent] = i
-
                 with transaction.commit_manually():
+                    logger.info("Computing download counts from %s (%s/%s)", statfile, i + 1, total)
+
+                    data = bz2.decompress(resp.content)
+                    csv_r = csv.DictReader(io.BytesIO(data), ["project", "filename", "user_agent", "downloads"])
+
+                    user_agents = {}
+
+                    cursor.execute("SELECT id, agent FROM warehouse_useragent")
+
+                    for i, agent in cursor.fetchall():
+                        user_agents[agent] = i
+
                     try:
                         for i, row in enumerate(csv_r):
                             row["date"] = date
