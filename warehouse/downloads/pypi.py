@@ -17,10 +17,6 @@ from warehouse.models import Download
 from warehouse.utils import locks
 
 
-# Number of rows to include in a transaction
-ROWS_PER_TRANSACTION = 50
-
-
 logger = logging.getLogger(__name__)
 
 
@@ -159,9 +155,6 @@ def downloads(label):
                             if changed:
                                 # We have changes so lets update
                                 Download.update_counts(row["project"], row.get("version", ""), row["filename"], changed)
-
-                            if not i % ROWS_PER_TRANSACTION:
-                                transaction.commit()
                     except:
                         transaction.rollback()
                         raise
