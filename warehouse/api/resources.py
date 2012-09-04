@@ -11,6 +11,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import condition
 
 from tastypie.exceptions import NotFound, ImmediateHttpResponse
+from tastypie.resources import Resource as TastypieResource
 from tastypie.resources import ModelResource as TastypieModelResource
 from tastypie.utils import trailing_slash
 from tastypie.utils.mime import build_content_type
@@ -114,6 +115,18 @@ class Conditional(object):
         return wrapper
 
 
+class SimplifiedURLS(object):
+
+    def base_urls(self):
+        """
+        The standard URLs this ``Resource`` should respond to.
+        """
+        return [
+            url(r"^(?P<resource_name>%s)%s$" % (self._meta.resource_name, trailing_slash()), self.wrap_view('dispatch_list'), name="api_dispatch_list"),
+            url(r"^(?P<resource_name>%s)/(?P<%s>[^/]+)%s$" % (self._meta.resource_name, self._meta.detail_uri_name, trailing_slash()), self.wrap_view('dispatch_detail'), name="api_dispatch_detail"),
+        ]
+
+
 class FixExceptionHandling(object):
 
     def _handle_500(self, request, exception):
@@ -121,7 +134,11 @@ class FixExceptionHandling(object):
         return super(FixExceptionHandling, self)._handle_500(request, exception)
 
 
-class ModelResource(CleanErrors, ClientCache, Conditional, FixExceptionHandling, TastypieModelResource):
+class Resource(ClientCache, Conditional, FixExceptionHandling, SimplifiedURLS, TastypieResource):
+    pass
+
+
+class ModelResource(CleanErrors, ClientCache, Conditional, FixExceptionHandling, SimplifiedURLS, TastypieModelResource):
 
     def filter_value_to_python(self, value, field_name, filters, filter_expr,
             filter_type):
@@ -148,15 +165,6 @@ class ModelResource(CleanErrors, ClientCache, Conditional, FixExceptionHandling,
                 value = value.split(',')
 
         return value
-
-    def base_urls(self):
-        """
-        The standard URLs this ``Resource`` should respond to.
-        """
-        return [
-            url(r"^(?P<resource_name>%s)%s$" % (self._meta.resource_name, trailing_slash()), self.wrap_view('dispatch_list'), name="api_dispatch_list"),
-            url(r"^(?P<resource_name>%s)/(?P<%s>[^/]+)%s$" % (self._meta.resource_name, self._meta.detail_uri_name, trailing_slash()), self.wrap_view('dispatch_detail'), name="api_dispatch_detail"),
-        ]
 
     def get_via_uri(self, uri, request=None):
         # @@@ Hackish
