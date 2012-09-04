@@ -48,7 +48,6 @@ def downloads(label):
             continue
 
         date = statfile[:-4]
-        year, month, day = date.split("-")
 
         last_modified_key = "pypi:download:last_modified:%s" % url
         last_modified = r.get(last_modified_key)
