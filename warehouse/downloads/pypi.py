@@ -1,4 +1,5 @@
 import bz2
+import collections
 import csv
 import io
 import logging
@@ -83,7 +84,7 @@ def downloads(label):
                         """)
                         files = dict(cursor.fetchall())
 
-                        total = 0
+                        totals = collections.Counter()
 
                         for i, row in enumerate(csv_r):
                             row["date"] = date
@@ -139,13 +140,11 @@ def downloads(label):
                                 changed = row["downloads"] - d[1]
                                 cursor.execute("UPDATE warehouse_download SET downloads = downloads + %s WHERE id = %s", [changed, d[0]])
 
-                            if changed:
-                                # We have changes so lets update
-                                Download.update_counts(row["project"], row.get("version", ""), row["filename"], changed)
-                                total += changed
+                            Download.update_counts(row["project"], row.get("version", ""), row["filename"], changed)
+                            totals[(row["project"], row.get("version", ""), row["filename"])] += changed
 
                         datastore = redis.StrictRedis(**dict([(k.lower(), v) for k, v in settings.REDIS.get("default", {}).items()]))
-                        datastore.incr("warehouse:stats:downloads", total)
+                        datastore.incr("warehouse:stats:downloads", sum(totals.values()))
                     except:
                         transaction.rollback()
                         raise
