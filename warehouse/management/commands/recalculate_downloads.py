@@ -1,6 +1,7 @@
 import logging
 import uuid
 
+import progress.bar
 import redis
 
 from django.core.management.base import NoArgsCommand
@@ -32,10 +33,16 @@ class Command(NoArgsCommand):
                 cursor.execute("UPDATE warehouse_version SET downloads = 0")
                 cursor.execute("UPDATE warehouse_versionfile SET downloads = 0")
 
+                # Get the number of downloads
+                cursor.execute("SELECT COUNT(id) FROM warehouse_download")
+                count = cursor.fetchall()[0][0]
+
+                logger.info("Found %s download records", count)
+
                 # Replay all the download counts
                 downloads.execute("SELECT project, version, filename, downloads FROM warehouse_download")
 
-                for i, record in enumerate(downloads):
+                for record in progress.bar.ShadyBar("Recalculating", max=count).iter(downloads):
                     # Update download counts
                     Download.update_counts(record[0], record[1], record[2], record[3])
 

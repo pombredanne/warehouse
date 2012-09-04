@@ -20,6 +20,7 @@ install_requires = [
     "python_dateutil>=2.1",
     "distutils2",
     "docutils",
+    "progress",
     "psycopg2",
     "redis",
     "requests",
