@@ -71,6 +71,8 @@ def downloads(label):
                     data = bz2.decompress(resp.content)
                     csv_r = csv.DictReader(io.BytesIO(data), ["project", "filename", "user_agent", "downloads"])
 
+                    total = 0
+
                     user_agents = {}
 
                     cursor.execute("SELECT id, agent FROM warehouse_useragent")
@@ -154,6 +156,10 @@ def downloads(label):
                             if changed:
                                 # We have changes so lets update
                                 Download.update_counts(row["project"], row.get("version", ""), row["filename"], changed)
+                                total += changed
+
+                            datastore = redis.StrictRedis(**dict([(k.lower(), v) for k, v in settings.REDIS.get("default", {}).items()]))
+                            datastore.incr("warehouse:stats:downloads", total)
                     except:
                         transaction.rollback()
                         raise
