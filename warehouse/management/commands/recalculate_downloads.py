@@ -1,3 +1,4 @@
+import collections
 import logging
 import uuid
 
@@ -22,9 +23,9 @@ class Command(NoArgsCommand):
 
         # Get the database cursors
         cursor = connection.cursor()
-        downloads = connection.connection.cursor(name=str(uuid.uuid4()))
+        downloads = connection.connection.cursor(name="cur" + str(uuid.uuid4()))
 
-        total = 0
+        totals = collections.Counter()
 
         with transaction.commit_manually():
             try:
@@ -34,8 +35,8 @@ class Command(NoArgsCommand):
                 cursor.execute("UPDATE warehouse_versionfile SET downloads = 0")
 
                 # Get the number of downloads
-                cursor.execute("SELECT COUNT(id) FROM warehouse_download")
-                count = cursor.fetchall()[0][0]
+                cursor.execute("SELECT reltuples FROM pg_class WHERE relname=%s", ["warehouse_download"])
+                count = int(cursor.fetchall()[0][0])
 
                 logger.info("Found %s download records", count)
 
@@ -43,11 +44,11 @@ class Command(NoArgsCommand):
                 downloads.execute("SELECT project, version, filename, downloads FROM warehouse_download")
 
                 for record in progress.bar.ShadyBar("Recalculating", max=count).iter(downloads):
-                    # Update download counts
-                    Download.update_counts(record[0], record[1], record[2], record[3])
+                    # Process Record
+                    totals[(record[0], record[1], record[2])] += record[3]
 
-                    # Update running total
-                    total += record[3]
+                for (project, version, filename), changed in progress.bar.ShadyBar("Updating Counts", max=len(totals)).iter(totals.iteritems()):
+                    Download.update_counts(project, version, filename, changed)
             except:
                 transaction.rollback()
                 raise
@@ -55,4 +56,4 @@ class Command(NoArgsCommand):
                 transaction.commit()
 
         datastore = redis.StrictRedis(**dict([(k.lower(), v) for k, v in settings.REDIS.get("default", {}).items()]))
-        datastore.set("warehouse:stats:downloads", total)
+        datastore.set("warehouse:stats:downloads", sum(totals.values()))
