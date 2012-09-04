@@ -18,6 +18,10 @@ from warehouse.models import Download
 from warehouse.utils import locks
 
 
+# How many rows to process between transactions
+ROWS_PER_TRANSACTION = 50
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -34,6 +38,9 @@ def downloads(label):
 
     # Get the database cursor
     cursor = connection.cursor()
+
+    # Redis datastore
+    datastore = redis.StrictRedis(**dict([(k.lower(), v) for k, v in settings.REDIS.get("default", {}).items()]))
 
     # Get a listing of all the Files
     resp = session.get(stats_url)
@@ -143,7 +150,11 @@ def downloads(label):
                             Download.update_counts(row["project"], row.get("version", ""), row["filename"], changed)
                             totals[(row["project"], row.get("version", ""), row["filename"])] += changed
 
-                        datastore = redis.StrictRedis(**dict([(k.lower(), v) for k, v in settings.REDIS.get("default", {}).items()]))
+                            if not i % ROWS_PER_TRANSACTION:
+                                datastore.incr("warehouse:stats:downloads", sum(totals.values()))
+                                totals = collections.Counter()
+                                transaction.commit()
+
                         datastore.incr("warehouse:stats:downloads", sum(totals.values()))
                     except:
                         transaction.rollback()
