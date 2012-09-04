@@ -75,6 +75,15 @@ def downloads(label):
                         cursor.execute("SELECT agent, id FROM warehouse_useragent")
                         user_agents = dict(cursor.fetchall())
 
+                        cursor.execute("""
+                            SELECT warehouse_versionfile.filename, warehouse_version.version
+                            FROM warehouse_version
+                            INNER JOIN warehouse_versionfile ON (
+                                warehouse_version.id = warehouse_versionfile.version_id
+                            )
+                        """)
+                        files = dict(cursor.fetchall())
+
                         total = 0
 
                         for i, row in enumerate(csv_r):
@@ -94,19 +103,10 @@ def downloads(label):
                                 ua = uas[0][0]
                                 user_agents[row["user_agent"]] = ua
 
-                            cursor.execute("""
-                                SELECT warehouse_version.version
-                                FROM warehouse_version
-                                INNER JOIN warehouse_versionfile ON (
-                                    warehouse_version.id = warehouse_versionfile.version_id
-                                )
-                                WHERE warehouse_versionfile.filename = %s
-                                LIMIT 1
-                            """, [row["filename"]])
-                            vfiles = cursor.fetchall()
+                            vfile = files.get(row["filename"], None)
 
-                            if vfiles:
-                                row["version"] = vfiles[0][0]
+                            if not vfile is None:
+                                row["version"] = vfile[0]
 
                             changed = 0
 
