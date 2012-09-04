@@ -10,7 +10,7 @@ import lxml.html
 import redis
 import requests
 
-from django.db import connection, transaction, IntegrityError
+from django.db import connection, transaction
 
 from warehouse.conf import settings
 from warehouse.models import Download
@@ -112,22 +112,10 @@ def downloads(label):
                             if vfiles:
                                 row["version"] = vfiles[0][0]
 
-                            sid = transaction.savepoint()
-
                             changed = 0
 
-                            try:
-                                cursor.execute("""
-                                    INSERT INTO warehouse_download (id, label, date, user_agent_id, project, version, filename, downloads)
-                                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                                """, [str(uuid.uuid4()), label, date, ua, row["project"], row.get("version", ""), row["filename"], row["downloads"]])
-
-                                changed = row["downloads"]
-                            except IntegrityError:
-                                transaction.savepoint_rollback(sid)
-
-                                args = [row["project"], row.get("version", ""), row["filename"], ua, date, label]
-                                cursor.execute("""
+                            args = [row["project"], row.get("version", ""), row["filename"], ua, date, label]
+                            cursor.execute("""
                                     SELECT id, downloads
                                     FROM warehouse_download
                                     WHERE project = %s
@@ -138,28 +126,31 @@ def downloads(label):
                                         and label = %s
                                 """, args)
 
-                                # There should only ever be 1 here
-                                downloads = cursor.fetchall()
-                                assert len(downloads) == 1
+                            downloads = cursor.fetchall()
 
+                            if not downloads:
+                                cursor.execute("""
+                                    INSERT INTO warehouse_download (id, label, date, user_agent_id, project, version, filename, downloads)
+                                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                                """, [str(uuid.uuid4()), label, date, ua, row["project"], row.get("version", ""), row["filename"], row["downloads"]])
+
+                                changed = row["downloads"]
+                            else:
+                                # There should only ever be 1 here
+                                assert len(downloads) == 1
                                 d = downloads[0]
 
                                 # The total new value minus the existing value == amount changed
                                 changed = row["downloads"] - d[1]
-
                                 cursor.execute("UPDATE warehouse_download SET downloads = downloads + %s WHERE id = %s", [changed, d[0]])
-
-                                transaction.savepoint_commit(sid)
-                            else:
-                                transaction.savepoint_commit(sid)
 
                             if changed:
                                 # We have changes so lets update
                                 Download.update_counts(row["project"], row.get("version", ""), row["filename"], changed)
                                 total += changed
 
-                            datastore = redis.StrictRedis(**dict([(k.lower(), v) for k, v in settings.REDIS.get("default", {}).items()]))
-                            datastore.incr("warehouse:stats:downloads", total)
+                        datastore = redis.StrictRedis(**dict([(k.lower(), v) for k, v in settings.REDIS.get("default", {}).items()]))
+                        datastore.incr("warehouse:stats:downloads", total)
                     except:
                         transaction.rollback()
                         raise
