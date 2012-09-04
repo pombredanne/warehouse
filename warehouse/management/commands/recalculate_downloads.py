@@ -10,10 +10,6 @@ from warehouse.conf import settings
 from warehouse.models import Download
 
 
-# Number of rows to include in a transaction
-ROWS_PER_TRANSACTION = 50
-
-
 logger = logging.getLogger(__name__)
 
 
@@ -25,14 +21,14 @@ class Command(NoArgsCommand):
 
         # Get the database cursors
         cursor = connection.cursor()
-        downloads = connection.cursor(str(uuid.uuid4()))
+        downloads = connection.connection.cursor(name=str(uuid.uuid4()))
 
         seen = set()
 
         total = 0
 
-        try:
-            with transaction.commit_manually():
+        with transaction.commit_manually():
+            try:
                 downloads.execute("SELECT project, version, filename, downloads FROM warehouse_download")
 
                 for i, record in enumerate(downloads):
@@ -40,6 +36,7 @@ class Command(NoArgsCommand):
                     pids, vids = None, None
 
                     if not record[0] in seen:
+                        logger.debug("Resetting download counts for %s", record[0])
                         cursor.execute("UPDATE warehouse_project SET downloads = 0 WHERE name = %s RETURNING id", [record[0]])
                         pids = cursor.fetchall()
 
@@ -56,14 +53,13 @@ class Command(NoArgsCommand):
                     # Update running total
                     total += record[3]
 
-                    # Commit transactions
-                    if not i % ROWS_PER_TRANSACTION:
-                        transaction.commit()
-        except:
-            transaction.rollback()
-            raise
-        else:
-            transaction.commit()
+                    # We've now seen this Project
+                    seen.add(record[0])
+            except:
+                transaction.rollback()
+                raise
+            else:
+                transaction.commit()
 
         datastore = redis.StrictRedis(**dict([(k.lower(), v) for k, v in settings.REDIS.get("default", {}).items()]))
         datastore.set("warehouse:stats:downloads", total)
