@@ -71,12 +71,12 @@ def downloads(label):
                     data = bz2.decompress(resp.content)
                     csv_r = csv.DictReader(io.BytesIO(data), ["project", "filename", "user_agent", "downloads"])
 
-                    total = 0
-
-                    cursor.execute("SELECT agent, id FROM warehouse_useragent")
-                    user_agents = dict(cursor.fetchall())
-
                     try:
+                        cursor.execute("SELECT agent, id FROM warehouse_useragent")
+                        user_agents = dict(cursor.fetchall())
+
+                        total = 0
+
                         for i, row in enumerate(csv_r):
                             row["date"] = date
                             row["downloads"] = int(row["downloads"])
