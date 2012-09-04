@@ -73,12 +73,8 @@ def downloads(label):
 
                     total = 0
 
-                    user_agents = {}
-
-                    cursor.execute("SELECT id, agent FROM warehouse_useragent")
-
-                    for i, agent in cursor.fetchall():
-                        user_agents[agent] = i
+                    cursor.execute("SELECT agent, id FROM warehouse_useragent")
+                    user_agents = dict(cursor.fetchall())
 
                     try:
                         for i, row in enumerate(csv_r):
