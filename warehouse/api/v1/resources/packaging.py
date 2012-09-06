@@ -62,6 +62,7 @@ class ProjectResource(ModelResource):
 
     # Read only fields
     downloads = fields.IntegerField(attribute="downloads", readonly=True)
+    normalized = fields.CharField(attribute="normalized", readonly=True)
 
     # related fields
     versions = fields.ToManyField("warehouse.api.v1.resources.VersionResource", handle_yanked_versions, readonly=True, null=True)
@@ -69,16 +70,17 @@ class ProjectResource(ModelResource):
 
     class Meta:
         resource_name = "projects"
-        detail_uri_name = "name"
+        detail_uri_name = "normalized"
 
         queryset = Project.objects.all()
-        fields = ["created", "downloads", "name"]
+        fields = ["created", "downloads", "name", "normalized"]
 
         filtering = {
             "name": ALL,
+            "normalized": ALL,
         }
 
-        ordering = ["name", "downloads"]
+        ordering = ["name", "normalized", "downloads"]
 
         authentication = MultiAuthentication(BasicAuthentication())
         authorization = DjangoAuthorization()
@@ -170,7 +172,7 @@ class VersionResource(ModelResource):
     def base_urls(self):
         return [
             url(r"^(?P<resource_name>%s)%s$" % (self._meta.resource_name, trailing_slash()), self.wrap_view('dispatch_list'), name="api_dispatch_list"),
-            url(r"^(?P<resource_name>%s)/(?P<project__name>[^/]+)/(?P<%s>[^/]+)%s$" % (self._meta.resource_name, self._meta.detail_uri_name, trailing_slash()), self.wrap_view('dispatch_detail'), name="api_dispatch_detail"),
+            url(r"^(?P<resource_name>%s)/(?P<project__normalized>[^/]+)/(?P<%s>[^/]+)%s$" % (self._meta.resource_name, self._meta.detail_uri_name, trailing_slash()), self.wrap_view('dispatch_detail'), name="api_dispatch_detail"),
         ]
 
     def detail_uri_kwargs(self, bundle_or_obj):
@@ -178,7 +180,7 @@ class VersionResource(ModelResource):
 
         uri_kwargs = super(ModelResource, self).detail_uri_kwargs(bundle_or_obj)
         uri_kwargs.update({
-            "project__name": obj.project.name,
+            "project__normalized": obj.project.normalized,
         })
 
         return uri_kwargs
