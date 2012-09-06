@@ -56,7 +56,7 @@ class Project(TimeStampedModel):
     def latest(self):
         if not hasattr(self, "_latest"):
             try:
-                self._latest = self.versions.latest("created")
+                self._latest = self.versions.order_by("-order")[:1].get()
             except Version.DoesNotExist:
                 self._latest = None
         return self._latest
