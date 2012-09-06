@@ -48,9 +48,9 @@ class SearchResource(Resource):
 
             if bundle_or_obj is not None:
                 if isinstance(bundle_or_obj, Bundle):
-                    kwargs["normalized"] = getattr(bundle_or_obj.obj, "normalized")
+                    kwargs["name"] = getattr(bundle_or_obj.obj, "name")
                 else:
-                    kwargs["normalized"] = getattr(bundle_or_obj, "normalized")
+                    kwargs["name"] = getattr(bundle_or_obj, "name")
 
             return self._build_reverse_url(url_name, kwargs=kwargs)
 
