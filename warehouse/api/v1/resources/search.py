@@ -20,6 +20,8 @@ __all__ = ["SearchResource"]
 class SearchResource(Resource):
 
     name = fields.CharField("name", readonly=True)
+    summary = fields.CharField("summary", readonly=True)
+    description = fields.CharField("description", readonly=True)
 
     class Meta:
         resource_name = "search"
