@@ -132,12 +132,13 @@ def downloads(label):
                             downloads = cursor.fetchall()
 
                             if not downloads:
-                                cursor.execute("""
-                                    INSERT INTO warehouse_download (id, label, date, user_agent_id, project, version, filename, downloads)
-                                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                                """, [str(uuid.uuid4()), label, date, ua, row["project"], row.get("version", ""), row["filename"], row["downloads"]])
-
                                 changed = row["downloads"]
+
+                                if changed:
+                                    cursor.execute("""
+                                        INSERT INTO warehouse_download (id, label, date, user_agent_id, project, version, filename, downloads)
+                                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                                    """, [str(uuid.uuid4()), label, date, ua, row["project"], row.get("version", ""), row["filename"], row["downloads"]])
                             else:
                                 # There should only ever be 1 here
                                 assert len(downloads) == 1
@@ -145,7 +146,9 @@ def downloads(label):
 
                                 # The total new value minus the existing value == amount changed
                                 changed = row["downloads"] - d[1]
-                                cursor.execute("UPDATE warehouse_download SET downloads = downloads + %s WHERE id = %s", [changed, d[0]])
+
+                                if changed:
+                                    cursor.execute("UPDATE warehouse_download SET downloads = downloads + %s WHERE id = %s", [changed, d[0]])
 
                             Download.update_counts(row["project"], row.get("version", ""), row["filename"], changed)
                             totals[(row["project"], row.get("version", ""), row["filename"])] += changed
