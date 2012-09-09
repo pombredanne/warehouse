@@ -1,7 +1,8 @@
 import os
 
-from django.core.wsgi import get_wsgi_application
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "warehouse.settings.base")
+os.environ.setdefault("DJANGO_CONFIGURATION", "WarehouseSettings")
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "warehouse.settings.server")
+from configurations.wsgi import get_wsgi_application
 
 application = get_wsgi_application()

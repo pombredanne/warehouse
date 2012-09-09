@@ -8,13 +8,13 @@ install_requires = [
     "Django>=1.4",
 
     "django-appconf",
+    "django-configurations",
     "django-haystack",
     "django-hstore",
     "django-json-field",
     "django-model-utils>=1.1",
     "django-tastypie",
     "django-uuidfield",
-    "logan",
     "south",
 
     "python_dateutil>=2.1",
@@ -54,7 +54,7 @@ setup(
 
     entry_points={
         "console_scripts": [
-            "warehouse = warehouse.utils.runner:main",
+            "warehouse = warehouse.__main__:main",
         ],
     },
 )
