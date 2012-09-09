@@ -23,5 +23,5 @@ class Command(NoArgsCommand):
         if total_downloads is None:
             total_downloads = 0
 
-        datastore = redis.StrictRedis(**dict([(k.lower(), v) for k, v in settings.REDIS.get("default", {}).items()]))
+        datastore = redis.StrictRedis(**dict([(k.lower(), v) for k, v in settings.REDIS.items()]))
         datastore.set("warehouse:stats:downloads", total_downloads)

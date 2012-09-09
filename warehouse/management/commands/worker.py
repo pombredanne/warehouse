@@ -13,12 +13,6 @@ class Command(BaseCommand):
     help = "Starts an RQ worker"
 
     option_list = BaseCommand.option_list + (
-        make_option("--redis", "-r",
-            action="store",
-            dest="redis",
-            default="default",
-            help="Which REDIS key to use (default: default)"
-        ),
         make_option("--burst", "-b",
             action="store_true",
             dest="burst",
@@ -36,9 +30,7 @@ class Command(BaseCommand):
         if not args:
             args = ["default"]
 
-        config = settings.REDIS[options["redis"]]
-        kwargs = dict([(k.lower(), v) for k, v in config.items()])
-        conn = redis.Redis(**kwargs)
+        conn = redis.Redis(**dict([(k.lower(), v) for k, v in settings.REDIS.items()]))
 
         with rq.Connection(conn):
             worker = rq.Worker([rq.Queue(q) for q in args], name=options.get("name", getattr(settings, "RQ_NAME", None)))

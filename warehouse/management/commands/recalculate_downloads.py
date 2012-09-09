@@ -55,5 +55,5 @@ class Command(NoArgsCommand):
             else:
                 transaction.commit()
 
-        datastore = redis.StrictRedis(**dict([(k.lower(), v) for k, v in settings.REDIS.get("default", {}).items()]))
+        datastore = redis.StrictRedis(**dict([(k.lower(), v) for k, v in settings.REDIS.items()]))
         datastore.set("warehouse:stats:downloads", sum(totals.values()))

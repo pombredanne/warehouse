@@ -30,17 +30,11 @@ def downloads(label):
 
     session = requests.session(verify=getattr(settings, "PYPI_SSL_CERT", os.path.join(os.path.dirname(__file__), "pypi.crt")))
 
-    redis_db = "pypi" if "pypi" in settings.REDIS else "default"
-
-    config = settings.REDIS[redis_db]
-    kwargs = dict([(k.lower(), v) for k, v in config.items()])
-    r = redis.StrictRedis(**kwargs)
-
     # Get the database cursor
     cursor = connection.cursor()
 
     # Redis datastore
-    datastore = redis.StrictRedis(**dict([(k.lower(), v) for k, v in settings.REDIS.get("default", {}).items()]))
+    datastore = redis.StrictRedis(**dict([(k.lower(), v) for k, v in settings.REDIS.items()]))
 
     # Get a listing of all the Files
     resp = session.get(stats_url)
@@ -58,7 +52,7 @@ def downloads(label):
         date = statfile[:-4]
 
         last_modified_key = "pypi:download:last_modified:%s" % url
-        last_modified = r.get(last_modified_key)
+        last_modified = datastore.get(last_modified_key)
 
         headers = {"If-Modified-Since": last_modified} if last_modified else None
 
@@ -166,9 +160,9 @@ def downloads(label):
                         transaction.commit()
 
                 if "Last-Modified" in resp.headers:
-                    r.set(last_modified_key, resp.headers["Last-Modified"])
+                    datastore.set(last_modified_key, resp.headers["Last-Modified"])
                 else:
-                    r.delete(last_modified_key)
+                    datastore.delete(last_modified_key)
         except locks.LockTimeout:
             continue
 

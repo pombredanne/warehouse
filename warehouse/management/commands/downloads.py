@@ -13,12 +13,6 @@ class Command(LabelCommand):
     help = "Spawns download counting jobs"
 
     option_list = LabelCommand.option_list + (
-        make_option("--redis", "-r",
-            action="store",
-            dest="redis",
-            default="default",
-            help="Which REDIS key to use (default: default)"
-        ),
         make_option("--queue", "-q",
             action="store",
             dest="queue",
@@ -31,10 +25,7 @@ class Command(LabelCommand):
         if not label in settings.WAREHOUSE_DOWNLOAD_SOURCES:
             raise CommandError("No download source identified by the %s label" % label)
 
-        config = settings.REDIS[options["redis"]]
-        kwargs = dict([(k.lower(), v) for k, v in config.items()])
-        conn = redis.Redis(**kwargs)
-
+        conn = redis.Redis(**dict([(k.lower(), v) for k, v in settings.REDIS.items()]))
         function = settings.WAREHOUSE_DOWNLOAD_SOURCES[label]
 
         q = rq.Queue(options["queue"], connection=conn)

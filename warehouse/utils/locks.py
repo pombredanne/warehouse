@@ -5,7 +5,7 @@ from warehouse.conf import settings
 
 
 class Lock(object):
-    def __init__(self, key, expires=60, timeout=10, using="default"):
+    def __init__(self, key, expires=60, timeout=10):
         """
         Distributed locking using Redis SETNX and GETSET.
 
@@ -27,8 +27,7 @@ class Lock(object):
         self.key = key
         self.timeout = timeout
         self.expires = expires
-        self.using = using
-        self.datastore = redis.StrictRedis(**dict([(k.lower(), v) for k, v in settings.REDIS[self.using].items()]))
+        self.datastore = redis.StrictRedis(**dict([(k.lower(), v) for k, v in settings.REDIS.items()]))
         self._expiration = None
 
     def __enter__(self):
