@@ -4,6 +4,9 @@ import sys
 
 
 def main():
+    # @@@ Why is this required?
+    sys.path = [""] + sys.path
+
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "warehouse.settings.base")
     os.environ.setdefault("DJANGO_CONFIGURATION", "WarehouseSettings")
 
