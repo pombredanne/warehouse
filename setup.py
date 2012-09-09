@@ -8,6 +8,7 @@ install_requires = [
     "Django>=1.4",
 
     "django-appconf",
+    "django-configurations",
     "django-haystack",
     "django-hstore",
     "django-json-field",
