@@ -1,9 +1,41 @@
+from django.db.models import signals
+
 from haystack import indexes
 
-from warehouse.models import Project
+from warehouse.models import Project, Version, VersionFile
 
 
-class ProjectIndex(indexes.RealTimeSearchIndex, indexes.Indexable):
+class ProjectRealTimeSearchIndex(indexes.RealTimeSearchIndex):
+
+    def _setup_save(self):
+        signals.post_save.connect(self.update_object, sender=self.get_model())
+        signals.post_save.connect(self.update_version, sender=Version)
+        signals.post_save.connect(self.update_versionfile, sender=VersionFile)
+
+    def _setup_delete(self):
+        signals.post_delete.connect(self.remove_object, sender=self.get_model())
+        # Deleting a Version or VersionFile should just update the Project index
+        signals.post_save.connect(self.update_version, sender=Version)
+        signals.post_save.connect(self.update_versionfile, sender=VersionFile)
+
+    def _teardown_save(self):
+        signals.post_save.disconnect(self.update_object, sender=self.get_model())
+        signals.post_save.disconnect(self.update_version, sender=Version)
+        signals.post_save.disconnect(self.update_versionfile, sender=VersionFile)
+
+    def _teardown_delete(self):
+        signals.post_delete.disconnect(self.remove_object, sender=self.get_model())
+        signals.post_save.disconnect(self.update_version, sender=Version)
+        signals.post_save.disconnect(self.update_versionfile, sender=VersionFile)
+
+    def update_version(self, instance, using=None, **kwargs):
+        return self.update_object(instance.project, using=using, **kwargs)
+
+    def update_versionfile(self, instance, using=None, **kwargs):
+        return self.update_object(instance.version.project, using=using, **kwargs)
+
+
+class ProjectIndex(ProjectRealTimeSearchIndex, indexes.Indexable):
 
     text = indexes.CharField(document=True, use_template=True)
 
