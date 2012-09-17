@@ -34,6 +34,12 @@ class ProjectRealTimeSearchIndex(indexes.RealTimeSearchIndex):
     def update_versionfile(self, instance, using=None, **kwargs):
         return self.update_object(instance.version.project, using=using, **kwargs)
 
+    # @@@ Move this into Haystack proper?
+    def update_object(self, instance, using=None, **kwargs):
+        # Check to make sure we want to index this first.
+        if self.should_update(instance, **kwargs):
+            self._get_backend(using).update(self, [instance], commit=False)
+
 
 class ProjectIndex(ProjectRealTimeSearchIndex, indexes.Indexable):
 
