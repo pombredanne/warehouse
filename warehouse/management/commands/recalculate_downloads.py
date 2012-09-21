@@ -41,14 +41,14 @@ class Command(NoArgsCommand):
                 logger.info("Found %s download records", count)
 
                 # Replay all the download counts
-                downloads.execute("SELECT project, version, filename, downloads FROM warehouse_download")
+                downloads.execute("SELECT project, filename, downloads FROM warehouse_download")
 
                 for record in progress.bar.ShadyBar("Recalculating", max=count).iter(downloads):
                     # Process Record
                     totals[(record[0], record[1], record[2])] += record[3]
 
-                for (project, version, filename), changed in progress.bar.ShadyBar("Updating Counts", max=len(totals)).iter(totals.iteritems()):
-                    Download.update_counts(project, version, filename, changed)
+                for (project, filename), changed in progress.bar.ShadyBar("Updating Counts", max=len(totals)).iter(totals.iteritems()):
+                    Download.update_counts(project, filename, changed)
             except:
                 transaction.rollback()
                 raise

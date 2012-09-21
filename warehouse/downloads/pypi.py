@@ -76,15 +76,6 @@ def downloads(label):
                         cursor.execute("SELECT agent, id FROM warehouse_useragent")
                         user_agents = dict(cursor.fetchall())
 
-                        cursor.execute("""
-                            SELECT warehouse_versionfile.filename, warehouse_version.version
-                            FROM warehouse_version
-                            INNER JOIN warehouse_versionfile ON (
-                                warehouse_version.id = warehouse_versionfile.version_id
-                            )
-                        """)
-                        files = dict(cursor.fetchall())
-
                         totals = collections.Counter()
 
                         for i, row in enumerate(csv_r):
@@ -104,19 +95,13 @@ def downloads(label):
                                 ua = uas[0][0]
                                 user_agents[row["user_agent"]] = ua
 
-                            vfile = files.get(row["filename"], None)
-
-                            if not vfile is None:
-                                row["version"] = vfile[0]
-
                             changed = 0
 
-                            args = [row["project"], row.get("version", ""), row["filename"], ua, date, label]
+                            args = [row["project"], row["filename"], ua, date, label]
                             cursor.execute("""
                                     SELECT id, downloads
                                     FROM warehouse_download
                                     WHERE project = %s
-                                        AND version = %s
                                         AND filename = %s
                                         AND user_agent_id = %s
                                         AND date = %s
@@ -130,9 +115,9 @@ def downloads(label):
 
                                 if changed:
                                     cursor.execute("""
-                                        INSERT INTO warehouse_download (id, label, date, user_agent_id, project, version, filename, downloads)
-                                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                                    """, [str(uuid.uuid4()), label, date, ua, row["project"], row.get("version", ""), row["filename"], row["downloads"]])
+                                        INSERT INTO warehouse_download (id, label, date, user_agent_id, project, filename, downloads)
+                                        VALUES (%s, %s, %s, %s, %s, %s, %s)
+                                    """, [str(uuid.uuid4()), label, date, ua, row["project"], row["filename"], row["downloads"]])
                             else:
                                 # There should only ever be 1 here
                                 assert len(downloads) == 1
@@ -144,8 +129,8 @@ def downloads(label):
                                 if changed:
                                     cursor.execute("UPDATE warehouse_download SET downloads = downloads + %s WHERE id = %s", [changed, d[0]])
 
-                            Download.update_counts(row["project"], row.get("version", ""), row["filename"], changed)
-                            totals[(row["project"], row.get("version", ""), row["filename"])] += changed
+                            Download.update_counts(row["project"], row["filename"], changed)
+                            totals[(row["project"], row["filename"])] += changed
 
                             if not i % ROWS_PER_TRANSACTION:
                                 datastore.incr("warehouse:stats:downloads", sum(totals.values()))
