@@ -45,7 +45,7 @@ class Command(NoArgsCommand):
 
                 for record in progress.bar.ShadyBar("Recalculating", max=count).iter(downloads):
                     # Process Record
-                    totals[(record[0], record[1])] += record[3]
+                    totals[(record[0], record[1])] += record[2]
 
                 for (project, filename), changed in progress.bar.ShadyBar("Updating Counts", max=len(totals)).iter(totals.iteritems()):
                     Download.update_counts(project, filename, changed)
