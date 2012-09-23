@@ -19,6 +19,8 @@ class WarehouseSettings(Settings):
 
     APPEND_SLASH = True
 
+    SOUTH_DATABASE_ADAPTERS = {}
+
     CACHES = {
         "default": {
             "BACKEND": "django.core.cache.backends.dummy.DummyCache",
@@ -131,3 +133,19 @@ class WarehouseSettings(Settings):
             "ENGINE": "haystack.backends.simple_backend.SimpleEngine",
         },
     }
+
+    def __init__(self):
+        # These settings must be set or bad things happens
+
+        for key in self.DATABASES:
+            # Ensure database level autocommit
+            options = self.DATABASES[key].get("OPTIONS", {})
+            options.update({"autocommit": True})
+            self.DATABASES[key]["OPTIONS"] = options
+
+            # Set databases to the HSTORE backend (Postgresql)
+            if self.DATABASES[key]["ENGINE"] == "django.db.backends.postgresql_psycopg2":
+                self.DATABASES[key]["ENGINE"] = "django_hstore.postgresql_psycopg2"
+
+                # Make sure that South respects the new backend
+                self.SOUTH_DATABASE_ADAPTERS[key] = "south.db.postgresql_psycopg2"
