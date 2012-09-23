@@ -1,6 +1,5 @@
 from django.conf.urls import url
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import transaction
 
 from tastypie import fields
 from tastypie.authentication import MultiAuthentication
@@ -20,6 +19,7 @@ from warehouse.api.v1.forms.packaging import ProjectForm, VersionForm, VersionFi
 from warehouse.models import Event
 from warehouse.models import Project, Version, VersionFile, Classifier
 from warehouse.models import Require, Provide, Obsolete
+from warehouse.utils.transactions import xact
 
 
 # @@@ Sort out Permissions
@@ -248,7 +248,7 @@ class VersionResource(ModelResource):
             except ObjectDoesNotExist:
                 raise NotFound("A model instance matching the provided arguments could not be found.")
 
-        with transaction.commit_on_success():
+        with xact():
             obj.yanked = True
             obj.save()
 
@@ -430,7 +430,7 @@ class FileResource(ModelResource):
             except ObjectDoesNotExist:
                 raise NotFound("A model instance matching the provided arguments could not be found.")
 
-        with transaction.commit_on_success():
+        with xact():
             obj.yanked = True
             obj.save()
 
