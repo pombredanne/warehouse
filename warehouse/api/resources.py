@@ -5,7 +5,6 @@ import urllib
 from django.conf.urls import url
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.signals import got_request_exception
-from django.db import transaction
 from django.utils.cache import patch_cache_control, patch_vary_headers
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import condition
@@ -17,6 +16,7 @@ from tastypie.utils import trailing_slash
 from tastypie.utils.mime import build_content_type
 
 from warehouse.api.http import HttpUnprocessableEntity
+from warehouse.utils.transactions import xact
 
 
 __all__ = ["ModelResource"]
@@ -172,7 +172,7 @@ class ModelResource(CleanErrors, ClientCache, Conditional, FixExceptionHandling,
         return super(ModelResource, self).get_via_uri(uri, request=request)
 
     def obj_create(self, bundle, request=None, **kwargs):
-        with transaction.commit_on_success():
+        with xact():
             bundle = super(ModelResource, self).obj_create(bundle, request=request, **kwargs)
 
             try:
@@ -186,11 +186,11 @@ class ModelResource(CleanErrors, ClientCache, Conditional, FixExceptionHandling,
         raise NotImplementedError()
 
     def obj_update(self, bundle, request=None, skip_errors=False, **kwargs):
-        with transaction.commit_on_success():
-            # Hack to force lookup
-            bundle.obj = self.obj_get(request=request, **kwargs)
-            current = copy.copy(bundle.obj)
+        # Hack to force lookup
+        bundle.obj = self.obj_get(request=request, **kwargs)
+        current = copy.copy(bundle.obj)
 
+        with xact():
             bundle = super(ModelResource, self).obj_update(bundle, request=request, skip_errors=skip_errors, **kwargs)
 
             try:
@@ -214,7 +214,7 @@ class ModelResource(CleanErrors, ClientCache, Conditional, FixExceptionHandling,
 
         kwargs["_obj"] = obj
 
-        with transaction.commit_on_success():
+        with xact():
             try:
                 self.on_obj_delete(obj, request=request, **kwargs)
             except NotImplementedError:
