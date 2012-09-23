@@ -14,6 +14,7 @@ from warehouse.api.authentication import BasicAuthentication
 from warehouse.api.fields import Base64FileField
 from warehouse.api.resources import ModelResource
 from warehouse.api.serializers import Serializer
+from warehouse.api.transaction import XactTransaction
 from warehouse.api.validation import FormValidation
 from warehouse.api.v1.forms.packaging import ProjectForm, VersionForm, VersionFileForm
 from warehouse.models import Event
@@ -81,6 +82,8 @@ class ProjectResource(ModelResource):
         }
 
         ordering = ["name", "normalized", "downloads"]
+
+        transaction_class = XactTransaction
 
         authentication = MultiAuthentication(BasicAuthentication())
         authorization = DjangoAuthorization()
@@ -155,6 +158,8 @@ class VersionResource(ModelResource):
             "project": ALL_WITH_RELATIONS,
             "version": ALL_WITH_RELATIONS,
         }
+
+        transaction_class = XactTransaction
 
         authentication = MultiAuthentication(BasicAuthentication())
         authorization = DjangoAuthorization()
@@ -314,6 +319,8 @@ class RequireResource(TastypieModelResource):
         include_resource_uri = False
         queryset = Require.objects.all()
 
+        transaction_class = XactTransaction
+
         serializer = Serializer(formats=["json", "jsonp"])
 
     def dehydrate(self, bundle):
@@ -332,6 +339,8 @@ class ProvideResource(TastypieModelResource):
         include_resource_uri = False
         queryset = Provide.objects.all()
 
+        transaction_class = XactTransaction
+
         serializer = Serializer(formats=["json", "jsonp"])
 
     def dehydrate(self, bundle):
@@ -349,6 +358,8 @@ class ObsoleteResource(TastypieModelResource):
         fields = ["name", "version", "environment"]
         include_resource_uri = False
         queryset = Obsolete.objects.all()
+
+        transaction_class = XactTransaction
 
         serializer = Serializer(formats=["json", "jsonp"])
 
@@ -388,6 +399,8 @@ class FileResource(ModelResource):
             "version": ALL_WITH_RELATIONS,
             "filename": ALL,
         }
+
+        transaction_class = XactTransaction
 
         authentication = MultiAuthentication(BasicAuthentication())
         authorization = DjangoAuthorization()
