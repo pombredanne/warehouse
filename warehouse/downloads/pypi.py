@@ -18,7 +18,7 @@ from warehouse.utils import locks
 
 
 # How many rows to process between transactions
-ROWS_PER_TRANSACTION = 50
+ROWS_PER_TRANSACTION = 25
 
 
 logger = logging.getLogger(__name__)
