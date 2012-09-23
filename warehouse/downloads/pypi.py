@@ -5,7 +5,6 @@ import io
 import logging
 import os
 import urlparse
-import uuid
 
 import lxml.html
 import redis
@@ -115,9 +114,9 @@ def downloads(label):
 
                                 if changed:
                                     cursor.execute("""
-                                        INSERT INTO warehouse_download (id, label, date, user_agent_id, project, filename, downloads)
+                                        INSERT INTO warehouse_download (label, date, user_agent_id, project, filename, downloads)
                                         VALUES (%s, %s, %s, %s, %s, %s, %s)
-                                    """, [str(uuid.uuid4()), label, date, ua, row["project"], row["filename"], row["downloads"]])
+                                    """, [label, date, ua, row["project"], row["filename"], row["downloads"]])
                             else:
                                 # There should only ever be 1 here
                                 assert len(downloads) == 1

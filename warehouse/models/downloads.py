@@ -1,9 +1,8 @@
-from django.db import models, connection
+from django.db import models
 from django.db.models import F
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from uuidfield import UUIDField
 
 from warehouse.models.packaging import Project, Version, VersionFile
 from warehouse.utils.track_data import track_data
@@ -21,8 +20,6 @@ class UserAgent(models.Model):
 
 @track_data("downloads")
 class Download(models.Model):
-    id = UUIDField(auto=True, primary_key=True)
-
     label = models.CharField(max_length=25)
 
     date = models.DateField()
