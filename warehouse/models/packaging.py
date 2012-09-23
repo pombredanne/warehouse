@@ -21,6 +21,7 @@ from docutils.core import publish_string
 from warehouse.conf import settings
 from warehouse.fields import dbarray
 from warehouse.utils.packages import version_file_upload_path, package_storage
+from warehouse.utils.transactions import xact
 
 
 __all__ = [
@@ -109,6 +110,11 @@ class Version(models.Model):
     def __unicode__(self):
         return u"%(project)s %(version)s" % {"project": self.project.name, "version": self.version}
 
+    def save(self, *args, **kwargs):
+        with xact():
+            # We have signals firing here so wrap it all in a transaction
+            return super(Version, self).save(*args, **kwargs)
+
 
 class VersionFile(models.Model):
 
@@ -168,7 +174,9 @@ class VersionFile(models.Model):
 
             self.digests[dtype] = hasher.hexdigest()
 
-        return super(VersionFile, self).save(*args, **kwargs)
+        with xact():
+            # We have signals firing here so wrap it all in a transaction
+            return super(VersionFile, self).save(*args, **kwargs)
 
     @property
     def hashed_url(self):
