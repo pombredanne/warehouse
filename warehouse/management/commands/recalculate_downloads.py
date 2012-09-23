@@ -34,14 +34,14 @@ class Command(NoArgsCommand):
 
         logger.info("Found %s download records", count)
 
-        # Replay all the download counts
-        downloads.execute("SELECT project, filename, downloads FROM warehouse_download")
-
-        for record in progress.bar.ShadyBar("Recalculating", max=count).iter(downloads):
-            # Process Record
-            totals[(record[0], record[1])] += record[2]
-
         with xact():
+            # Replay all the download counts
+            downloads.execute("SELECT project, filename, downloads FROM warehouse_download")
+
+            for record in progress.bar.ShadyBar("Recalculating", max=count).iter(downloads):
+                # Process Record
+                totals[(record[0], record[1])] += record[2]
+
             # Set all the download counts to 0
             cursor.execute("UPDATE warehouse_project SET downloads = 0")
             cursor.execute("UPDATE warehouse_version SET downloads = 0")
