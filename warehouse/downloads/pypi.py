@@ -115,7 +115,7 @@ def downloads(label):
                                 if changed:
                                     cursor.execute("""
                                         INSERT INTO warehouse_download (label, date, user_agent_id, project, filename, downloads)
-                                        VALUES (%s, %s, %s, %s, %s, %s, %s)
+                                        VALUES (%s, %s, %s, %s, %s, %s)
                                     """, [label, date, ua, row["project"], row["filename"], row["downloads"]])
                             else:
                                 # There should only ever be 1 here
