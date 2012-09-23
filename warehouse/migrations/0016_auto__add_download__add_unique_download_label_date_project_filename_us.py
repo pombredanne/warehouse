@@ -1,21 +1,32 @@
 # -*- coding: utf-8 -*-
-import datetime
 from south.db import db
 from south.v2 import SchemaMigration
-from django.db import models
 
 
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
+        # Adding model 'Download'
+        db.create_table('warehouse_download', (
+            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('label', self.gf('django.db.models.fields.CharField')(max_length=25)),
+            ('date', self.gf('django.db.models.fields.DateField')()),
+            ('user_agent', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['warehouse.UserAgent'])),
+            ('project', self.gf('django.db.models.fields.CharField')(max_length=512)),
+            ('filename', self.gf('django.db.models.fields.CharField')(max_length=512)),
+            ('downloads', self.gf('django.db.models.fields.PositiveIntegerField')(default=0)),
+        ))
+        db.send_create_signal('warehouse', ['Download'])
 
-        # Changing field 'Download.id'
-        db.alter_column('warehouse_download', 'id', self.gf('django.db.models.fields.AutoField')(primary_key=True))
+        # Adding unique constraint on 'Download', fields ['project', 'filename', 'user_agent', 'date', 'label']
+        db.create_unique('warehouse_download', ['project', 'filename', 'user_agent_id', 'date', 'label'])
 
     def backwards(self, orm):
+        # Removing unique constraint on 'Download', fields ['project', 'filename', 'user_agent', 'date', 'label']
+        db.delete_unique('warehouse_download', ['project', 'filename', 'user_agent_id', 'date', 'label'])
 
-        # Changing field 'Download.id'
-        db.alter_column('warehouse_download', 'id', self.gf('uuidfield.fields.UUIDField')(max_length=32, unique=True, primary_key=True))
+        # Deleting model 'Download'
+        db.delete_table('warehouse_download')
 
     models = {
         'auth.group': {
