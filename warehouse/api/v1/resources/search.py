@@ -33,8 +33,6 @@ class SearchResource(Resource):
         list_allowed_methods = ["get"]
         detail_allowed_methods = []
 
-        #cache_control = {"public": True, "max_age": 60, "s_maxage": 60}
-
         serializer = Serializer(formats=["json", "jsonp"])
 
     def get_resource_uri(self, bundle_or_obj=None, url_name='api_dispatch_list'):

@@ -88,8 +88,6 @@ class ProjectResource(ModelResource):
         list_allowed_methods = ["get", "post", "patch"]
         detail_allowed_methods = ["get", "put", "delete", "patch"]
 
-        cache_control = {"public": True, "max_age": 60, "s_maxage": 60}
-
         serializer = Serializer(formats=["json", "jsonp"])
         validation = FormValidation(form_class=ProjectForm)
 
@@ -163,8 +161,6 @@ class VersionResource(ModelResource):
 
         list_allowed_methods = ["get", "post", "patch"]
         detail_allowed_methods = ["get", "put", "delete", "patch"]
-
-        cache_control = {"public": True, "max_age": 60, "s_maxage": 60}
 
         serializer = Serializer(formats=["json", "jsonp"])
         validation = FormValidation(form_class=VersionForm)
@@ -398,8 +394,6 @@ class FileResource(ModelResource):
 
         list_allowed_methods = ["get", "post", "patch"]
         detail_allowed_methods = ["get", "put", "delete", "patch"]
-
-        cache_control = {"public": True, "max_age": 60, "s_maxage": 60}
 
         serializer = Serializer(formats=["json", "jsonp"])
         validation = FormValidation(form_class=VersionFileForm)

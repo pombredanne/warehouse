@@ -5,7 +5,6 @@ import urllib
 from django.conf.urls import url
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.signals import got_request_exception
-from django.utils.cache import patch_cache_control, patch_vary_headers
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import condition
 
@@ -72,19 +71,6 @@ class CleanErrors(object):
         return True
 
 
-class ClientCache(object):
-    def create_response(self, request, data, **response_kwargs):
-        response = super(ClientCache, self).create_response(request, data, **response_kwargs)
-
-        if request.method == "GET" and response.status_code == 200 and hasattr(self._meta, "cache_control"):
-            cache_control = self._meta.cache_control.copy()
-            patch_cache_control(response, **cache_control)
-
-        patch_vary_headers(response, ["Accept"])
-
-        return response
-
-
 class Conditional(object):
 
     def wrap_view(self, view):
@@ -134,11 +120,11 @@ class FixExceptionHandling(object):
         return super(FixExceptionHandling, self)._handle_500(request, exception)
 
 
-class Resource(ClientCache, Conditional, FixExceptionHandling, SimplifiedURLS, TastypieResource):
+class Resource(Conditional, FixExceptionHandling, SimplifiedURLS, TastypieResource):
     pass
 
 
-class ModelResource(CleanErrors, ClientCache, Conditional, FixExceptionHandling, SimplifiedURLS, TastypieModelResource):
+class ModelResource(CleanErrors, Conditional, FixExceptionHandling, SimplifiedURLS, TastypieModelResource):
 
     def filter_value_to_python(self, value, field_name, filters, filter_expr,
             filter_type):
