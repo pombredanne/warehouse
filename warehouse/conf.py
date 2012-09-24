@@ -20,3 +20,5 @@ class WarehouseAppConf(AppConf):
 
     DOWNLOAD_SOURCES = {}
     DOWNLOAD_COUNT_TIMEOUT = 15 * 60
+
+    UPDATE_DOWNLOAD_COUNTS = True

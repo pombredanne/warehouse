@@ -128,15 +128,20 @@ def downloads(label):
                                 if changed:
                                     cursor.execute("UPDATE warehouse_download SET downloads = downloads + %s WHERE id = %s", [changed, d[0]])
 
-                            Download.update_counts(row["project"], row["filename"], changed)
                             totals[(row["project"], row["filename"])] += changed
 
+                            if settings.WAREHOUSE_UPDATE_DOWNLOAD_COUNTS:
+                                Download.update_counts(row["project"], row["filename"], changed)
+
                             if not i % ROWS_PER_TRANSACTION:
-                                datastore.incr("warehouse:stats:downloads", sum(totals.values()))
+                                if settings.WAREHOUSE_UPDATE_DOWNLOAD_COUNTS:
+                                    datastore.incr("warehouse:stats:downloads", sum(totals.values()))
+
                                 totals = collections.Counter()
                                 transaction.commit()
 
-                        datastore.incr("warehouse:stats:downloads", sum(totals.values()))
+                        if settings.WAREHOUSE_UPDATE_DOWNLOAD_COUNTS:
+                            datastore.incr("warehouse:stats:downloads", sum(totals.values()))
                     except:
                         transaction.rollback()
                         raise
