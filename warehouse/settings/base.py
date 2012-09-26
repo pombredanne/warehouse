@@ -53,14 +53,11 @@ class BaseSettings(Settings):
     # If you set this to False, Django will not use timezone-aware datetimes.
     USE_TZ = True
 
-    MIDDLEWARE_CLASSES = [
-        "django.middleware.gzip.GZipMiddleware",
-        "django.middleware.common.CommonMiddleware",
-        "django.middleware.http.ConditionalGetMiddleware",
-        "django.contrib.sessions.middleware.SessionMiddleware",
-        "django.middleware.csrf.CsrfViewMiddleware",
-        "django.contrib.auth.middleware.AuthenticationMiddleware",
-        "django.contrib.messages.middleware.MessageMiddleware",
+    MIDDLEWARE = [
+        (100, "django.middleware.gzip.GZipMiddleware"),
+        (200, "django.middleware.common.CommonMiddleware"),
+        (300, "django.middleware.http.ConditionalGetMiddleware"),
+        (400, "django.middleware.csrf.CsrfViewMiddleware"),
     ]
 
     # List of callables that know how to import templates from various sources.
@@ -156,7 +153,20 @@ class BaseSettings(Settings):
 
         return apps
 
-        return self._INSTALLED_APPS
+    @property
+    def MIDDLEWARE_CLASSES(self):
+        middleware = []
+        seen = set()
+
+        for klass in self.__class__.mro():
+            for m in getattr(klass, "MIDDLEWARE", []):
+                if not m[1] in seen:
+                    seen.add(m[1])
+                    middleware.append(m)
+
+        middleware.sort(key=lambda x: x[0])
+
+        return [m[1] for m in middleware]
 
 
 class ApiSettings(BaseSettings):
@@ -174,4 +184,10 @@ class AppSettings(BaseSettings):
         "django.contrib.sites",
         "django.contrib.messages",
         "django.contrib.staticfiles",
+    ]
+
+    MIDDLEWARE = [
+        (350, "django.contrib.sessions.middleware.SessionMiddleware"),
+        (500, "django.contrib.auth.middleware.AuthenticationMiddleware"),
+        (600, "django.contrib.messages.middleware.MessageMiddleware"),
     ]
