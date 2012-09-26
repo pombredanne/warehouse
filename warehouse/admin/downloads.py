@@ -9,7 +9,7 @@ class UserAgentAdmin(admin.ModelAdmin):
 
 
 class DownloadAdmin(admin.ModelAdmin):
-    list_display = ["date", "project", "version", "filename", "downloads"]
+    list_display = ["date", "project", "filename", "downloads"]
     raw_id_fields = ["user_agent"]
 
 
