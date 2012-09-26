@@ -2,9 +2,39 @@ import os
 import os.path
 
 from configurations import Settings
+from configurations.base import SettingsBase
+
+
+class SettingsMergeBase(SettingsBase):
+
+    def __new__(cls, name, bases, attrs):
+        super_new = super(SettingsMergeBase, cls).__new__
+
+        # Create the class.
+        module = attrs.pop("__module__")
+        new_class = super_new(cls, name, bases, {"__module__": module})
+
+        #import pdb; pdb.set_trace()
+
+        parents = [base for base in bases if isinstance(base, SettingsMergeBase)]
+
+        # Merge INSTALLED_APPS
+        new_class.INSTALLED_APPS = []
+        for parent in parents:
+            new_class.INSTALLED_APPS += getattr(parent, "INSTALLED_APPS", [])
+        new_class.INSTALLED_APPS += attrs.pop("INSTALLED_APPS", [])
+
+        # Add all attributes to the class.
+        for obj_name, obj in attrs.items():
+            setattr(new_class, obj_name, obj)
+
+        return new_class
 
 
 class BaseSettings(Settings):
+
+    __metaclass__ = SettingsMergeBase
+
     PROJECT_ROOT = os.path.join(os.path.dirname(__file__), os.pardir)
 
     DEBUG = False
@@ -70,7 +100,7 @@ class BaseSettings(Settings):
         os.path.join(PROJECT_ROOT, "templates"),
     ]
 
-    APPS = [
+    INSTALLED_APPS = [
         "django.contrib.auth",
         "django.contrib.contenttypes",
 
@@ -141,19 +171,6 @@ class BaseSettings(Settings):
                 self.SOUTH_DATABASE_ADAPTERS[key] = "south.db.postgresql_psycopg2"
 
     @property
-    def INSTALLED_APPS(self):
-        apps = []
-        seen = set()
-
-        for klass in self.__class__.mro():
-            for app in getattr(klass, "APPS", []):
-                if not app in seen:
-                    seen.add(app)
-                    apps.append(app)
-
-        return apps
-
-    @property
     def MIDDLEWARE_CLASSES(self):
         middleware = []
         seen = set()
@@ -178,7 +195,7 @@ class AppSettings(BaseSettings):
 
     ROOT_URLCONF = "warehouse.urls"
 
-    APPS = [
+    INSTALLED_APPS = [
         "django.contrib.admin",
         "django.contrib.sessions",
         "django.contrib.sites",
