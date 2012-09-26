@@ -40,13 +40,13 @@ class SettingsMergeBase(SettingsBase):
 
         # Merge INSTALLED_APPS
         new_class.INSTALLED_APPS = []
-        for base in bases:
+        for base in reversed(bases):
             new_class.INSTALLED_APPS += getattr(base, "INSTALLED_APPS", [])
         new_class.INSTALLED_APPS += attrs.pop("INSTALLED_APPS", [])
 
         # Merge Logging
         new_class.LOGGING = {}
-        for base in bases:
+        for base in reversed(bases):
             new_class.LOGGING = merge_dict(new_class.LOGGING, getattr(base, "LOGGING", {}))
         new_class.LOGGING = merge_dict(new_class.LOGGING, attrs.pop("LOGGING", {}))
 
