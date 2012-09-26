@@ -145,17 +145,16 @@ class BaseSettings(Settings):
 
     @property
     def INSTALLED_APPS(self):
-        if not hasattr(self, "_INSTALLED_APPS"):
-            apps = []
-            seen = set()
+        apps = []
+        seen = set()
 
-            for klass in self.__class__.mro():
-                for app in getattr(klass, "APPS", []):
-                    if not app in seen:
-                        seen.add(app)
-                        apps.append(app)
+        for klass in self.__class__.mro():
+            for app in getattr(klass, "APPS", []):
+                if not app in seen:
+                    seen.add(app)
+                    apps.append(app)
 
-            self._INSTALLED_APPS = apps
+        return apps
 
         return self._INSTALLED_APPS
 
