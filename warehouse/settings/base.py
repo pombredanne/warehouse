@@ -109,6 +109,8 @@ class BaseSettings(Settings):
     # If you set this to False, Django will not use timezone-aware datetimes.
     USE_TZ = True
 
+    ROOT_URLCONF = "warehouse.api.urls"
+
     MIDDLEWARE = [
         (100, "django.middleware.gzip.GZipMiddleware"),
         (200, "django.middleware.common.CommonMiddleware"),
@@ -213,12 +215,7 @@ class BaseSettings(Settings):
         return [m[1] for m in middleware]
 
 
-class ApiSettings(BaseSettings):
-
-    ROOT_URLCONF = "warehouse.api.urls"
-
-
-class AppSettings(BaseSettings):
+class AdminSettings(BaseSettings):
 
     ROOT_URLCONF = "warehouse.urls"
 
