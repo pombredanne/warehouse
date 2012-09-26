@@ -4,7 +4,7 @@ import os.path
 from configurations import Settings
 
 
-class WarehouseSettings(Settings):
+class BaseSettings(Settings):
     PROJECT_ROOT = os.path.join(os.path.dirname(__file__), os.pardir)
 
     DEBUG = False
@@ -28,8 +28,6 @@ class WarehouseSettings(Settings):
     }
 
     SITE_ID = 1
-
-    ROOT_URLCONF = "warehouse.urls"
 
     # Local time zone for this installation. Choices can be found here:
     # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -77,12 +75,7 @@ class WarehouseSettings(Settings):
 
     APPS = [
         "django.contrib.auth",
-        "django.contrib.admin",
         "django.contrib.contenttypes",
-        "django.contrib.sessions",
-        "django.contrib.sites",
-        "django.contrib.messages",
-        "django.contrib.staticfiles",
 
         # External
         "haystack",
@@ -165,3 +158,21 @@ class WarehouseSettings(Settings):
             self._INSTALLED_APPS = apps
 
         return self._INSTALLED_APPS
+
+
+class ApiSettings(BaseSettings):
+
+    ROOT_URLCONF = "warehouse.api.urls"
+
+
+class AppSettings(BaseSettings):
+
+    ROOT_URLCONF = "warehouse.urls"
+
+    APPS = [
+        "django.contrib.admin",
+        "django.contrib.sessions",
+        "django.contrib.sites",
+        "django.contrib.messages",
+        "django.contrib.staticfiles",
+    ]
