@@ -75,7 +75,7 @@ class WarehouseSettings(Settings):
         os.path.join(PROJECT_ROOT, "templates"),
     ]
 
-    INSTALLED_APPS = [
+    APPS = [
         "django.contrib.auth",
         "django.contrib.admin",
         "django.contrib.contenttypes",
@@ -149,3 +149,19 @@ class WarehouseSettings(Settings):
 
                 # Make sure that South respects the new backend
                 self.SOUTH_DATABASE_ADAPTERS[key] = "south.db.postgresql_psycopg2"
+
+    @property
+    def INSTALLED_APPS(self):
+        if not hasattr(self, "_INSTALLED_APPS"):
+            apps = []
+            seen = set()
+
+            for klass in self.__class__.mro():
+                for app in getattr(klass, "APPS", []):
+                    if not app in seen:
+                        seen.add(app)
+                        apps.append(app)
+
+            self._INSTALLED_APPS = apps
+
+        return self._INSTALLED_APPS
