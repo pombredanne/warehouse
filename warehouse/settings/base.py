@@ -38,18 +38,16 @@ class SettingsMergeBase(SettingsBase):
         module = attrs.pop("__module__")
         new_class = super_new(cls, name, bases, {"__module__": module})
 
-        parents = [base for base in bases if isinstance(base, SettingsMergeBase)]
-
         # Merge INSTALLED_APPS
         new_class.INSTALLED_APPS = []
-        for parent in parents:
-            new_class.INSTALLED_APPS += getattr(parent, "INSTALLED_APPS", [])
+        for base in bases:
+            new_class.INSTALLED_APPS += getattr(base, "INSTALLED_APPS", [])
         new_class.INSTALLED_APPS += attrs.pop("INSTALLED_APPS", [])
 
         # Merge Logging
         new_class.LOGGING = {}
-        for parent in parents:
-            new_class.LOGGING = merge_dict(new_class.LOGGING, getattr(parent, "LOGGING", {}))
+        for base in bases:
+            new_class.LOGGING = merge_dict(new_class.LOGGING, getattr(base, "LOGGING", {}))
         new_class.LOGGING = merge_dict(new_class.LOGGING, attrs.pop("LOGGING", {}))
 
         # Add all attributes to the class.
@@ -169,6 +167,7 @@ class BaseSettings(Settings):
         },
 
         "loggers": {
+            "django.request": None,
             "requests.packages.urllib3": {
                 "handlers": [],
                 "propagate": False,
