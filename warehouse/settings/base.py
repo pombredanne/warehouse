@@ -38,8 +38,6 @@ class SettingsMergeBase(SettingsBase):
         module = attrs.pop("__module__")
         new_class = super_new(cls, name, bases, {"__module__": module})
 
-        #import pdb; pdb.set_trace()
-
         parents = [base for base in bases if isinstance(base, SettingsMergeBase)]
 
         # Merge INSTALLED_APPS
