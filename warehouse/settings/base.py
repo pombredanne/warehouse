@@ -52,16 +52,6 @@ class SettingsMergeBase(SettingsBase):
             new_class.LOGGING = merge_dict(new_class.LOGGING, getattr(parent, "LOGGING", {}))
         new_class.LOGGING = merge_dict(new_class.LOGGING, attrs.pop("LOGGING", {}))
 
-        # Create MIDDLEWARE_CLASSES
-        #  This cannot be a merge ala INSTALLED_APPS because order matters
-        middleware = []
-        for parent in parents:
-            middleware += getattr(parent, "MIDDLEWARE", [])
-        middleware += attrs.pop("MIDDLEWARE", [])
-        middleware.sort(key=lambda x: x[0])
-        new_class.MIDDLEWARE = middleware
-        new_class.MIDDLEWARE_CLASSES = [m[1] for m in middleware]
-
         # Add all attributes to the class.
         for obj_name, obj in attrs.items():
             setattr(new_class, obj_name, obj)
@@ -207,6 +197,21 @@ class BaseSettings(Settings):
 
                 # Make sure that South respects the new backend
                 self.SOUTH_DATABASE_ADAPTERS[key] = "south.db.postgresql_psycopg2"
+
+    @property
+    def MIDDLEWARE_CLASSES(self):
+        middleware = []
+        seen = set()
+
+        for klass in self.__class__.mro():
+            for m in getattr(klass, "MIDDLEWARE", []):
+                if not m[1] in seen:
+                    seen.add(m[1])
+                    middleware.append(m)
+
+        middleware.sort(key=lambda x: x[0])
+
+        return [m[1] for m in middleware]
 
 
 class ApiSettings(BaseSettings):
