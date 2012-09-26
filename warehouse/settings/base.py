@@ -1,8 +1,32 @@
+import collections
+import copy
 import os
 import os.path
 
 from configurations import Settings
 from configurations.base import SettingsBase
+
+
+def merge_dict(target, update):
+    target, update = copy.deepcopy(target), copy.deepcopy(update)
+
+    for key in update:
+        if not key in target:
+            # Key doesn't already exist no need to merge we can just assign it
+            target[key] = update[key]
+        else:
+            # Key exists so we need to merge it
+            if update[key] is None:
+                # None is special, it stands for delete
+                del target[key]
+            elif isinstance(target[key], collections.Mapping) and isinstance(update[key], collections.Mapping):
+                # Value is a Mapping so we recurse into it and merge it as well
+                target[key] = merge_dict(target[key], update[key])
+            else:
+                # Value is something else, so we assign it
+                target[key] = update[key]
+
+    return target
 
 
 class SettingsMergeBase(SettingsBase):
@@ -23,6 +47,12 @@ class SettingsMergeBase(SettingsBase):
         for parent in parents:
             new_class.INSTALLED_APPS += getattr(parent, "INSTALLED_APPS", [])
         new_class.INSTALLED_APPS += attrs.pop("INSTALLED_APPS", [])
+
+        # Merge Logging
+        new_class.LOGGING = {}
+        for parent in parents:
+            new_class.LOGGING = merge_dict(new_class.LOGGING, getattr(parent, "LOGGING", {}))
+        new_class.LOGGING = merge_dict(new_class.LOGGING, attrs.pop("LOGGING", {}))
 
         # Add all attributes to the class.
         for obj_name, obj in attrs.items():
