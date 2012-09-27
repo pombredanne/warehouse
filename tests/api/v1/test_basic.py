@@ -5,7 +5,3 @@ import pytest
 def test_unauthenticated_access(client, url):
     resp = client.get(url, ACCEPT="application/json")
     assert resp.status_code == 200
-
-
-def test_fail():
-    assert False
