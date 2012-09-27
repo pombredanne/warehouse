@@ -1,7 +1,29 @@
 #!/usr/bin/env python
+import os
+
 from setuptools import setup, find_packages
+from setuptools.command.test import test as TestCommand
 
 import warehouse
+
+
+class PyTest(TestCommand):
+
+    def finalize_options(self):
+        TestCommand.finalize_options(self)
+        self.test_args = []
+        self.test_suite = True
+
+    def run_tests(self):
+        #import here, cause outside the eggs aren't loaded
+        import pytest
+        from configurations import importer
+
+        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tests.settings")
+        os.environ.setdefault("DJANGO_CONFIGURATION", "Tests")
+
+        importer.install()
+        pytest.main(self.test_args)
 
 
 install_requires = [
@@ -41,10 +63,7 @@ setup(
     author_email="donald.stufft@gmail.com",
 
     install_requires=install_requires,
-
-    extras_require={
-        "test": ["pytest", "pytest-django"]
-    },
+    tests_require=["pytest", "pytest-django"],
 
     packages=find_packages(exclude=["tests"]),
     package_data={"": ["LICENSE"], "warehouse": ["templates/*.html", "templates/search/indexes/warehouse/*.txt", "downloads/*.crt"]},
@@ -57,4 +76,6 @@ setup(
             "warehouse = warehouse.__main__:main",
         ],
     },
+
+    cmdclass = {"test": PyTest},
 )
