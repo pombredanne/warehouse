@@ -1,12 +1,11 @@
-from warehouse.settings.server import *
+from warehouse.settings.base import ApiSettings
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django_hstore.postgresql_psycopg2",
-        "NAME": "warehouse",
+
+class Tests(ApiSettings):
+
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql_psycopg2",
+            "NAME": "warehouse",
+        }
     }
-}
-
-SOUTH_DATABASE_ADAPTERS = {
-    "default": "south.db.postgresql_psycopg2",
-}
