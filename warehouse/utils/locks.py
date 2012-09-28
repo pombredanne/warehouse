@@ -1,7 +1,6 @@
 import time
-import redis
 
-from warehouse.conf import settings
+from warehouse.redis import datastore
 
 
 class Lock(object):
@@ -27,7 +26,6 @@ class Lock(object):
         self.key = key
         self.timeout = timeout
         self.expires = expires
-        self.datastore = redis.StrictRedis(**dict([(k.lower(), v) for k, v in settings.REDIS.items()]))
         self._expiration = None
 
     def __enter__(self):
@@ -36,15 +34,15 @@ class Lock(object):
         while timeout >= 0:
             self._expiration = time.time() + self.expires + 1
 
-            if self.datastore.setnx(self.key, self._expiration):
+            if datastore.setnx(self.key, self._expiration):
                 # We gained the lock; enter critical section
                 return
 
-            current_value = self.datastore.get(self.key)
+            current_value = datastore.get(self.key)
 
             # We found an expired lock and nobody raced us to replacing it
             if current_value and float(current_value) < time.time() and \
-                self.datastore.getset(self.key, self._expiration) == current_value:
+                datastore.getset(self.key, self._expiration) == current_value:
                     return
 
             timeout -= 1
@@ -54,8 +52,8 @@ class Lock(object):
 
     def __exit__(self, exc_type, exc_value, traceback):
         if self._expiration is not None:
-            if self.datastore.get(self.key) == str(self._expiration):
-                self.datastore.delete(self.key)
+            if datastore.get(self.key) == str(self._expiration):
+                datastore.delete(self.key)
 
 
 class LockTimeout(BaseException):

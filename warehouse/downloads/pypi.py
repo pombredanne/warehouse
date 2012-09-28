@@ -7,13 +7,13 @@ import os
 import urlparse
 
 import lxml.html
-import redis
 import requests
 
 from django.db import connection, transaction
 
 from warehouse.conf import settings
 from warehouse.models import Download
+from warehouse.redis import datastore
 from warehouse.utils import locks
 
 
@@ -31,9 +31,6 @@ def downloads(label):
 
     # Get the database cursor
     cursor = connection.cursor()
-
-    # Redis datastore
-    datastore = redis.StrictRedis(**dict([(k.lower(), v) for k, v in settings.REDIS.items()]))
 
     # Get a listing of all the Files
     resp = session.get(stats_url)

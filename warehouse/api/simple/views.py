@@ -1,8 +1,6 @@
 import base64
 import datetime
 
-import redis
-
 from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponsePermanentRedirect, Http404
@@ -16,6 +14,7 @@ from django.contrib.auth import authenticate
 from warehouse.conf import settings
 from warehouse.models import Project
 from warehouse.models.packaging import _normalize_regex
+from warehouse.redis import datastore
 
 
 class ProjectIndex(ListView):
@@ -97,8 +96,6 @@ class ProjectDetail(DetailView):
 def last_modified(request):
     if settings.WAREHOUSE_ALWAYS_MODIFIED_NOW:
         return HttpResponse(datetime.datetime.utcnow().isoformat(), content_type="text/plain")
-
-    datastore = redis.StrictRedis(**dict([(k.lower(), v) for k, v in settings.REDIS.items()]))
 
     if request.method in ["POST"]:
         if not request.META.get("HTTP_AUTHORIZATION"):
