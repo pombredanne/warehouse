@@ -1,4 +1,4 @@
-from __future__ import absolute_imports
+from __future__ import absolute_import
 
 import redis
 from warehouse.conf import settings
