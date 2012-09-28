@@ -77,6 +77,8 @@ class BaseSettings(Settings):
 
     SOUTH_DATABASE_ADAPTERS = {}
 
+    REDIS = {}
+
     CACHES = {
         "default": {
             "BACKEND": "django.core.cache.backends.dummy.DummyCache",
