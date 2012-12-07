@@ -15,6 +15,7 @@ from flask.ext.sqlalchemy import SQLAlchemy
 __all__ = ["create_app", "db", "script"]
 
 MODULES = [
+    {"name": "packages"},
 ]
 
 logger = logging.getLogger("warehouse")
