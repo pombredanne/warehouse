@@ -5,17 +5,20 @@ from __future__ import unicode_literals
 from sqlalchemy import event
 from sqlalchemy.schema import FetchedValue
 from sqlalchemy.dialects import postgresql as pg
-from sqlalchemy.sql.expression import text
 
 from warehouse import db
+from warehouse.databases.mixins import UUIDPrimaryKeyMixin
 from warehouse.database.types import CIText
 
 
-class Project(db.Model):
-    id = db.Column(pg.UUID(as_uuid=True),
-            primary_key=True, server_default=text("uuid_generate_v4()"))
+class Project(UUIDPrimaryKeyMixin, db.Model):
+
+    __tablename__ = "projects"
+
     name = db.Column(CIText, unique=True, nullable=False)
-    normalized = db.Column(CIText, FetchedValue(), unique=True, nullable=False)
+    normalized = db.Column(CIText, unique=True, nullable=False,
+                                    server_default=FetchedValue(),
+                                    server_onupdate=FetchedValue())
 
     def __init__(self, name):
         self.name = name
