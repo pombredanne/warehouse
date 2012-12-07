@@ -1,4 +1,5 @@
 import logging
+import os
 
 from flask import Flask
 
@@ -19,6 +20,11 @@ def create_app(config=None):
 
     # Load Configuration
     logger.debug("Loading configuration")
+
+    app.config.from_object("warehouse.defaults")
+
+    if "WAREHOUSE_CONF" in os.environ:
+        app.config.from_envvar("WAREHOUSE_CONF")
 
     if config:
         app.config.from_pyfile(config)
