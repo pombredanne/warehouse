@@ -56,3 +56,9 @@ def create_app(config=None):
 
 script = Manager(create_app)
 script.add_option("-c", "--config", dest="config", required=False)
+
+for module in MODULES:
+    # Load commands
+    if module.get("commands"):
+        logger.debug("Loading commands for %s", module["name"])
+        importlib.import_module("warehouse.%(name)s.commands" % module)
