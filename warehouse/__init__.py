@@ -1,3 +1,4 @@
+import importlib
 import logging
 import os
 
@@ -8,6 +9,9 @@ from flask.ext.sqlalchemy import SQLAlchemy
 
 
 __all__ = ["create_app", "db", "script"]
+
+MODULES = [
+]
 
 logger = logging.getLogger("warehouse")
 
@@ -33,6 +37,15 @@ def create_app(config=None):
     logger.debug("Initializing extensions")
 
     db.init_app(app)
+
+    # Load Modules
+    logger.debug("Loading modules")
+
+    for module in MODULES:
+        # Load Models
+        if module.get("models", True):
+            logger.debug("Loading models for %s", module["name"])
+            importlib.import_module("warehouse.%(name)s.models" % module)
 
     return app
 
