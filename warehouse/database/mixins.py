@@ -17,20 +17,20 @@ class TimeStampedMixin(object):
 
     __table_args__ = (
         TableDDL("""
-                CREATE OR REPLACE FUNCTION update_modified_column()
-                RETURNS TRIGGER AS $$
-                BEGIN
-                    NEW.modified = now();
-                    RETURN NEW;
-                END;
-                $$ LANGUAGE 'plpgsql';
+            CREATE OR REPLACE FUNCTION update_modified_column()
+            RETURNS TRIGGER AS $$
+            BEGIN
+                NEW.modified = now();
+                RETURN NEW;
+            END;
+            $$ LANGUAGE 'plpgsql';
 
-                CREATE TRIGGER update_%(table)s_modtime
-                BEFORE UPDATE
-                ON %(table)s
-                FOR EACH ROW
-                EXECUTE PROCEDURE update_modified_column();
-            """),
+            CREATE TRIGGER update_%(table)s_modtime
+            BEFORE UPDATE
+            ON %(table)s
+            FOR EACH ROW
+            EXECUTE PROCEDURE update_modified_column();
+        """),
     )
 
     created = db.Column(db.DateTime, nullable=False, server_default=func.now())

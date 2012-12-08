@@ -17,22 +17,22 @@ class Project(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
 
     __tablename__ = "projects"
     __table_args__ = declared_attr(table_args((
-            TableDDL("""
-                    CREATE OR REPLACE FUNCTION normalize_name()
-                    RETURNS trigger AS $$
-                    BEGIN
-                        NEW.normalized = lower(regexp_replace(new.name, '[^A-Za-z0-9.]+', '-'));
-                        return NEW;
-                    END;
-                    $$ LANGUAGE plpgsql;
+        TableDDL("""
+            CREATE OR REPLACE FUNCTION normalize_name()
+            RETURNS trigger AS $$
+            BEGIN
+                NEW.normalized = lower(regexp_replace(new.name, '[^A-Za-z0-9.]+', '-'));
+                return NEW;
+            END;
+            $$ LANGUAGE plpgsql;
 
-                    CREATE TRIGGER %(table)s_normalize_name
-                    BEFORE INSERT OR UPDATE
-                    ON %(table)s
-                    FOR EACH ROW
-                    EXECUTE PROCEDURE normalize_name();
-                """),
-        )))
+            CREATE TRIGGER %(table)s_normalize_name
+            BEFORE INSERT OR UPDATE
+            ON %(table)s
+            FOR EACH ROW
+            EXECUTE PROCEDURE normalize_name();
+        """),
+    )))
 
     name = db.Column(CIText, unique=True, nullable=False)
     normalized = db.Column(CIText, unique=True, nullable=False,
