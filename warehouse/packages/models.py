@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 from sqlalchemy.schema import FetchedValue
 from sqlalchemy.dialects import postgresql as pg
 from sqlalchemy.ext.declarative import declared_attr
+from sqlalchemy.orm import relationship
 
 from warehouse import db
 from warehouse.database.mixins import UUIDPrimaryKeyMixin, TimeStampedMixin
@@ -39,8 +40,30 @@ class Project(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
                            server_default=FetchedValue(),
                            server_onupdate=FetchedValue())
 
+    versions = relationship("Version", backref="project")
+
     def __init__(self, name):
         self.name = name
 
     def __repr__(self):
         return "<Project: {name}>".format(name=self.name)
+
+
+class Version(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
+
+    __tablename__ = "versions"
+    __table_args__ = declared_attr(table_args((
+        db.Index("idx_project_version", "project_id", "version", unique=True),
+    )))
+
+    project_id = db.Column(pg.UUID(as_uuid=True),
+                           db.ForeignKey("projects.id", ondelete="RESTRICT"),
+                           nullable=False)
+    version = db.Column(db.Unicode, nullable=False)
+
+    summary = db.Column(db.UnicodeText, nullable=False)
+    description = db.Column(db.UnicodeText, nullable=False)
+
+    def __repr__(self):
+        ctx = {"name": self.project.name, "version": self.version}
+        return "<Version: {name} {version}>".format(**ctx)
