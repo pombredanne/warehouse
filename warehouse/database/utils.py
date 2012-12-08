@@ -1,3 +1,8 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import unicode_literals
+
+
 def table_args(args):
     def wrapper(cls):
         targs = args

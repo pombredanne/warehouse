@@ -1,3 +1,7 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import unicode_literals
+
 from sqlalchemy import event, schema
 
 from warehouse import db
