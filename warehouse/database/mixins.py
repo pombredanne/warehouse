@@ -1,4 +1,5 @@
 from sqlalchemy.dialects import postgresql as pg
+from sqlalchemy.schema import FetchedValue
 from sqlalchemy.sql import func
 from sqlalchemy.sql.expression import text
 
@@ -32,5 +33,7 @@ class TimeStampedMixin(object):
             """),
     )
 
-    created = db.Column(db.DateTime, server_default=func.now(), nullable=False)
-    modified = db.Column(db.DateTime, server_default=func.now(), nullable=False)
+    created = db.Column(db.DateTime, nullable=False, server_default=func.now())
+    modified = db.Column(db.DateTime, nullable=False,
+                            server_default=func.now(),
+                            server_onupdate=FetchedValue())
