@@ -36,8 +36,8 @@ class Project(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
 
     name = db.Column(CIText, unique=True, nullable=False)
     normalized = db.Column(CIText, unique=True, nullable=False,
-                                    server_default=FetchedValue(),
-                                    server_onupdate=FetchedValue())
+                           server_default=FetchedValue(),
+                           server_onupdate=FetchedValue())
 
     def __init__(self, name):
         self.name = name
