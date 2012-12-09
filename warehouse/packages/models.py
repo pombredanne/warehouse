@@ -10,7 +10,6 @@ from sqlalchemy.orm import relationship
 from warehouse import db
 from warehouse.database.mixins import UUIDPrimaryKeyMixin, TimeStampedMixin
 from warehouse.database.schema import TableDDL
-from warehouse.database.types import CIText
 from warehouse.database.utils import table_args
 
 
@@ -35,8 +34,8 @@ class Project(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
         """),
     )))
 
-    name = db.Column(CIText, unique=True, nullable=False)
-    normalized = db.Column(CIText, unique=True, nullable=False,
+    name = db.Column(db.Unicode, unique=True, nullable=False)
+    normalized = db.Column(db.Unicode, unique=True, nullable=False,
                            server_default=FetchedValue(),
                            server_onupdate=FetchedValue())
 
