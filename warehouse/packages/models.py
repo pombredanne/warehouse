@@ -34,8 +34,8 @@ class Project(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
         """),
     )))
 
-    name = db.Column(db.Unicode, unique=True, nullable=False)
-    normalized = db.Column(db.Unicode, unique=True, nullable=False,
+    name = db.Column(db.UnicodeText, unique=True, nullable=False)
+    normalized = db.Column(db.UnicodeText, unique=True, nullable=False,
                            server_default=FetchedValue(),
                            server_onupdate=FetchedValue())
 
@@ -58,7 +58,7 @@ class Version(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
     project_id = db.Column(pg.UUID(as_uuid=True),
                            db.ForeignKey("projects.id", ondelete="RESTRICT"),
                            nullable=False)
-    version = db.Column(db.Unicode, nullable=False)
+    version = db.Column(db.UnicodeText, nullable=False)
 
     summary = db.Column(db.UnicodeText, nullable=False, server_default="")
     description = db.Column(db.UnicodeText, nullable=False, server_default="")
