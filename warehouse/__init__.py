@@ -16,6 +16,7 @@ __all__ = ["create_app", "db", "script"]
 
 MODULES = [
     {"name": "packages"},
+    {"name": "synchronize", "models": False, "commands": True},
 ]
 
 logger = logging.getLogger("warehouse")
