@@ -52,7 +52,12 @@ class PyPIFetcher(object):
         data["classifiers"].sort()
 
         # Filter resulting dictionary down to only the required keys
-        keys = {"name", "version", "summary", "description"}
+        keys = {
+            "name", "version", "summary", "description", "author",
+            "author_email", "maintainer", "maintainer_email", "license",
+            "requires_python", "requires_external", "bugtrack_url",
+            "home_page", "project_url",
+        }
         data = {key: value for key, value in data.items() if key in keys}
 
         return data
@@ -92,6 +97,33 @@ def store(release):
 
     version.summary = release.get("summary", "")
     version.description = release.get("description", "")
+
+    version.author = release.get("author", "")
+    version.author_email = release.get("author_email", "")
+
+    version.maintainer = release.get("maintainer", "")
+    version.maintainer_email = release.get("maintainer_email", "")
+
+    version.license = release.get("maintainer", "")
+
+    requires_python = release.get("requires_python", "")
+    requires_external = release.get("requires_external", [])
+
+    # Handle URIS
+    uris = {}
+
+    if release.get("bugtrack_url"):
+        uris["Bugtracker"] = release["bugtrack_url"]
+
+    if release.get("home_page"):
+        uris["Home page"] = release["home_page"]
+
+    if release.get("project_url"):
+        for purl in release["project_url"]:
+            label, url = [x.strip() for x in purl.split(",")]
+            uris[label] = url
+
+    version.uris = uris
 
     # TODO(dstufft): Remove no longer existing Files
 
