@@ -106,8 +106,8 @@ def store(release):
 
     version.license = release.get("maintainer", "")
 
-    requires_python = release.get("requires_python", "")
-    requires_external = release.get("requires_external", [])
+    version.requires_python = release.get("requires_python", "")
+    version.requires_external = release.get("requires_external", [])
 
     # Handle URIS
     uris = {}
