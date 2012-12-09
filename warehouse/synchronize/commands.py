@@ -89,7 +89,7 @@ def store(release):
         db.session.flush()
 
     try:
-        version = Version.query.filter_by(project=project, version=release["version"])
+        version = Version.query.filter_by(project=project, version=release["version"]).one()
     except NoResultFound:
         version = Version(project=project, version=release["version"])
         db.session.add(version)
