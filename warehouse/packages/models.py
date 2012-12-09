@@ -61,8 +61,8 @@ class Version(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
                            nullable=False)
     version = db.Column(db.Unicode, nullable=False)
 
-    summary = db.Column(db.UnicodeText, nullable=False)
-    description = db.Column(db.UnicodeText, nullable=False)
+    summary = db.Column(db.UnicodeText, nullable=False, server_default="")
+    description = db.Column(db.UnicodeText, nullable=False, server_default="")
 
     def __repr__(self):
         ctx = {"name": self.project.name, "version": self.version}
