@@ -68,16 +68,20 @@ class Version(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
     author_email = db.Column(db.UnicodeText, nullable=False, server_default="")
 
     maintainer = db.Column(db.UnicodeText, nullable=False, server_default="")
-    maintainer_email = db.Column(db.UnicodeText, nullable=False, server_default="")
+    maintainer_email = db.Column(db.UnicodeText, nullable=False,
+                                 server_default="")
 
     license = db.Column(db.UnicodeText, nullable=False, server_default="")
 
     # URIs
-    uris = db.Column(pg.HSTORE, nullable=False, server_default=text("''::hstore"))
+    uris = db.Column(pg.HSTORE, nullable=False,
+                     server_default=text("''::hstore"))
 
     # Requirements
-    requires_python = db.Column(db.UnicodeText, nullable=False, server_default="")
-    requires_external = db.Column(pg.ARRAY(db.UnicodeText, dimensions=1), nullable=False, server_default=text("'{}'"))
+    requires_python = db.Column(db.UnicodeText, nullable=False,
+                                server_default="")
+    requires_external = db.Column(pg.ARRAY(db.UnicodeText, dimensions=1),
+                                  nullable=False, server_default=text("'{}'"))
 
     def __repr__(self):
         ctx = {"name": self.project.name, "version": self.version}
