@@ -40,4 +40,4 @@ class TimeStampedMixin(object):
     created = db.Column(db.DateTime, nullable=False, server_default=func.now())
     modified = db.Column(db.DateTime, nullable=False,
                          server_default=func.now(),
-                         server_onupdate=FetchedValue())
+                         server_onupdate=FetchedValue(for_update=True))
