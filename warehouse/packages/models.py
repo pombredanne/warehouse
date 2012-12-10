@@ -64,6 +64,9 @@ class Version(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
     summary = db.Column(db.UnicodeText, nullable=False, server_default="")
     description = db.Column(db.UnicodeText, nullable=False, server_default="")
 
+    keywords = db.Column(pg.ARRAY(db.UnicodeText, dimensions=1),
+                         nullable=False, server_default="{}")
+
     author = db.Column(db.UnicodeText, nullable=False, server_default="")
     author_email = db.Column(db.UnicodeText, nullable=False, server_default="")
 

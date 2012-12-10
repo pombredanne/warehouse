@@ -56,7 +56,7 @@ class PyPIFetcher(object):
             "name", "version", "summary", "description", "author",
             "author_email", "maintainer", "maintainer_email", "license",
             "requires_python", "requires_external", "bugtrack_url",
-            "home_page", "project_url",
+            "home_page", "project_url", "keywords",
         }
         data = {key: value for key, value in data.items() if key in keys}
 
@@ -109,6 +109,12 @@ def store(release):
 
     version.requires_python = release.get("requires_python", "")
     version.requires_external = release.get("requires_external", [])
+
+    split_key = "," if "," in release.get("keywords", "") else None
+
+    version.keywords = [x.strip()
+                        for x in release.get("keywords", "").split(split_key)
+                        if x.strip()]
 
     # Handle URIS
     uris = {}
