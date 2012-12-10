@@ -81,7 +81,7 @@ class Version(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
     requires_python = db.Column(db.UnicodeText, nullable=False,
                                 server_default="")
     requires_external = db.Column(pg.ARRAY(db.UnicodeText, dimensions=1),
-                                  nullable=False, server_default=text("'{}'"))
+                                  nullable=False, server_default="{}")
 
     def __repr__(self):
         ctx = {"name": self.project.name, "version": self.version}
