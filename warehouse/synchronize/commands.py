@@ -9,6 +9,7 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from warehouse import db, script
 from warehouse.packages.models import Project, Version
+from warehouse.synchronize import validators
 
 
 eventlet.monkey_patch()
@@ -44,8 +45,7 @@ class PyPIFetcher(object):
         """
         data = self.client.release_data(project, version)
         data = filter_dict(data, required=set(["name", "version"]))
-
-        # TODO(dstufft): Validate incoming data
+        data = validators.release_data.validate(data)
 
         # fix classifiers (dedupe + sort)
         data["classifiers"] = list(set(data.get("classifiers", [])))
@@ -68,8 +68,7 @@ class PyPIFetcher(object):
         versions of that project.
         """
         versions = self.client.package_releases(project, True)
-
-        # TODO(dstufft): Validate incoming data
+        versions = validators.package_releases.validate(versions)
 
         return [self.version(project, v) for v in versions]
 
@@ -77,7 +76,7 @@ class PyPIFetcher(object):
         """
         Returns a list of all project names
         """
-        return self.client.list_packages()
+        return validators.list_packages.validate(self.client.list_packages())
 
 
 def store_project(name):
@@ -116,27 +115,16 @@ def store(release):
     version.requires_python = release.get("requires_python", "")
     version.requires_external = release.get("requires_external", [])
 
-    split_key = "," if "," in release.get("keywords", "") else None
+    version.keywords = release.get("keywords", [])
 
-    version.keywords = [x.strip()
-                        for x in release.get("keywords", "").split(split_key)
-                        if x.strip()]
-
-    # Handle URIS
-    uris = {}
+    version.uris = release.get("project_url", {})
 
     if release.get("bugtrack_url"):
-        uris["Bugtracker"] = release["bugtrack_url"]
+        version.uris.update({"Bugtracker": release["bugtrack_url"]})
 
     if release.get("home_page"):
-        uris["Home page"] = release["home_page"]
+        version.uris.update({"Home page": release["home_page"]})
 
-    if release.get("project_url"):
-        for purl in release["project_url"]:
-            label, url = [x.strip() for x in purl.split(",")]
-            uris[label] = url
-
-    version.uris = uris
     version.download_uri = release.get("download_url", "")
 
     # TODO(dstufft): Remove no longer existing Files
