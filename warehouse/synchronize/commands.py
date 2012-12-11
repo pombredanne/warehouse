@@ -80,13 +80,19 @@ class PyPIFetcher(object):
         return self.client.list_packages()
 
 
-def store(release):
+def store_project(name):
     try:
-        project = Project.query.filter_by(name=release["name"]).one()
+        project = Project.query.filter_by(name=name).one()
     except NoResultFound:
-        project = Project(release["name"])
+        project = Project(name)
         db.session.add(project)
         db.session.flush()
+
+    return project
+
+
+def store(release):
+    project = store_project(release["name"])
 
     try:
         version = Version.query.filter_by(project=project,
@@ -159,14 +165,18 @@ def syncer(project=None, version=None, fetcher=None):
 
             # Commit the session to the Database
             db.session.commit()
+
+        # Make sure that all projects exist in the database
+        for project in projects:
+            store_project(project)
     else:
         # Fetch and store the release
         store(fetcher.version(project, version))
 
-        # Commit the session to the Database
-        db.session.commit()
-
     # TODO(dstufft): Remove no longer existing projects
+
+    # Commit the session to the Database
+    db.session.commit()
 
 
 @script.command
