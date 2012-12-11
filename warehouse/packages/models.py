@@ -79,6 +79,7 @@ class Version(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
     # URIs
     uris = db.Column(pg.HSTORE, nullable=False,
                      server_default=text("''::hstore"))
+    download_uri = db.Column(db.UnicodeText, nullable=False, server_default="")
 
     # Requirements
     requires_python = db.Column(db.UnicodeText, nullable=False,

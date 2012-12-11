@@ -56,7 +56,7 @@ class PyPIFetcher(object):
             "name", "version", "summary", "description", "author",
             "author_email", "maintainer", "maintainer_email", "license",
             "requires_python", "requires_external", "bugtrack_url",
-            "home_page", "project_url", "keywords",
+            "home_page", "project_url", "keywords", "download_url",
         }
         data = {key: value for key, value in data.items() if key in keys}
 
@@ -131,6 +131,7 @@ def store(release):
             uris[label] = url
 
     version.uris = uris
+    version.download_uri = release.get("download_url", "")
 
     # TODO(dstufft): Remove no longer existing Files
 
