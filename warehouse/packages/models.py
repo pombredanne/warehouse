@@ -11,6 +11,7 @@ from sqlalchemy.sql.expression import text
 from warehouse import db
 from warehouse.database.mixins import UUIDPrimaryKeyMixin, TimeStampedMixin
 from warehouse.database.schema import TableDDL
+from warehouse.database.types import Enum
 from warehouse.database.utils import table_args
 
 
@@ -87,6 +88,40 @@ class Version(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
     requires_external = db.Column(pg.ARRAY(db.UnicodeText, dimensions=1),
                                   nullable=False, server_default="{}")
 
+    files = relationship("File", backref="version")
+
     def __repr__(self):
         ctx = {"name": self.project.name, "version": self.version}
         return "<Version: {name} {version}>".format(**ctx)
+
+
+class FileType(Enum):
+    source = "sdist", "Source"
+    egg = "bdist_egg", "Egg"
+    msi = "bdist_msi", "MSI"
+    dmg = "bdist_dmg", "DMG"
+    rpm = "bdist_rpm", "RPM",
+    dumb = "bdist_dumb", "Dumb Binary Distribution"
+    windows_installer = "bdist_wininst", "Windows Installer"
+    wheel = "bdist_wheel", "Wheel"
+
+
+class File(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
+
+    __tablename__ = "files"
+
+    version_id = db.Column(pg.UUID(as_uuid=True),
+                           db.ForeignKey("versions.id", ondelete="RESTRICT"),
+                           nullable=False)
+
+    filename = db.Column(db.UnicodeText, nullable=False, unique=True)
+    filesize = db.Column(db.Integer, nullable=False)
+
+    type = db.Column(FileType.db_type(), nullable=False)
+
+    python_version = db.Column(db.UnicodeText, nullable=False, server_default="")
+
+    comment = db.Column(db.UnicodeText, nullable=False, server_default="")
+
+    hashes = db.Column(pg.HSTORE, nullable=False,
+                       server_default=text("''::hstore"))

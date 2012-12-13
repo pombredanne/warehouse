@@ -8,7 +8,7 @@ import xmlrpc2.client
 from sqlalchemy.orm.exc import NoResultFound
 
 from warehouse import db, script
-from warehouse.packages.models import Project, Version
+from warehouse.packages.models import Project, Version, FileType, File
 from warehouse.synchronize import validators
 
 
@@ -38,6 +38,26 @@ class PyPIFetcher(object):
         # TODO(dstufft): Switch this to using verified SSL
         self.client = xmlrpc2.client.Client("http://pypi.python.org/pypi")
 
+    def files(self, project, version):
+        """
+        Takes a project and version and it returns the normalized files for
+        the release of project with the given version.
+        """
+        files = self.client.release_urls(project, version)
+        files = [filter_dict(x) for x in files]
+
+        # TODO(dstufft): Validate incoming data
+
+        # Filter resulting dictionaries down to only the required keys
+        keys = {
+            "filename", "md5_digest", "size", "python_version", "packagetype",
+            "comment_text",
+        }
+        files = [{key: value for key, value in x.items() if key in keys}
+                    for x in files]
+
+        return files
+
     def version(self, project, version):
         """
         Takes a project and version and it returns the normalized data for the
@@ -59,6 +79,8 @@ class PyPIFetcher(object):
             "home_page", "project_url", "keywords", "download_url",
         }
         data = {key: value for key, value in data.items() if key in keys}
+
+        data["files"] = self.files(project, version)
 
         return data
 
@@ -128,6 +150,24 @@ def store(release):
     version.download_uri = release.get("download_url", "")
 
     # TODO(dstufft): Remove no longer existing Files
+
+    for release_file in release.get("files", []):
+        try:
+            vfile = File.query.filter_by(version=version,
+                                         filename=release_file["filename"]
+                                         ).one()
+        except NoResultFound:
+            vfile = File(version=version, filename=release_file["filename"])
+            db.session.add(vfile)
+
+        vfile.filesize = release_file["size"]
+        vfile.python_version = release_file["python_version"]
+
+        vfile.type = FileType.from_string(release_file["packagetype"])
+
+        vfile.comment = release_file.get("comment_text", "")
+
+        db.session.flush()
 
     return project, version
 
