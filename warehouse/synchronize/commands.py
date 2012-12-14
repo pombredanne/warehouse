@@ -52,7 +52,7 @@ def syncer(projects=None, fetcher=None, app=None, pool=None, progress=True):
     if fetcher is None:
         fetcher = PyPIFetcher()
 
-    if projects is None:
+    if not projects:
         # TODO(dstufft): Determine how to make this do the "since last sync"
         projects = fetcher.projects()
 
@@ -66,6 +66,15 @@ def syncer(projects=None, fetcher=None, app=None, pool=None, progress=True):
             pool.spawn_n(synchronize_project, app, project, fetcher)
 
 
+@script.option("--concurrency", dest="concurrency", type=int, default=10)
 @script.option("--no-progress", action="store_false", dest="progress")
-def synchronize(progress=True):
-    syncer(progress=progress)
+@script.option("projects", nargs="*", metavar="project")
+def synchronize(projects=None, concurrency=10, progress=True):
+    # This is a hack to normalize the incoming projects to unicode
+    projects = [x.decode("utf-8") for x in projects]
+
+    # Create the Pool that Synchronization will use
+    pool = eventlet.GreenPool(concurrency)
+
+    # Run the actual Synchronization
+    syncer(projects, pool=pool, progress=progress)
