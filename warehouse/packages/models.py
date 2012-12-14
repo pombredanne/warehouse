@@ -114,6 +114,8 @@ class File(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
                            db.ForeignKey("versions.id", ondelete="RESTRICT"),
                            nullable=False)
 
+    file = db.Column(db.UnicodeText, nullable=False, unique=True)
+
     filename = db.Column(db.UnicodeText, nullable=False, unique=True)
     filesize = db.Column(db.Integer, nullable=False)
 
