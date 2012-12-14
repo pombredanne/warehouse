@@ -24,10 +24,13 @@ def synchronize_project(app, project, fetcher):
     with app.test_request_context():
         project = store.project(project)
 
-        for v in fetcher.versions(project.name):
-            version = store.version(project, fetcher.release(project.name, v))
+        versions = fetcher.versions(project.name)
 
-            for dist in fetcher.distributions(project.name, version.version):
+        for v in versions:
+            version = store.version(project, fetcher.release(project.name, v))
+            distributions = fetcher.distributions(project.name, version.version)
+
+            for dist in distributions:
                 distribution = store.distribution(project, version, dist)
 
                 # Check if the stored hash matches what the fetcher says
