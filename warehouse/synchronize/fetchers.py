@@ -2,10 +2,13 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
+import os
+
 import requests
 import xmlrpc2.client
 
 from warehouse.synchronize import validators
+from warehouse.utils import user_agent
 
 
 def filter_dict(d, required=None):
@@ -27,9 +30,26 @@ def filter_dict(d, required=None):
 
 class PyPIFetcher(object):
 
-    def __init__(self):
-        # TODO(dstufft): Switch this to using verified SSL
-        self.client = xmlrpc2.client.Client("http://pypi.python.org/pypi")
+    def __init__(self, client=None, session=None):
+        if session is None:
+            certificate = os.path.join(os.path.dirname(__file__), "PyPI.crt")
+            session = requests.session(verify=certificate)
+
+        # Patch the headers
+        session.headers.update({"User-Agent": user_agent()})
+
+        # Store the session
+        self.session = session
+
+        if client is None:
+            transports = [
+                xmlrpc2.client.HTTPTransport(session=self.session),
+                xmlrpc2.client.HTTPSTransport(session=self.session),
+            ]
+            client = xmlrpc2.client.Client("https://pypi.python.org/pypi",
+                                            transports=transports)
+
+        self.client = client
 
     def file(self, url):
         """

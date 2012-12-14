@@ -12,7 +12,11 @@ from flask.ext.script import Manager
 from flask.ext.sqlalchemy import SQLAlchemy
 
 
-__all__ = ["create_app", "db", "script"]
+__all__ = ["__version__", "create_app", "db", "script"]
+
+# - Meta Information -
+__version__ = "0.1dev1"
+# - End Meta Information -
 
 MODULES = [
     {"name": "packages"},
