@@ -3,6 +3,7 @@ from __future__ import division
 from __future__ import unicode_literals
 
 import os
+import urlparse
 
 import requests
 import xmlrpc2.client
@@ -55,7 +56,10 @@ class PyPIFetcher(object):
         """
         Fetches the file located at ``url``.
         """
-        resp = requests.get(url, prefetch=True)
+        parsed = urlparse.urlparse(url)
+        url = urlparse.urlunparse(("https",) + parsed[1:])
+
+        resp = self.session.get(url, prefetch=True)
         return resp.content
 
     def distributions(self, project, version):
