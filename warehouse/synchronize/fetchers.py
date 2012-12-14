@@ -1,0 +1,120 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import unicode_literals
+
+import requests
+import xmlrpc2.client
+
+from warehouse.synchronize import validators
+
+
+def filter_dict(d, required=None):
+    if required is None:
+        required = set()
+
+    data = {}
+    for key, value in d.items():
+        if value is None:
+            continue
+        elif not key in required and value in ["None", "UNKNOWN"]:
+            continue
+        elif isinstance(value, (basestring, list, tuple, set)) and not value:
+            continue
+        else:
+            data[key] = value
+    return data
+
+
+class PyPIFetcher(object):
+
+    def __init__(self):
+        # TODO(dstufft): Switch this to using verified SSL
+        self.client = xmlrpc2.client.Client("http://pypi.python.org/pypi")
+
+    def file(self, url):
+        """
+        Fetches the file located at ``url``.
+        """
+        resp = requests.get(url, prefetch=True)
+        return resp.content
+
+    def distributions(self, project, version):
+        """
+        Takes a project and version and it returns the normalized files for
+        the release of project with the given version.
+        """
+        urls = self.client.release_urls(project, version)
+
+        # TODO(dstufft): Validate incoming data
+
+        keys = set([
+            "filename", "filesize", "python_version", "type", "comment",
+            "md5_digest", "url",
+        ])
+
+        for url in urls:
+            url = filter_dict(url)
+
+            # Rename size to filesize
+            url["filesize"] = url["size"]
+
+            # Rename packagetype to type
+            url["type"] = url["packagetype"]
+
+            # Rename comment_text to comment
+            if "comment_text" in url:
+                url["comment"] = url["comment_text"]
+
+            yield dict(x for x in url.items() if x[0] in keys)
+
+    def release(self, project, version):
+        """
+        Takes a project and version and it returns the normalized data for the
+        release of project with that version.
+        """
+        data = self.client.release_data(project, version)
+        data = filter_dict(data, required=set(["name", "version"]))
+        data = validators.release_data.validate(data)
+
+        # fix classifiers (dedupe + sort)
+        data["classifiers"] = list(set(data.get("classifiers", [])))
+        data["classifiers"].sort()
+
+        # rename download_url to download_uri
+        if "download_url" in data:
+            data["download_uri"] = data["download_url"]
+
+        # Collapse project_url, bugtrack_url, and home_page into uris
+        data["uris"] = {}
+
+        if "project_url" in data:
+            data["uris"].update(data["project_url"])
+
+        if "bugtrack_url" in data:
+            data["uris"]["bugtracker"] = data["bugtrack_url"]
+
+        if "home_page" in data:
+            data["uris"]["home page"] = data["home_page"]
+
+        # Filter resulting dictionary down to only the required keys
+        keys = set([
+            "name", "version", "summary", "description", "author",
+            "author_email", "maintainer", "maintainer_email", "license",
+            "requires_python", "requires_external", "uris", "keywords",
+            "download_uri",
+        ])
+
+        return dict(x for x in data.items() if x[0] in keys)
+
+    def versions(self, project):
+        """
+        Returns a list of all the versions for a particular project.
+        """
+        versions = self.client.package_releases(project, True)
+        return validators.package_releases.validate(versions)
+
+    def projects(self):
+        """
+        Returns a list of all project names
+        """
+        return validators.list_packages.validate(self.client.list_packages())
