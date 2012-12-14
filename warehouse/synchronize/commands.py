@@ -14,6 +14,12 @@ from warehouse.synchronize.fetchers import PyPIFetcher
 eventlet.monkey_patch()
 
 
+class DummyBar(object):
+    def iter(self, iterable):
+        for x in iterable:
+            yield x
+
+
 def synchronize_project(app, project, fetcher):
     with app.test_request_context():
         project = store.project(project)
@@ -36,7 +42,7 @@ def synchronize_project(app, project, fetcher):
         db.session.commit()
 
 
-def syncer(projects=None, fetcher=None, app=None, pool=None):
+def syncer(projects=None, fetcher=None, app=None, pool=None, progress=True):
     if pool is None:
         pool = eventlet.GreenPool(10)
 
@@ -50,11 +56,16 @@ def syncer(projects=None, fetcher=None, app=None, pool=None):
         # TODO(dstufft): Determine how to make this do the "since last sync"
         projects = fetcher.projects()
 
+    if progress:
+        bar = ShadyBar("Synchronizing", max=len(projects))
+    else:
+        bar = DummyBar()
+
     with app.app_context():
-        for project in ShadyBar("Syncing", max=len(projects)).iter(projects):
+        for project in bar.iter(projects):
             pool.spawn_n(synchronize_project, app, project, fetcher)
 
 
-@script.command
-def synchronize():
-    syncer()
+@script.option("--no-progress", action="store_false", dest="progress")
+def synchronize(progress=True):
+    syncer(progress=progress)
