@@ -2,6 +2,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
+import datetime
+
 from schema import Schema, And, Optional, Use
 
 
@@ -74,3 +76,17 @@ release_data = Schema({
     Optional("requires_python"): basestring,  # TODO: What does this look like?
     Optional("summary"):  basestring,  # TODO: Any sort of validation?
 })
+
+
+release_urls = Schema([{
+    "has_sig": bool,
+    "upload_time": datetime.datetime,  # TODO: Validate Oldest
+    "python_version": basestring,  # TODO: Validate expected
+    "url": basestring,  # TODO: Validate URI
+    "md5_digest": basestring,  # TODO: Validate looks like an md5
+    "downloads": And(int, lambda x: x >= 0),
+    "filename": basestring,
+    "packagetype": basestring,  # TODO: Validate expected
+    "size": And(int, lambda x: x >= 0),
+    Optional("comment_text"): basestring,
+}])

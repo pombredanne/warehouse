@@ -68,8 +68,7 @@ class PyPIFetcher(object):
         the release of project with the given version.
         """
         urls = self.client.release_urls(project, version)
-
-        # TODO(dstufft): Validate incoming data
+        urls = validators.release_urls.validate(urls)
 
         keys = set([
             "filename", "filesize", "python_version", "type", "comment",
