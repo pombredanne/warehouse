@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 from sqlalchemy.schema import FetchedValue
 from sqlalchemy.dialects import postgresql as pg
 from sqlalchemy.ext.declarative import declared_attr
+from sqlalchemy.ext.mutable import MutableDict
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import text
 
@@ -78,7 +79,7 @@ class Version(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
     license = db.Column(db.UnicodeText, nullable=False, server_default="")
 
     # URIs
-    uris = db.Column(pg.HSTORE, nullable=False,
+    uris = db.Column(MutableDict.as_mutable(pg.HSTORE), nullable=False,
                      server_default=text("''::hstore"))
     download_uri = db.Column(db.UnicodeText, nullable=False, server_default="")
 
@@ -125,5 +126,5 @@ class File(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
 
     comment = db.Column(db.UnicodeText, nullable=False, server_default="")
 
-    hashes = db.Column(pg.HSTORE, nullable=False,
+    hashes = db.Column(MutableDict.as_mutable(pg.HSTORE), nullable=False,
                        server_default=text("''::hstore"))
