@@ -19,24 +19,21 @@ from warehouse.database.utils import table_args
 
 
 classifiers = db.Table("version_classifiers",
-    db.Column("id",
-        pg.UUID(as_uuid=True),
-        primary_key=True,
-        server_default=text("uuid_generate_v4()")
-    ),
     db.Column("classifier_id",
         pg.UUID(as_uuid=True),
-        db.ForeignKey("classifiers.id", ondelete="CASCADE"),
-        nullable=False
+        db.ForeignKey("classifiers.id",
+            onupdate="CASCADE",
+            ondelete="CASCADE"
+        ),
+        primary_key=True,
     ),
     db.Column("version_id",
         pg.UUID(as_uuid=True),
-        db.ForeignKey("versions.id", ondelete="CASCADE"),
-        nullable=False
-    ),
-    db.Index("idx_version_classifiers",
-        "classifier_id", "version_id",
-        unique=True
+        db.ForeignKey("versions.id",
+            onupdate="CASCADE",
+            ondelete="CASCADE"
+        ),
+        primary_key=True,
     ),
 )
 
