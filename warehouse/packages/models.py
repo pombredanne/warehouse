@@ -19,16 +19,25 @@ from warehouse.database.utils import table_args
 
 
 classifiers = db.Table("version_classifiers",
-    db.Column("id", pg.UUID(as_uuid=True), primary_key=True,
-              server_default=text("uuid_generate_v4()")),
-    db.Column("classifier_id", pg.UUID(as_uuid=True),
-              db.ForeignKey("classifiers.id", ondelete="CASCADE"),
-              nullable=False),
-    db.Column("version_id", pg.UUID(as_uuid=True),
-              db.ForeignKey("versions.id", ondelete="CASCADE"),
-              nullable=False),
-    db.Index("idx_version_classifiers", "classifier_id", "version_id",
-             unique=True),
+    db.Column("id",
+        pg.UUID(as_uuid=True),
+        primary_key=True,
+        server_default=text("uuid_generate_v4()")
+    ),
+    db.Column("classifier_id",
+        pg.UUID(as_uuid=True),
+        db.ForeignKey("classifiers.id", ondelete="CASCADE"),
+        nullable=False
+    ),
+    db.Column("version_id",
+        pg.UUID(as_uuid=True),
+        db.ForeignKey("versions.id", ondelete="CASCADE"),
+        nullable=False
+    ),
+    db.Index("idx_version_classifiers",
+        "classifier_id", "version_id",
+        unique=True
+    ),
 )
 
 
@@ -75,9 +84,12 @@ class Project(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
     )))
 
     name = db.Column(db.UnicodeText, unique=True, nullable=False)
-    normalized = db.Column(db.UnicodeText, unique=True, nullable=False,
-                           server_default=FetchedValue(),
-                           server_onupdate=FetchedValue())
+    normalized = db.Column(db.UnicodeText,
+                    unique=True,
+                    nullable=False,
+                    server_default=FetchedValue(),
+                    server_onupdate=FetchedValue()
+                )
 
     versions = relationship("Version", backref="project")
 
@@ -96,40 +108,54 @@ class Version(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
     )))
 
     project_id = db.Column(pg.UUID(as_uuid=True),
-                           db.ForeignKey("projects.id", ondelete="RESTRICT"),
-                           nullable=False)
+                    db.ForeignKey("projects.id", ondelete="RESTRICT"),
+                    nullable=False
+                )
     version = db.Column(db.UnicodeText, nullable=False)
 
     summary = db.Column(db.UnicodeText, nullable=False, server_default="")
     description = db.Column(db.UnicodeText, nullable=False, server_default="")
 
     keywords = db.Column(pg.ARRAY(db.UnicodeText, dimensions=1),
-                         nullable=False, server_default="{}")
+                    nullable=False,
+                    server_default="{}"
+                )
 
     author = db.Column(db.UnicodeText, nullable=False, server_default="")
     author_email = db.Column(db.UnicodeText, nullable=False, server_default="")
 
     maintainer = db.Column(db.UnicodeText, nullable=False, server_default="")
-    maintainer_email = db.Column(db.UnicodeText, nullable=False,
-                                 server_default="")
+    maintainer_email = db.Column(db.UnicodeText,
+                            nullable=False,
+                            server_default=""
+                        )
 
     license = db.Column(db.UnicodeText, nullable=False, server_default="")
 
     # URIs
-    uris = db.Column(MutableDict.as_mutable(pg.HSTORE), nullable=False,
-                     server_default=text("''::hstore"))
+    uris = db.Column(MutableDict.as_mutable(pg.HSTORE),
+                nullable=False,
+                server_default=text("''::hstore")
+            )
     download_uri = db.Column(db.UnicodeText, nullable=False, server_default="")
 
     # Requirements
-    requires_python = db.Column(db.UnicodeText, nullable=False,
-                                server_default="")
+    requires_python = db.Column(db.UnicodeText,
+                            nullable=False,
+                            server_default=""
+                        )
     requires_external = db.Column(pg.ARRAY(db.UnicodeText, dimensions=1),
-                                  nullable=False, server_default="{}")
+                            nullable=False,
+                            server_default="{}"
+                        )
 
-    _classifiers = relationship("Classifier", secondary=classifiers,
-                               backref=db.backref("versions", lazy='dynamic'))
+    _classifiers = relationship("Classifier",
+                        secondary=classifiers,
+                        backref=db.backref("versions", lazy='dynamic')
+                    )
     classifiers = association_proxy("_classifiers", "trove",
-                                    creator=Classifier.get_or_create)
+                        creator=Classifier.get_or_create
+                    )
     files = relationship("File", backref="version", )
 
     def __repr__(self):
@@ -153,8 +179,9 @@ class File(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
     __tablename__ = "files"
 
     version_id = db.Column(pg.UUID(as_uuid=True),
-                           db.ForeignKey("versions.id", ondelete="RESTRICT"),
-                           nullable=False)
+                        db.ForeignKey("versions.id", ondelete="RESTRICT"),
+                        nullable=False
+                    )
 
     file = db.Column(db.UnicodeText, nullable=False, unique=True)
 
@@ -163,9 +190,14 @@ class File(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
 
     type = db.Column(FileType.db_type(), nullable=False)
 
-    python_version = db.Column(db.UnicodeText, nullable=False, server_default="")
+    python_version = db.Column(db.UnicodeText,
+                        nullable=False,
+                        server_default=""
+                    )
 
     comment = db.Column(db.UnicodeText, nullable=False, server_default="")
 
-    hashes = db.Column(MutableDict.as_mutable(pg.HSTORE), nullable=False,
-                       server_default=text("''::hstore"))
+    hashes = db.Column(MutableDict.as_mutable(pg.HSTORE),
+                    nullable=False,
+                    server_default=text("''::hstore")
+                )

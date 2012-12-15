@@ -14,7 +14,9 @@ from warehouse.database.schema import TableDDL
 class UUIDPrimaryKeyMixin(object):
 
     id = db.Column(pg.UUID(as_uuid=True),
-                   primary_key=True, server_default=text("uuid_generate_v4()"))
+            primary_key=True,
+            server_default=text("uuid_generate_v4()")
+        )
 
 
 class TimeStampedMixin(object):
@@ -38,6 +40,8 @@ class TimeStampedMixin(object):
     )
 
     created = db.Column(db.DateTime, nullable=False, server_default=func.now())
-    modified = db.Column(db.DateTime, nullable=False,
-                         server_default=func.now(),
-                         server_onupdate=FetchedValue(for_update=True))
+    modified = db.Column(db.DateTime,
+                    nullable=False,
+                    server_default=func.now(),
+                    server_onupdate=FetchedValue(for_update=True)
+                )
