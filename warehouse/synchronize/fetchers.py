@@ -52,6 +52,11 @@ class PyPIFetcher(object):
 
         self.client = client
 
+    def classifiers(self):
+        resp = self.session.get(
+                    "https://pypi.python.org/pypi?:action=list_classifiers")
+        return filter(None, resp.text.split("\n"))
+
     def file(self, url):
         """
         Fetches the file located at ``url``.
@@ -124,7 +129,7 @@ class PyPIFetcher(object):
             "name", "version", "summary", "description", "author",
             "author_email", "maintainer", "maintainer_email", "license",
             "requires_python", "requires_external", "uris", "keywords",
-            "download_uri",
+            "download_uri", "classifiers",
         ])
 
         return dict(x for x in data.items() if x[0] in keys)

@@ -55,6 +55,14 @@ def syncer(projects=None, fetcher=None, app=None, pool=None, progress=True):
     if fetcher is None:
         fetcher = PyPIFetcher()
 
+    # Sync the Classifiers
+    for classifier in fetcher.classifiers():
+        store.classifier(classifier)
+
+    # Commit the classifiers
+    db.session.commit()
+
+    # Sync the Projects/Versions/Files
     if not projects:
         # TODO(dstufft): Determine how to make this do the "since last sync"
         projects = fetcher.projects()

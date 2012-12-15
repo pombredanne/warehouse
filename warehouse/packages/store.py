@@ -10,7 +10,23 @@ import flask
 from sqlalchemy.orm.exc import NoResultFound
 
 from warehouse import db
-from warehouse.packages.models import Project, Version, File, FileType
+from warehouse.packages.models import (
+                                    Classifier,
+                                    Project,
+                                    Version,
+                                    File,
+                                    FileType,
+                                )
+
+
+def classifier(trove):
+    try:
+        c = Classifier.query.filter_by(trove=trove).one()
+    except NoResultFound:
+        c = Classifier(trove)
+        db.session.add(c)
+
+    return c
 
 
 def project(name):
@@ -43,6 +59,12 @@ def version(project, release):
 
     version.requires_python = release.get("requires_python", "")
     version.requires_external = release.get("requires_external", [])
+
+    # We cannot use the association proxy here because of a bug, and because
+    #   of a race condition in multiple green threads.
+    #   See: https://github.com/mitsuhiko/flask-sqlalchemy/issues/112
+    version._classifiers = [Classifier.query.filter_by(trove=t).one()
+                                for t in release.get("classifiers", [])]
 
     version.keywords = release.get("keywords", [])
 
