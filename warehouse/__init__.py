@@ -26,7 +26,7 @@ MODULES = [
 
 logger = logging.getLogger("warehouse")
 
-db = SQLAlchemy()
+db = SQLAlchemy(session_options={"autoflush": True})
 
 
 def create_app(config=None):
