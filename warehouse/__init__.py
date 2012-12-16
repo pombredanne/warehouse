@@ -19,9 +19,9 @@ __version__ = "0.1dev1"
 # - End Meta Information -
 
 MODULES = [
-    {"name": "packages"},
-    {"name": "synchronize", "models": False, "commands": True},
-    {"name": "simple", "models": False, "views": True},
+    {"name": "packages", "models": True},
+    {"name": "synchronize", "commands": True},
+    {"name": "simple", "views": True},
 ]
 
 logger = logging.getLogger("warehouse")
@@ -54,12 +54,12 @@ def create_app(config=None):
 
     for module in MODULES:
         # Load Models
-        if module.get("models", True):
+        if module.get("models"):
             logger.debug("Loading models for %s", module["name"])
             importlib.import_module("warehouse.%(name)s.models" % module)
 
         # Load views
-        if module.get("views", False):
+        if module.get("views"):
             logger.debug("Loading views for %s", module["name"])
             mod = importlib.import_module("warehouse.%(name)s.views" % module)
 
