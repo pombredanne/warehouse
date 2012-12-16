@@ -1,5 +1,8 @@
+import os
 import platform
 import sys
+
+import flask
 
 import warehouse
 
@@ -33,3 +36,38 @@ def user_agent():
             "%s/%s" % (_implementation, _implementation_version),
             "%s/%s" % (platform.system(), platform.release()),
         ])
+
+
+def ropen(path, mode="r"):
+    """
+    Redirects the open() call depending on the configured storage.
+    """
+    app = flask.current_app
+
+    if app.config["STORAGE"].lower() == "filesystem":
+        real_path = os.path.join(app.config["STORAGE_DIRECTORY"], path)
+
+        # TODO(dstufft): Detect suspicious paths
+
+        try:
+            os.makedirs(os.path.dirname(real_path))
+        except OSError:
+            # TODO(dstufft): Filter this down to only EEXISTS
+            pass
+
+        return open(real_path, mode)
+    elif app.config["STORAGE"].lower() == "s3":
+        from s3file import s3open
+
+        # Generate the url
+        fmt = {"bucket": app.config["STORAGE_BUCKET"], "filename": path}
+        url = "http://{bucket}.s3.amazonaws.com/{filename}".format(**fmt)
+
+        return s3open(url,
+                    key=app.config["S3_KEY"],
+                    secret=app.config["S3_SECRET"],
+                    create=False,
+                )
+    else:
+        raise ValueError(
+            "Unsupported 'STORAGE' option '{}'".format(app.config["STORAGE"]))
