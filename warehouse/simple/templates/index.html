@@ -1,0 +1,10 @@
+<html>
+  <head>
+    <title>Simple Index</title>
+  </head>
+  <body>
+    {% for project in projects %}
+      <a href="{{ url_for('.detail', project=project.name) }}">{{ project.name }}</a>
+    {%- endfor %}
+  </body>
+</html>

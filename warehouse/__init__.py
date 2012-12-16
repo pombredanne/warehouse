@@ -21,6 +21,7 @@ __version__ = "0.1dev1"
 MODULES = [
     {"name": "packages"},
     {"name": "synchronize", "models": False, "commands": True},
+    {"name": "simple", "models": False, "views": True},
 ]
 
 logger = logging.getLogger("warehouse")

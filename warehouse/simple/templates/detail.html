@@ -1,0 +1,26 @@
+<html>
+  <head>
+    <title>Links for {{ project.name }}</title>
+  </head>
+  <body>
+    <h1>Links for {{ project.name }}</h1>
+
+    {% for version in project.versions %}
+      {% for file in version.files %}
+        <a href="">{{ file.filename }}</a>
+      {% endfor %}
+    {% endfor %}
+
+    {% for version in project.versions %}
+      {% for label, uri in version.uris.iteritems() %}
+        {% if label|lower == "download" %}
+          <a href="{{ uri }}" rel="download">{{ version.version }} download_url</a>
+        {% elif label|lower == "home page" or label|lower == "homepage" %}
+          <a href="{{ uri }}" rel="homepage">{{ version.version }} home_page</a>
+        {% endif %}
+      {% endfor %}
+    {% endfor %}
+
+    {# TODO(dstufft): Handle the URIs that we need to parse from the version descriptions #}
+  </body>
+</html>
