@@ -20,7 +20,7 @@ class DummyBar(object):
             yield x
 
 
-def synchronize_project(app, project, fetcher):
+def synchronize_project(app, project, fetcher, force=False):
     with app.test_request_context():
         project = store.project(project)
 
@@ -34,10 +34,10 @@ def synchronize_project(app, project, fetcher):
                 distribution = store.distribution(project, version, dist)
 
                 # Check if the stored hash matches what the fetcher says
-                if (distribution.hashes is None or
+                if (force or
+                        distribution.hashes is None or
                         dist["md5_digest"] != distribution.hashes.get("md5")):
                     # The fetcher has a different file
-                    # TODO(dstufft): Verify that this url is HTTPS
                     store.distribution_file(project, version, distribution,
                                             fetcher.file(dist["url"]))
 
@@ -45,12 +45,9 @@ def synchronize_project(app, project, fetcher):
         db.session.commit()
 
 
-def syncer(projects=None, fetcher=None, app=None, pool=None, progress=True):
+def syncer(projects=None, fetcher=None, pool=None, progress=True, force=False):
     if pool is None:
         pool = eventlet.GreenPool(10)
-
-    if app is None:
-        app = create_app()
 
     if fetcher is None:
         fetcher = PyPIFetcher()
@@ -72,15 +69,18 @@ def syncer(projects=None, fetcher=None, app=None, pool=None, progress=True):
     else:
         bar = DummyBar()
 
+    app = create_app()
+
     with app.app_context():
         for project in bar.iter(projects):
-            pool.spawn_n(synchronize_project, app, project, fetcher)
+            pool.spawn_n(synchronize_project, app, project, fetcher, force)
 
 
+@script.option("--force-download", action="store_true", dest="force")
 @script.option("--concurrency", dest="concurrency", type=int, default=10)
 @script.option("--no-progress", action="store_false", dest="progress")
 @script.option("projects", nargs="*", metavar="project")
-def synchronize(projects=None, concurrency=10, progress=True):
+def synchronize(projects=None, concurrency=10, progress=True, force=False):
     # This is a hack to normalize the incoming projects to unicode
     projects = [x.decode("utf-8") for x in projects]
 
@@ -88,4 +88,4 @@ def synchronize(projects=None, concurrency=10, progress=True):
     pool = eventlet.GreenPool(concurrency)
 
     # Run the actual Synchronization
-    syncer(projects, pool=pool, progress=progress)
+    syncer(projects, pool=pool, progress=progress, force=force)
