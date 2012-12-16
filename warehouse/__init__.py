@@ -57,6 +57,14 @@ def create_app(config=None):
             logger.debug("Loading models for %s", module["name"])
             importlib.import_module("warehouse.%(name)s.models" % module)
 
+        # Load views
+        if module.get("views", False):
+            logger.debug("Loading views for %s", module["name"])
+            mod = importlib.import_module("warehouse.%(name)s.views" % module)
+
+            for blueprint in mod.BLUEPRINTS:
+                app.register_blueprint(blueprint)
+
     return app
 
 script = Manager(create_app)
