@@ -104,6 +104,11 @@ class Version(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
         db.Index("idx_project_version", "project_id", "version", unique=True),
     )))
 
+    yanked = db.Column(db.Boolean,
+                nullable=False,
+                server_default=text("FALSE")
+            )
+
     project_id = db.Column(pg.UUID(as_uuid=True),
                     db.ForeignKey("projects.id", ondelete="RESTRICT"),
                     nullable=False
@@ -174,6 +179,11 @@ class FileType(Enum):
 class File(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
 
     __tablename__ = "files"
+
+    yanked = db.Column(db.Boolean,
+                nullable=False,
+                server_default=text("FALSE")
+            )
 
     version_id = db.Column(pg.UUID(as_uuid=True),
                         db.ForeignKey("versions.id", ondelete="RESTRICT"),
