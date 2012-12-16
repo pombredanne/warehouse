@@ -153,7 +153,7 @@ class Version(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
     classifiers = association_proxy("_classifiers", "trove",
                         creator=Classifier.get_or_create
                     )
-    files = relationship("File", backref="version", )
+    files = relationship("File", backref="version")
 
     def __repr__(self):
         ctx = {"name": self.project.name, "version": self.version}
