@@ -11,15 +11,17 @@
       {% endfor %}
     {% endfor %}
 
-    {% for version in project.versions %}
-      {% for label, uri in version.uris.iteritems() %}
-        {% if label|lower == "download" %}
-          <a href="{{ uri }}" rel="download">{{ version.version }} download_url</a>
-        {% elif label|lower == "home page" or label|lower == "homepage" %}
-          <a href="{{ uri }}" rel="homepage">{{ version.version }} home_page</a>
-        {% endif %}
+    {% if not restricted %}
+      {% for version in project.versions %}
+        {% for label, uri in version.uris.iteritems() %}
+          {% if label|lower == "download" %}
+            <a href="{{ uri }}" rel="download">{{ version.version }} download_url</a>
+          {% elif label|lower == "home page" or label|lower == "homepage" %}
+            <a href="{{ uri }}" rel="homepage">{{ version.version }} home_page</a>
+          {% endif %}
+        {% endfor %}
       {% endfor %}
-    {% endfor %}
+    {% endif %}
 
     {# TODO(dstufft): Handle the URIs that we need to parse from the version descriptions #}
   </body>
