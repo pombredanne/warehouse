@@ -17,6 +17,7 @@ from warehouse.packages.models import (
                                     File,
                                     FileType,
                                 )
+from warehouse.utils import ropen
 
 
 def classifier(trove):
@@ -97,35 +98,28 @@ def distribution(project, version, dist):
 
 
 def distribution_file(project, version, distribution, dist_file):
-    def _prefix(project, version, distribution, dist_file):
-        # Create a Hash based URL prefix
-        # TODO(dstufft): Determine which algo to use
-        digest = hashlib.md5(dist_file).hexdigest()
-        parts = list(digest[:5])
-        parts.append(digest)
-        return os.path.join(*parts)
+    app = flask.current_app
 
-    # TODO(dstufft): Don't hard code this, and make it generic file storage
-    directory = flask.current_app.config["WAREHOUSE_STORAGE_DIRECTORY"]
-
-    filename = os.path.join(
-                directory,
-                _prefix(project, version, distribution, dist_file),
-                distribution.filename
-            )
-
-    try:
-        os.makedirs(os.path.dirname(filename))
-    except OSError:
-        pass
-
-    with open(filename, "w") as fp:
-        fp.write(dist_file)
-
+    # Generate all the hashes for this file
     hashes = {}
-
     for algorithm in hashlib.algorithms:
         hashes[algorithm] = getattr(hashlib, algorithm)(dist_file).hexdigest()
 
+    parts = []
+    # If we have a hash selected include it in the filename parts
+    if app.config.get("STORAGE_HASH"):
+        parts += list(hashes[app.config["STORAGE_HASH"]][:5])
+        parts += [hashes[app.config["STORAGE_HASH"]]]
+    # Finally end the filename parts with the actual filename
+    parts += [distribution.filename]
+
+    # Join together the parts to get the final filename
+    filename = os.path.join(*parts)
+
+    # Open the file with the redirected open (ropen) and save the contents
+    with ropen(filename, "w") as fp:
+        fp.write(dist_file)
+
+    # Set the hashes and filename for the distribution
     distribution.hashes = hashes
     distribution.file = filename
