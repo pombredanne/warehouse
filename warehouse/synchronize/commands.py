@@ -8,6 +8,7 @@ from progress.bar import ShadyBar
 
 from warehouse import create_app, db, script
 from warehouse.packages import store
+from warehouse.packages.models import Project, Version, File
 from warehouse.synchronize.fetchers import PyPIFetcher
 
 
@@ -40,6 +41,37 @@ def synchronize_project(app, project, fetcher, force=False):
                     # The fetcher has a different file
                     store.distribution_file(project, version, distribution,
                                             fetcher.file(dist["url"]))
+
+            # Get a list of filesnames
+            filenames = [x["filename"] for x in distributions]
+
+            # Find what files no longer exist in PyPI to yank them
+            if filenames:
+                # If there any files we use IN
+                files_to_yank = File.query.filter(
+                                    File.version == version,
+                                    ~File.filename.in_(filenames),
+                                )
+            else:
+                # If there are no filenames we can do a simpler query
+                files_to_yank = File.query.filter(File.version == version)
+
+            # Actually preform the yanking
+            files_to_yank.update({"yanked": False}, synchronize_session=False)
+
+        # Find what versions no longer exist in PyPI to yank them
+        if versions:
+            # If there are any versions we use IN
+            versions_to_yank = Version.query.filter(
+                                    Version.project == project,
+                                    ~Version.version.in_(versions),
+                                )
+        else:
+            # If there are no versions we can do a simpler query
+            versions_to_yank = Version.query.filter(Version.project == project)
+
+        # Actually preform the yanking
+        versions_to_yank.update({"yanked": True}, synchronize_session=False)
 
         # Commit our changes
         db.session.commit()
@@ -74,6 +106,14 @@ def syncer(projects=None, fetcher=None, pool=None, progress=True, force=False):
     with app.app_context():
         for project in bar.iter(projects):
             pool.spawn_n(synchronize_project, app, project, fetcher, force)
+
+    # Yank no longer existing projects (and versions and files)
+    Project.query.filter(
+                ~Project.name.in_(projects)
+            ).update({"yanked": True}, synchronize_session=False)
+
+    # Commit the deletion
+    db.session.commit()
 
 
 @script.option("--force-download", action="store_true", dest="force")
