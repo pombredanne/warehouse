@@ -2,12 +2,16 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
+import datetime
+import time
+
 import eventlet
 
 from progress.bar import ShadyBar
 
 from warehouse import create_app, db, script
 from warehouse.packages import diff, store
+from warehouse.packages.models import Project
 from warehouse.synchronize.fetchers import PyPIFetcher
 
 
@@ -55,7 +59,8 @@ def synchronize_project(app, project, fetcher, force=False):
         db.session.commit()
 
 
-def syncer(projects=None, fetcher=None, pool=None, progress=True, force=False):
+def syncer(projects=None, since=None, fetcher=None, pool=None, progress=True,
+        force=False):
     if pool is None:
         pool = eventlet.GreenPool(10)
 
@@ -71,11 +76,15 @@ def syncer(projects=None, fetcher=None, pool=None, progress=True, force=False):
 
     # Sync the Projects/Versions/Files
     if not projects:
-        # TODO(dstufft): Determine how to make this do the "since last sync"
-        projects = fetcher.projects()
+        projects, deleted = fetcher.projects(since=since)
 
-        # Yank no longer existing projects (and versions and files)
-        diff.projects(projects)
+        if since is None:
+            # Yank no longer existing projects (and versions and files)
+            diff.projects(projects)
+        else:
+            # Yank and projects that have been deletes
+            to_yank = Project.query.filter(Project.name.in_(deleted))
+            to_yank.update({"yanked": True}, synchronize_session=False)
 
         # Commit the deletion
         db.session.commit()
@@ -92,11 +101,16 @@ def syncer(projects=None, fetcher=None, pool=None, progress=True, force=False):
             pool.spawn_n(synchronize_project, app, project, fetcher, force)
 
 
+@script.option("--since", type=int, default=None)
 @script.option("--force-download", action="store_true", dest="force")
 @script.option("--concurrency", dest="concurrency", type=int, default=10)
 @script.option("--no-progress", action="store_false", dest="progress")
 @script.option("projects", nargs="*", metavar="project")
-def synchronize(projects=None, concurrency=10, progress=True, force=False):
+def synchronize(projects=None, concurrency=10, progress=True, force=False,
+        since=None):
+    # Grab the current time to display later
+    current = datetime.datetime.utcnow().replace(microsecond=0)
+
     # This is a hack to normalize the incoming projects to unicode
     projects = [x.decode("utf-8") for x in projects]
 
@@ -104,4 +118,7 @@ def synchronize(projects=None, concurrency=10, progress=True, force=False):
     pool = eventlet.GreenPool(concurrency)
 
     # Run the actual Synchronization
-    syncer(projects, pool=pool, progress=progress, force=force)
+    syncer(projects, since=since, pool=pool, progress=progress, force=force)
+
+    # Output the time we started the sync
+    print "Synchronization completed at", int(time.mktime(current.timetuple()))

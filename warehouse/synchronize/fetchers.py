@@ -141,8 +141,22 @@ class PyPIFetcher(object):
         versions = self.client.package_releases(project, True)
         return validators.package_releases.validate(versions)
 
-    def projects(self):
+    def projects(self, since=None):
         """
         Returns a list of all project names
         """
-        return validators.list_packages.validate(self.client.list_packages())
+        if since is None:
+            packages = self.client.list_packages()
+            return set(validators.list_packages.validate(packages)), None
+        else:
+            changes = self.client.changelog(since)
+
+            updated, deleted = [], []
+
+            for name, version, timestamp, action in changes:
+                if action.lower() == "remove" and version is None:
+                    deleted.append(name)
+                else:
+                    updated.append(name)
+
+            return set(updated), set(deleted)
