@@ -27,7 +27,7 @@ def distributions(project, version, current):
     if current:
         to_yank = File.query.filter(
                                     File.version == version,
-                                    ~File.version.in_(current),
+                                    ~File.filename.in_(current),
                                 )
     else:
         to_yank = File.query.filter(File.version == version)
