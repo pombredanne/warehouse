@@ -110,7 +110,7 @@ class Version(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
             )
 
     project_id = db.Column(pg.UUID(as_uuid=True),
-                    db.ForeignKey("projects.id", ondelete="RESTRICT"),
+                    db.ForeignKey("projects.id", ondelete="CASCADE"),
                     nullable=False
                 )
     version = db.Column(db.UnicodeText, nullable=False)
@@ -186,7 +186,7 @@ class File(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
             )
 
     version_id = db.Column(pg.UUID(as_uuid=True),
-                        db.ForeignKey("versions.id", ondelete="RESTRICT"),
+                        db.ForeignKey("versions.id", ondelete="CASCADE"),
                         nullable=False
                     )
 
