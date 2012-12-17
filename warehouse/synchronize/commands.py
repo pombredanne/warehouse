@@ -8,7 +8,6 @@ from progress.bar import ShadyBar
 
 from warehouse import create_app, db, script
 from warehouse.packages import diff, store
-from warehouse.packages.models import Project, Version, File
 from warehouse.synchronize.fetchers import PyPIFetcher
 
 
