@@ -46,6 +46,10 @@ def project(name):
     if project is None:
         project = Project(name)
 
+    # Explicitly set yanked to False. If somehow we are un-yanking instead of
+    #   creating a new object the Database will cause an error.
+    project.yanked = False
+
     db.session.add(project)
 
     return project
@@ -67,6 +71,10 @@ def version(project, release):
 
     if version is None:
         version = Version(project=project, version=release["version"])
+
+    # Explicitly set yanked to False. If somehow we are un-yanking instead of
+    #   creating a new object the Database will cause an error.
+    version.yanked = False
 
     version.summary = release.get("summary", "")
     version.description = release.get("description", "")
@@ -115,6 +123,10 @@ def distribution(project, version, dist):
 
     if vfile is None:
         vfile = File(version=version, filename=dist["filename"])
+
+    # Explicitly set yanked to False. If somehow we are un-yanking instead of
+    #   creating a new object the Database will cause an error.
+    vfile.yanked = False
 
     vfile.filesize = dist["filesize"]
     vfile.python_version = dist["python_version"]
