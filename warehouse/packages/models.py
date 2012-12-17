@@ -80,6 +80,11 @@ class Project(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
         """),
     )))
 
+    yanked = db.Column(db.Boolean,
+                nullable=False,
+                server_default=text("FALSE")
+            )
+
     name = db.Column(db.UnicodeText, unique=True, nullable=False)
     normalized = db.Column(db.UnicodeText,
                     unique=True,
