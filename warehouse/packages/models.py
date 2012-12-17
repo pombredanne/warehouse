@@ -118,7 +118,7 @@ class Version(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
         TableDDL("""
             CREATE OR REPLACE RULE yank_versions_from_projects
                 AS ON UPDATE TO projects
-                WHERE OLD.yanked = FALSE AND NEW.yanked = TRUE
+                WHERE NEW.yanked = TRUE
                 DO ALSO
                     UPDATE versions SET yanked = TRUE WHERE project_id = NEW.id;
         """),
@@ -210,7 +210,7 @@ class File(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
         TableDDL("""
             CREATE OR REPLACE RULE yank_files_from_versions
                 AS ON UPDATE TO versions
-                WHERE OLD.yanked = FALSE AND NEW.yanked = TRUE
+                WHERE NEW.yanked = TRUE
                 DO ALSO
                     UPDATE files SET yanked = TRUE WHERE version_id = NEW.id;
         """),
