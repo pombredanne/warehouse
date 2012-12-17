@@ -82,9 +82,10 @@ def syncer(projects=None, since=None, fetcher=None, pool=None, progress=True,
             # Yank no longer existing projects (and versions and files)
             diff.projects(projects)
         else:
-            # Yank and projects that have been deletes
-            to_yank = Project.query.filter(Project.name.in_(deleted))
-            to_yank.update({"yanked": True}, synchronize_session=False)
+            if deleted:
+                # Yank and projects that have been deletes
+                to_yank = Project.query.filter(Project.name.in_(deleted))
+                to_yank.update({"yanked": True}, synchronize_session=False)
 
         # Commit the deletion
         db.session.commit()
