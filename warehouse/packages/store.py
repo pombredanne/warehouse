@@ -33,9 +33,20 @@ def classifier(trove):
 def project(name):
     try:
         project = Project.query.filter_by(name=name).one()
+
+        # This object already exists, so if yanked is True we need to make it
+        #   "new"
+        if project.yanked:
+            db.session.delete(project)
+            db.session.flush()
+            project = None
     except NoResultFound:
+        project = None
+
+    if project is None:
         project = Project(name)
-        db.session.add(project)
+
+    db.session.add(project)
 
     return project
 
@@ -44,7 +55,17 @@ def version(project, release):
     try:
         version = Version.query.filter_by(project=project,
                                           version=release["version"]).one()
+
+        # This object already exists, so if yanked is True we need to make it
+        #   "new"
+        if version.yanked:
+            db.session.delete(version)
+            db.session.flush()
+            version = None
     except NoResultFound:
+        version = None
+
+    if version is None:
         version = Version(project=project, version=release["version"])
 
     version.summary = release.get("summary", "")
@@ -82,15 +103,25 @@ def distribution(project, version, dist):
     try:
         vfile = File.query.filter_by(version=version,
                                      filename=dist["filename"]).one()
+
+        # This object already exists, so if yanked is True we need to make it
+        #   "new"
+        if vfile.yanked:
+            db.session.delete(vfile)
+            db.session.flush()
+            vfile = None
     except NoResultFound:
+        vfile = None
+
+    if vfile is None:
         vfile = File(version=version, filename=dist["filename"])
 
-        vfile.filesize = dist["filesize"]
-        vfile.python_version = dist["python_version"]
+    vfile.filesize = dist["filesize"]
+    vfile.python_version = dist["python_version"]
 
-        vfile.type = FileType.from_string(dist["type"])
+    vfile.type = FileType.from_string(dist["type"])
 
-        vfile.comment = dist.get("comment", "")
+    vfile.comment = dist.get("comment", "")
 
     db.session.add(vfile)
 
