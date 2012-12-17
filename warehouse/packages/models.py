@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
+from sqlalchemy.event import listen
 from sqlalchemy.schema import FetchedValue
 from sqlalchemy.dialects import postgresql as pg
 from sqlalchemy.ext.associationproxy import association_proxy
@@ -78,6 +79,13 @@ class Project(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
             FOR EACH ROW
             EXECUTE PROCEDURE normalize_name();
         """),
+        TableDDL("""
+            CREATE CONSTRAINT TRIGGER cannot_unyank_projects
+                AFTER UPDATE OF yanked ON projects
+                FOR EACH ROW
+                WHEN (OLD.yanked = TRUE AND NEW.yanked = FALSE)
+                EXECUTE PROCEDURE cannot_unyank();
+        """),
     )))
 
     yanked = db.Column(db.Boolean,
@@ -107,6 +115,20 @@ class Version(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
     __tablename__ = "versions"
     __table_args__ = declared_attr(table_args((
         db.Index("idx_project_version", "project_id", "version", unique=True),
+        TableDDL("""
+            CREATE OR REPLACE RULE yank_versions_from_projects
+                AS ON UPDATE TO projects
+                WHERE OLD.yanked = FALSE AND NEW.yanked = TRUE
+                DO ALSO
+                    UPDATE versions SET yanked = TRUE WHERE project_id = NEW.id;
+        """),
+        TableDDL("""
+            CREATE CONSTRAINT TRIGGER cannot_unyank_versions
+                AFTER UPDATE OF yanked ON versions
+                FOR EACH ROW
+                WHEN (OLD.yanked = TRUE AND NEW.yanked = FALSE)
+                EXECUTE PROCEDURE cannot_unyank();
+        """),
     )))
 
     yanked = db.Column(db.Boolean,
@@ -184,6 +206,22 @@ class FileType(Enum):
 class File(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
 
     __tablename__ = "files"
+    __table_args__ = declared_attr(table_args((
+        TableDDL("""
+            CREATE OR REPLACE RULE yank_files_from_versions
+                AS ON UPDATE TO versions
+                WHERE OLD.yanked = FALSE AND NEW.yanked = TRUE
+                DO ALSO
+                    UPDATE files SET yanked = TRUE WHERE version_id = NEW.id;
+        """),
+        TableDDL("""
+            CREATE CONSTRAINT TRIGGER cannot_unyank_files
+                AFTER UPDATE OF yanked ON files
+                FOR EACH ROW
+                WHEN (OLD.yanked = TRUE AND NEW.yanked = FALSE)
+                EXECUTE PROCEDURE cannot_unyank();
+        """),
+    )))
 
     yanked = db.Column(db.Boolean,
                 nullable=False,
@@ -213,3 +251,20 @@ class File(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
                     nullable=False,
                     server_default=text("''::hstore")
                 )
+
+
+listen(db.metadata, "before_create",
+    db.DDL("""
+        CREATE OR REPLACE FUNCTION cannot_unyank()
+            RETURNS trigger AS $$
+            BEGIN
+                -- Check if unyanking is being attempted
+                IF OLD.yanked = TRUE AND NEW.yanked = FALSE THEN
+                    RAISE EXCEPTION '%% cannot be unyanked.', TG_TABLE_NAME;
+                END IF;
+
+                RETURN NULL;
+            END;
+            $$ LANGUAGE plpgsql;
+    """)
+)
