@@ -74,6 +74,12 @@ def syncer(projects=None, fetcher=None, pool=None, progress=True, force=False):
         # TODO(dstufft): Determine how to make this do the "since last sync"
         projects = fetcher.projects()
 
+        # Yank no longer existing projects (and versions and files)
+        diff.projects(projects)
+
+        # Commit the deletion
+        db.session.commit()
+
     if progress:
         bar = ShadyBar("Synchronizing", max=len(projects))
     else:
@@ -84,12 +90,6 @@ def syncer(projects=None, fetcher=None, pool=None, progress=True, force=False):
     with app.app_context():
         for project in bar.iter(projects):
             pool.spawn_n(synchronize_project, app, project, fetcher, force)
-
-    # Yank no longer existing projects (and versions and files)
-    diff.projects(projects)
-
-    # Commit the deletion
-    db.session.commit()
 
 
 @script.option("--force-download", action="store_true", dest="force")
