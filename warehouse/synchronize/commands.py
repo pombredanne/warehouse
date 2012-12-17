@@ -28,9 +28,9 @@ def synchronize_project(app, project, fetcher, force=False):
 
         for v in versions:
             version = store.version(project, fetcher.release(project.name, v))
-            distributions = fetcher.distributions(project.name, version.version)
+            dists = list(fetcher.distributions(project.name, version.version))
 
-            for dist in distributions:
+            for dist in dists:
                 distribution = store.distribution(project, version, dist)
 
                 # Check if the stored hash matches what the fetcher says
@@ -45,7 +45,7 @@ def synchronize_project(app, project, fetcher, force=False):
             diff.distributions(
                     project,
                     version,
-                    [x["filename"] for x in distributions]
+                    [x["filename"] for x in dists]
                 )
 
         # Yank versions that no longer exist in PyPI
