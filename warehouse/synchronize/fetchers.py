@@ -2,6 +2,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
+import datetime
+import time
 import os
 import urlparse
 
@@ -147,16 +149,22 @@ class PyPIFetcher(object):
         """
         if since is None:
             packages = self.client.list_packages()
-            return set(validators.list_packages.validate(packages)), None
+            return set(validators.list_packages.validate(packages))
         else:
             changes = self.client.changelog(since)
 
-            updated, deleted = [], []
+            updated = set()
 
             for name, version, timestamp, action in changes:
-                if action.lower() == "remove" and version is None:
-                    deleted.append(name)
-                else:
-                    updated.append(name)
+                if not (action.lower() == "remove" and version is None):
+                    updated.add(name)
 
-            return set(updated), set(deleted)
+            return updated
+
+    def current(self):
+        current_string = self.session.get("https://pypi.python.org/daytime")
+        current = datetime.datetime.strptime(
+                        current_string.text.strip(),
+                        "%Y%m%dT%H:%M:%S"
+                    )
+        return int(time.mktime(current.timetuple()))

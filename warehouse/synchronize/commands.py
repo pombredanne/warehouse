@@ -67,6 +67,8 @@ def syncer(projects=None, since=None, fetcher=None, pool=None, progress=True,
     if fetcher is None:
         fetcher = PyPIFetcher()
 
+    current = fetcher.current()
+
     # Sync the Classifiers
     for classifier in fetcher.classifiers():
         store.classifier(classifier)
@@ -76,19 +78,7 @@ def syncer(projects=None, since=None, fetcher=None, pool=None, progress=True,
 
     # Sync the Projects/Versions/Files
     if not projects:
-        projects, deleted = fetcher.projects(since=since)
-
-        if since is None:
-            # Yank no longer existing projects (and versions and files)
-            diff.projects(projects)
-        else:
-            if deleted:
-                # Yank and projects that have been deletes
-                to_yank = Project.query.filter(Project.name.in_(deleted))
-                to_yank.update({"yanked": True}, synchronize_session=False)
-
-        # Commit the deletion
-        db.session.commit()
+        projects = fetcher.projects(since=since)
 
     if progress:
         bar = ShadyBar("Synchronizing", max=len(projects))
@@ -101,6 +91,17 @@ def syncer(projects=None, since=None, fetcher=None, pool=None, progress=True,
         for project in bar.iter(projects):
             pool.spawn_n(synchronize_project, app, project, fetcher, force)
 
+    # Grab all projects to do a diff against
+    projects = fetcher.projects()
+
+    # Yank no longer existing projects (and versions and files)
+    diff.projects(projects)
+
+    # Commit the deletion
+    db.session.commit()
+
+    return current
+
 
 @script.option("--since", type=int, default=None)
 @script.option("--force-download", action="store_true", dest="force")
@@ -109,9 +110,6 @@ def syncer(projects=None, since=None, fetcher=None, pool=None, progress=True,
 @script.option("projects", nargs="*", metavar="project")
 def synchronize(projects=None, concurrency=10, progress=True, force=False,
         since=None):
-    # Grab the current time to display later
-    current = datetime.datetime.utcnow().replace(microsecond=0)
-
     # This is a hack to normalize the incoming projects to unicode
     projects = [x.decode("utf-8") for x in projects]
 
@@ -119,7 +117,12 @@ def synchronize(projects=None, concurrency=10, progress=True, force=False,
     pool = eventlet.GreenPool(concurrency)
 
     # Run the actual Synchronization
-    syncer(projects, since=since, pool=pool, progress=progress, force=force)
+    synced = syncer(projects,
+                since=since,
+                pool=pool,
+                progress=progress,
+                force=force
+            )
 
     # Output the time we started the sync
-    print "Synchronization completed at", int(time.mktime(current.timetuple()))
+    print "Synchronization completed at", synced
