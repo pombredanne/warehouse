@@ -11,11 +11,16 @@ from flask import Flask
 from flask.ext.script import Manager
 from flask.ext.sqlalchemy import SQLAlchemy
 
+from warehouse import __about__
 
-__all__ = ["__version__", "create_app", "db", "script"]
+
+__all__ = ["create_app", "db", "script"] + __about__.__all__
 
 # - Meta Information -
-__version__ = "0.1dev1"
+# This is pretty ugly
+for attr in __about__.__all__:
+    if hasattr(__about__, attr):
+        globals()[attr] = getattr(__about__, attr)
 # - End Meta Information -
 
 MODULES = [

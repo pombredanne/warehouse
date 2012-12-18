@@ -1,0 +1,3 @@
+include README.rst LICENSE
+recursive-include warehouse/simple/templates *.html
+recursive-include warehouse/synchronize *.crt
