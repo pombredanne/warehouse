@@ -19,7 +19,7 @@ from warehouse.database.types import Enum
 from warehouse.database.utils import table_args
 
 
-classifiers = db.Table("version_classifiers",
+classifiers = db.Table("version_classifiers",  # pylint: disable=C0103
     db.Column("classifier_id",
         pg.UUID(as_uuid=True),
         db.ForeignKey("classifiers.id",

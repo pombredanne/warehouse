@@ -1,3 +1,6 @@
+# Even though a lot of these names are "invalid" we do not want them to
+#   appear to be constants, but act more like functions.
+# pylint: disable=C0103
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
@@ -64,10 +67,10 @@ release_data = Schema({
     Optional("license"): basestring,
     Optional("maintainer"): basestring,  # Can we do any sort of validation?
     Optional("maintainer_email"): basestring,  # TODO Validate Email
-    Optional("obsoletes"): [basestring],  # TODO: What do these values look like?
-    Optional("obsoletes_dist"): [basestring],  # TODO: What do these values look like?
-    Optional("platform"): basestring,  # TODO: What do these values even look like?
-    Optional("project_url"): And(Use(_list2dict), {basestring: basestring}),  # TODO: list of Key,Value Make it so
+    Optional("obsoletes"): [basestring],  # TODO: What do these look like?
+    Optional("obsoletes_dist"): [basestring],  # TODO: What do these look like?
+    Optional("platform"): basestring,  # TODO: What do these look like?
+    Optional("project_url"): And(Use(_list2dict), {basestring: basestring}),
     Optional("provides"): [basestring],  # TODO: Is this right?
     Optional("provides_dist"): [basestring],  # TODO: Is this right?
     Optional("requires"): [basestring],  # TODO: What does this look like?

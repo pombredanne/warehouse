@@ -11,14 +11,15 @@ from warehouse.packages.models import Project, Version, File
 
 _normalize_regex = re.compile(r"[^A-Za-z0-9.]+")
 
-simple = flask.Blueprint("simple",
+
+simple = flask.Blueprint("simple",  # pylint: disable=C0103
             __name__,
             subdomain="api",
             url_prefix="/simple",
             template_folder="templates",
         )
 
-restricted = flask.Blueprint("restricted",
+restricted = flask.Blueprint("restricted",  # pylint: disable=C0103
             __name__,
             subdomain="api",
             url_prefix="/restricted",
@@ -39,9 +40,9 @@ def index():
 @simple.route("/<project>/<version>/")
 @restricted.route("/<project>", defaults={"restricted": True})
 @restricted.route("/<project>/", defaults={"restricted": True})
-@restricted.route("/<project>/<version>", defaults={"restricted": True})
-@restricted.route("/<project>/<version>/", defaults={"restricted": True})
-def detail(project, version=None, restricted=False):
+@restricted.route("/<project>/<version>", defaults={"restrict": True})
+@restricted.route("/<project>/<version>/", defaults={"restrict": True})
+def detail(project, version=None, restrict=False):
     normalized = _normalize_regex.sub("-", project).lower()
     project = Project.query.filter_by(normalized=normalized).first_or_404()
 
@@ -58,7 +59,7 @@ def detail(project, version=None, restricted=False):
                 project=project,
                 versions=versions,
                 files=files,
-                restricted=restricted
+                restricted=restrict,
             )
 
 

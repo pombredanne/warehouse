@@ -21,6 +21,8 @@ from warehouse.utils import ropen
 
 
 def classifier(trove):
+    # This method is so short that we don't really care about the bad name "c"
+    # pylint: disable=c0103
     try:
         c = Classifier.query.filter_by(trove=trove).one()
     except NoResultFound:
@@ -32,84 +34,87 @@ def classifier(trove):
 
 def project(name):
     try:
-        project = Project.query.filter_by(name=name).one()
+        proj = Project.query.filter_by(name=name).one()
 
         # This object already exists, so if yanked is True we need to make it
         #   "new"
-        if project.yanked:
-            db.session.delete(project)
+        if proj.yanked:
+            db.session.delete(proj)
             db.session.flush()
-            project = None
+            proj = None
     except NoResultFound:
-        project = None
+        proj = None
 
-    if project is None:
-        project = Project(name)
+    if proj is None:
+        proj = Project(name)
 
     # Explicitly set yanked to False. If somehow we are un-yanking instead of
     #   creating a new object the Database will cause an error.
-    project.yanked = False
+    proj.yanked = False
 
-    db.session.add(project)
+    db.session.add(proj)
 
-    return project
+    return proj
 
 
-def version(project, release):
+def version(proj, release):
     try:
-        version = Version.query.filter_by(project=project,
+        vers = Version.query.filter_by(project=proj,
                                           version=release["version"]).one()
 
         # This object already exists, so if yanked is True we need to make it
         #   "new"
-        if version.yanked:
-            db.session.delete(version)
+        if vers.yanked:
+            db.session.delete(vers)
             db.session.flush()
-            version = None
+            vers = None
     except NoResultFound:
-        version = None
+        vers = None
 
-    if version is None:
-        version = Version(project=project, version=release["version"])
+    if vers is None:
+        vers = Version(project=proj, version=release["version"])
 
     # Explicitly set yanked to False. If somehow we are un-yanking instead of
     #   creating a new object the Database will cause an error.
-    version.yanked = False
+    vers.yanked = False
 
-    version.summary = release.get("summary", "")
-    version.description = release.get("description", "")
+    vers.summary = release.get("summary", "")
+    vers.description = release.get("description", "")
 
-    version.author = release.get("author", "")
-    version.author_email = release.get("author_email", "")
+    vers.author = release.get("author", "")
+    vers.author_email = release.get("author_email", "")
 
-    version.maintainer = release.get("maintainer", "")
-    version.maintainer_email = release.get("maintainer_email", "")
+    vers.maintainer = release.get("maintainer", "")
+    vers.maintainer_email = release.get("maintainer_email", "")
 
-    version.license = release.get("license", "")
+    vers.license = release.get("license", "")
 
-    version.requires_python = release.get("requires_python", "")
-    version.requires_external = release.get("requires_external", [])
+    vers.requires_python = release.get("requires_python", "")
+    vers.requires_external = release.get("requires_external", [])
 
     # We cannot use the association proxy here because of a bug, and because
     #   of a race condition in multiple green threads.
     #   See: https://github.com/mitsuhiko/flask-sqlalchemy/issues/112
-    version._classifiers = [Classifier.query.filter_by(trove=t).one()
+    # It's fine to use _classifiers here, the association_proxy isn't useful
+    #   in this use.
+    # pylint: disable=W0212
+    vers._classifiers = [Classifier.query.filter_by(trove=t).one()
                                 for t in release.get("classifiers", [])]
 
-    version.keywords = release.get("keywords", [])
+    vers.keywords = release.get("keywords", [])
 
-    version.uris = release.get("uris", {})
+    vers.uris = release.get("uris", {})
 
-    version.download_uri = release.get("download_uri", "")
+    vers.download_uri = release.get("download_uri", "")
 
-    db.session.add(version)
+    db.session.add(vers)
 
-    return version
+    return vers
 
 
-def distribution(project, version, dist):
+def distribution(vers, dist):
     try:
-        vfile = File.query.filter_by(version=version,
+        vfile = File.query.filter_by(version=vers,
                                      filename=dist["filename"]).one()
 
         # This object already exists, so if yanked is True we need to make it
@@ -122,7 +127,7 @@ def distribution(project, version, dist):
         vfile = None
 
     if vfile is None:
-        vfile = File(version=version, filename=dist["filename"])
+        vfile = File(version=vers, filename=dist["filename"])
 
     # Explicitly set yanked to False. If somehow we are un-yanking instead of
     #   creating a new object the Database will cause an error.
@@ -140,7 +145,7 @@ def distribution(project, version, dist):
     return vfile
 
 
-def distribution_file(project, version, distribution, dist_file):
+def distribution_file(dist, dist_file):
     app = flask.current_app
 
     # Generate all the hashes for this file
@@ -154,7 +159,7 @@ def distribution_file(project, version, distribution, dist_file):
         parts += list(hashes[app.config["STORAGE_HASH"]][:5])
         parts += [hashes[app.config["STORAGE_HASH"]]]
     # Finally end the filename parts with the actual filename
-    parts += [distribution.filename]
+    parts += [dist.filename]
 
     # Join together the parts to get the final filename
     filename = os.path.join(*parts)
@@ -164,5 +169,5 @@ def distribution_file(project, version, distribution, dist_file):
         fp.write(dist_file)
 
     # Set the hashes and filename for the distribution
-    distribution.hashes = hashes
-    distribution.file = filename
+    dist.hashes = hashes
+    dist.file = filename

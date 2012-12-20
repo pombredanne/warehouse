@@ -21,7 +21,7 @@ def versions(project, current):
     to_yank.update({"yanked": True}, synchronize_session=False)
 
 
-def distributions(project, version, current):
+def distributions(version, current):
     # Use different logic if there are any current distributions to provide
     #   a more optimal query
     if current:

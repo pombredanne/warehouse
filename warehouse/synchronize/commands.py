@@ -16,8 +16,8 @@ eventlet.monkey_patch()
 
 class DummyBar(object):
     def iter(self, iterable):
-        for x in iterable:
-            yield x
+        for item in iterable:
+            yield item
 
 
 def synchronize_project(app, project, fetcher, force=False):
@@ -26,27 +26,28 @@ def synchronize_project(app, project, fetcher, force=False):
 
         versions = fetcher.versions(project.name)
 
-        for v in versions:
-            version = store.version(project, fetcher.release(project.name, v))
+        for ver in versions:
+            version = store.version(
+                        project,
+                        fetcher.release(project.name, ver),
+                    )
             dists = list(fetcher.distributions(project.name, version.version))
 
             for dist in dists:
-                distribution = store.distribution(project, version, dist)
+                distribution = store.distribution(version, dist)
 
                 # Check if the stored hash matches what the fetcher says
                 if (force or
                         distribution.hashes is None or
                         dist["md5_digest"] != distribution.hashes.get("md5")):
                     # The fetcher has a different file
-                    store.distribution_file(project, version, distribution,
-                                            fetcher.file(dist["url"]))
+                    store.distribution_file(
+                            distribution,
+                            fetcher.file(dist["url"]),
+                        )
 
             # Yank distributions that no longer exist in PyPI
-            diff.distributions(
-                    project,
-                    version,
-                    [x["filename"] for x in dists]
-                )
+            diff.distributions(version, [x["filename"] for x in dists])
 
         # Yank versions that no longer exist in PyPI
         diff.versions(project, versions)

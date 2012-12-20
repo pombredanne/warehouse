@@ -4,7 +4,6 @@ from __future__ import unicode_literals
 
 import calendar
 import datetime
-import time
 import os
 import urlparse
 
@@ -15,12 +14,12 @@ from warehouse.synchronize import validators
 from warehouse.utils import user_agent
 
 
-def filter_dict(d, required=None):
+def filter_dict(unfiltered, required=None):
     if required is None:
         required = set()
 
     data = {}
-    for key, value in d.items():
+    for key, value in unfiltered.items():
         if value is None:
             continue
         elif not key in required and value in ["None", "UNKNOWN"]:
@@ -60,7 +59,7 @@ class PyPIFetcher(object):
     def classifiers(self):
         resp = self.session.get(
                     "https://pypi.python.org/pypi?:action=list_classifiers")
-        return filter(None, resp.text.split("\n"))
+        return [c for c in resp.text.split("\n") if c]
 
     def file(self, url):
         """
@@ -158,7 +157,7 @@ class PyPIFetcher(object):
 
             updated = set()
 
-            for name, version, timestamp, action in changes:
+            for name, version, _timestamp, action in changes:
                 if not (action.lower() == "remove" and version is None):
                     updated.add(name)
 

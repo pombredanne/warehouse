@@ -11,6 +11,7 @@ class TableDDL(schema.SchemaItem):
 
     def __init__(self, ddl):
         self.ddl = ddl
+        self.parent = None
 
     def _set_parent(self, table):
         self.parent = table

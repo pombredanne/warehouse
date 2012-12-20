@@ -8,6 +8,9 @@ import warehouse
 
 
 def user_agent():
+    # A lot of the things checked here are platform specific and don't exist
+    #   on CPython.
+    # pylint: disable=E1101
     _implementation = platform.python_implementation()
 
     if _implementation == "CPython":

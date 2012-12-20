@@ -39,18 +39,23 @@ class EnumMeta(type):
 
     def __init__(cls, classname, bases, dict_):
         cls._reg = reg = cls._reg.copy()
-        for k, v in dict_.items():
-            if isinstance(v, tuple):
-                sym = reg[v[0]] = EnumSymbol(cls, k, *v)
-                setattr(cls, k, sym)
-        return type.__init__(cls, classname, bases, dict_)
+
+        for key, val in dict_.items():
+            if isinstance(val, tuple):
+                sym = reg[val[0]] = EnumSymbol(cls, key, *val)
+                setattr(cls, key, sym)
+
+        super(EnumMeta, cls).__init__(classname, bases, dict_)
+        #return type.__init__(cls, classname, bases, dict_)
 
     def __iter__(cls):
         return iter(cls._reg.values())
 
 
 class EnumType(SchemaType, TypeDecorator):
-    def __init__(self, enum):
+    # pylint: disable=W0223
+
+    def __init__(self, enum, *args, **kwargs):
         self.enum = enum
         self.impl = SQLAEnum(
                         *enum.values(),
@@ -59,7 +64,10 @@ class EnumType(SchemaType, TypeDecorator):
                             lambda m: "_" + m.group(1).lower(),
                             enum.__name__))
 
+        super(EnumType, self).__init__(*args, **kwargs)
+
     def _set_table(self, table, column):
+        # pylint: disable=W0212
         self.impl._set_table(table, column)
 
     def copy(self):

@@ -8,8 +8,8 @@ import os
 
 from flask import Flask
 
-from flask.ext.script import Manager
-from flask.ext.sqlalchemy import SQLAlchemy
+from flask.ext.script import Manager  # pylint: disable=E0611,F0401
+from flask.ext.sqlalchemy import SQLAlchemy  # pylint: disable=E0611,F0401
 
 from warehouse import __about__
 
@@ -57,7 +57,7 @@ def create_app(config=None):
     # Load Modules
     logger.debug("Loading modules")
 
-    for module in MODULES:
+    for module in MODULES:  # pylint: disable=W0621
         # Load Models
         if module.get("models"):
             logger.debug("Loading models for %s", module["name"])
