@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
+import calendar
 import datetime
 import time
 import os
@@ -169,4 +170,4 @@ class PyPIFetcher(object):
                         current_string.text.strip(),
                         "%Y%m%dT%H:%M:%S"
                     )
-        return int(time.mktime(current.timetuple()))
+        return int(calendar.timegm(current.timetuple()))
