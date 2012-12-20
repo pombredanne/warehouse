@@ -2,16 +2,12 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
-import datetime
-import time
-
 import eventlet
 
 from progress.bar import ShadyBar
 
 from warehouse import create_app, db, script
 from warehouse.packages import diff, store
-from warehouse.packages.models import Project
 from warehouse.synchronize.fetchers import PyPIFetcher
 
 
