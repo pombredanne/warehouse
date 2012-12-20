@@ -31,6 +31,11 @@ setup(
         "schema",
         "xmlrpc2",
     ],
+    extras_require={
+        "tests": [
+            "pylint",
+        ],
+    },
 
     packages=find_packages(exclude=["tests"]),
     package_data={
