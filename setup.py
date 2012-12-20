@@ -37,12 +37,16 @@ setup(
             "pylint",
             "pytest",
             "pytest-cov",
+            "pretend",
+            "mock",
         ],
     },
     tests_require=[
         "pep8",
         "pytest",
         "pytest-cov",
+        "pretend",
+        "mock",
     ],
 
     packages=find_packages(exclude=["tests"]),
