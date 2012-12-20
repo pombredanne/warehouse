@@ -77,7 +77,7 @@ release_data = Schema({
     Optional("requires_dist"): [basestring],  # TODO: What does this look like?
     Optional("requires_external"): [basestring],
     Optional("requires_python"): basestring,  # TODO: What does this look like?
-    Optional("summary"):  basestring,  # TODO: Any sort of validation?
+    Optional("summary"): basestring,  # TODO: Any sort of validation?
 })
 
 

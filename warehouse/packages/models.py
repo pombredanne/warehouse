@@ -68,7 +68,8 @@ class Project(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
             CREATE OR REPLACE FUNCTION normalize_name()
             RETURNS trigger AS $$
             BEGIN
-                NEW.normalized = lower(regexp_replace(new.name, '[^A-Za-z0-9.]+', '-'));
+                NEW.normalized = lower(
+                            regexp_replace(new.name, '[^A-Za-z0-9.]+', '-'));
                 return NEW;
             END;
             $$ LANGUAGE plpgsql;
@@ -120,7 +121,8 @@ class Version(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
                 AS ON UPDATE TO projects
                 WHERE NEW.yanked = TRUE
                 DO ALSO
-                    UPDATE versions SET yanked = TRUE WHERE project_id = NEW.id;
+                    UPDATE versions SET yanked = TRUE
+                        WHERE project_id = NEW.id;
         """),
         TableDDL("""
             CREATE CONSTRAINT TRIGGER cannot_unyank_versions

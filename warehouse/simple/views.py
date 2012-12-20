@@ -49,7 +49,8 @@ def detail(project, version=None, restrict=False):
     if version is None:
         versions = Version.query.filter_by(project=project, yanked=False).all()
         files = File.query.filter(
-                        File.version.in_(versions), File.yanked == False).all()
+                    File.version.in_(versions)
+                ).filter_by(yanked=False).all()
     else:
         versions = Version.query.filter_by(
                                     project=project, version=version).all()
