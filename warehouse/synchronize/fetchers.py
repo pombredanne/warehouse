@@ -36,7 +36,9 @@ class PyPIFetcher(object):
     def __init__(self, client=None, session=None):
         if session is None:
             certificate = os.path.join(os.path.dirname(__file__), "PyPI.crt")
-            session = requests.session(verify=certificate)
+
+            session = requests.session()
+            session.verify = certificate
 
         # Patch the headers
         session.headers.update({"User-Agent": user_agent()})
@@ -66,7 +68,7 @@ class PyPIFetcher(object):
         parsed = urlparse.urlparse(url)
         url = urlparse.urlunparse(("https",) + parsed[1:])
 
-        resp = self.session.get(url, prefetch=True)
+        resp = self.session.get(url)
         return resp.content
 
     def distributions(self, project, version):
