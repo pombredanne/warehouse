@@ -171,6 +171,26 @@ class PyPIFetcher(object):
 
             return updated
 
+    def deletions(self, since=None):
+        if since is None:
+            # With no point of reference we must assume there has been
+            #   deletions
+            return True
+        else:
+            since = since - 1
+            changes = self.client.changelog(since)
+
+            # TODO(dstufft): validate output
+
+            for _name, version, _timestamp, action in changes:
+                if action.lower() == "remove" and version is None:
+                    # If we find *any* project deletions we know there was
+                    #   at least one and can say True
+                    return True
+
+            # We've found no deletions, so False
+            return False
+
     def current(self):
         current_string = self.session.get("https://pypi.python.org/daytime")
         current = datetime.datetime.strptime(
