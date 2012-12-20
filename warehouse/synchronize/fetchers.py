@@ -153,6 +153,7 @@ class PyPIFetcher(object):
             packages = self.client.list_packages()
             return set(validators.list_packages.validate(packages))
         else:
+            since = since - 1
             changes = self.client.changelog(since)
 
             updated = set()
