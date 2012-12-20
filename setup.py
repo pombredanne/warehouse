@@ -39,7 +39,6 @@ setup(
 
     packages=find_packages(exclude=["tests"]),
     package_data={
-        "": ["LICENSE"],
         "warehouse": [
             "simple/templates/*.html",
             "synchronize/*.crt",
