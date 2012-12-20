@@ -33,15 +33,15 @@ setup(
     ],
     extras_require={
         "tests": [
+            "pep8",
             "pylint",
             "pytest",
-            "pytest-pep8",
             "pytest-cov",
         ],
     },
     tests_require=[
+        "pep8",
         "pytest",
-        "pytest-pep8",
         "pytest-cov",
     ],
 
