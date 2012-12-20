@@ -10,8 +10,8 @@ import urlparse
 import requests
 import xmlrpc2.client
 
-from warehouse.synchronize import validators
-from warehouse.utils import user_agent
+from warehouse.synchronize import validators as warehouse_validators
+from warehouse import utils
 
 
 def filter_dict(unfiltered, required=None):
@@ -33,7 +33,7 @@ def filter_dict(unfiltered, required=None):
 
 class PyPIFetcher(object):
 
-    def __init__(self, client=None, session=None):
+    def __init__(self, client=None, session=None, validators=None):
         if session is None:
             certificate = os.path.join(os.path.dirname(__file__), "PyPI.crt")
 
@@ -41,7 +41,7 @@ class PyPIFetcher(object):
             session.verify = certificate
 
         # Patch the headers
-        session.headers.update({"User-Agent": user_agent()})
+        session.headers.update({"User-Agent": utils.user_agent()})
 
         # Store the session
         self.session = session
@@ -55,6 +55,11 @@ class PyPIFetcher(object):
                                             transports=transports)
 
         self.client = client
+
+        if validators is None:
+            validators = warehouse_validators
+
+        self.validators = validators
 
     def classifiers(self):
         resp = self.session.get(
@@ -77,7 +82,7 @@ class PyPIFetcher(object):
         the release of project with the given version.
         """
         urls = self.client.release_urls(project, version)
-        urls = validators.release_urls.validate(urls)
+        urls = self.validators.release_urls.validate(urls)
 
         keys = set([
             "filename", "filesize", "python_version", "type", "comment",
@@ -106,7 +111,7 @@ class PyPIFetcher(object):
         """
         data = self.client.release_data(project, version)
         data = filter_dict(data, required=set(["name", "version"]))
-        data = validators.release_data.validate(data)
+        data = self.validators.release_data.validate(data)
 
         # fix classifiers (dedupe + sort)
         data["classifiers"] = list(set(data.get("classifiers", [])))
@@ -119,14 +124,14 @@ class PyPIFetcher(object):
         # Collapse project_url, bugtrack_url, and home_page into uris
         data["uris"] = {}
 
-        if "project_url" in data:
-            data["uris"].update(data["project_url"])
-
         if "bugtrack_url" in data:
             data["uris"]["bugtracker"] = data["bugtrack_url"]
 
         if "home_page" in data:
             data["uris"]["home page"] = data["home_page"]
+
+        if "project_url" in data:
+            data["uris"].update(data["project_url"])
 
         # Filter resulting dictionary down to only the required keys
         keys = set([
@@ -143,7 +148,7 @@ class PyPIFetcher(object):
         Returns a list of all the versions for a particular project.
         """
         versions = self.client.package_releases(project, True)
-        return validators.package_releases.validate(versions)
+        return self.validators.package_releases.validate(versions)
 
     def projects(self, since=None):
         """
@@ -151,10 +156,12 @@ class PyPIFetcher(object):
         """
         if since is None:
             packages = self.client.list_packages()
-            return set(validators.list_packages.validate(packages))
+            return set(self.validators.list_packages.validate(packages))
         else:
             since = since - 1
             changes = self.client.changelog(since)
+
+            # TODO(dstufft): validate output
 
             updated = set()
 
