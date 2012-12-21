@@ -88,6 +88,8 @@ def syncer(projects=None, since=None, fetcher=None, pool=None, progress=True,
         for project in bar.iter(projects):
             pool.spawn_n(synchronize_project, app, project, fetcher, force)
 
+    pool.waitall()
+
     # See if there have been any deletions
     if fetcher.deletions(since=since):
         # Grab all projects to do a diff against
