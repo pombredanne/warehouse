@@ -102,7 +102,10 @@ class Project(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
                     server_onupdate=FetchedValue()
                 )
 
-    versions = relationship("Version", backref="project")
+    versions = relationship("Version",
+                    cascade="all,delete,delete-orphan",
+                    backref="project",
+                )
 
     def __init__(self, name):
         self.name = name
@@ -187,7 +190,10 @@ class Version(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
     classifiers = association_proxy("_classifiers", "trove",
                         creator=Classifier.get_or_create
                     )
-    files = relationship("File", backref="version")
+    files = relationship("File",
+                cascade="all,delete,delete-orphan",
+                backref="version",
+            )
 
     def __repr__(self):
         ctx = {"name": self.project.name, "version": self.version}
