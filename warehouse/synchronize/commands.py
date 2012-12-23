@@ -107,6 +107,8 @@ def syncer(projects=None, since=None, fetcher=None, pool=None, progress=True,
     return current
 
 
+@script.option("--no-store",
+            action="store_false", dest="store_since", default=True)
 @script.option("--full", action="store_true", dest="full", default=False)
 @script.option("--since", type=int, default=None)
 @script.option("--force-download", action="store_true", dest="force")
@@ -114,7 +116,7 @@ def syncer(projects=None, since=None, fetcher=None, pool=None, progress=True,
 @script.option("--no-progress", action="store_false", dest="progress")
 @script.option("projects", nargs="*", metavar="project")
 def synchronize(projects=None, concurrency=10, progress=True, force=False,
-        since=None, full=False):
+        since=None, full=False, store_since=True):
     # This is a hack to normalize the incoming projects to unicode
     projects = [x.decode("utf-8") for x in projects]
 
@@ -137,7 +139,8 @@ def synchronize(projects=None, concurrency=10, progress=True, force=False,
             )
 
     # Save our synchronization time in redis
-    redis.set(REDIS_SINCE_KEY, synced)
+    if store_since:
+        redis.set(REDIS_SINCE_KEY, synced)
 
     # Output the time we started the sync
     print "Synchronization completed at", synced
