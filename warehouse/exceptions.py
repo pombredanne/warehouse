@@ -1,0 +1,2 @@
+class FailedSynchronization(Exception):
+    pass

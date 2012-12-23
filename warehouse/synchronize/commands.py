@@ -7,6 +7,7 @@ import eventlet
 from progress.bar import ShadyBar
 
 from warehouse import create_app, db, redis, script
+from warehouse.exceptions import FailedSynchronization
 from warehouse.packages import diff, store
 from warehouse.synchronize.fetchers import PyPIFetcher
 
@@ -98,11 +99,31 @@ def syncer(projects=None, since=None, fetcher=None, pool=None, progress=True,
 
     app = create_app()
 
+    results = []
+
     with app.app_context():
         for project in bar.iter(projects):
-            pool.spawn_n(synchronize_project, app, project, fetcher, force)
+            results.append(
+                pool.spawn(synchronize_project, app, project, fetcher, force),
+            )
 
-    pool.waitall()
+    failed = False
+
+    for result in results:
+        # Wait for the result so that it will raise an exception if one
+        #   occured
+        try:
+            result.wait()
+        # Catch a general Exception here because we do not know what will
+        #   be raised by the green thread.
+        except Exception:  # pylint: disable=W0703
+            failed = True
+
+    if failed:
+        # Raise a general Synchronization has failed exception. In general
+        #   hiding the exception like this isn't very nice but it's difficult
+        #   to "do the right thing" with green threads.
+        raise FailedSynchronization
 
     # See if there have been any deletions
     if fetcher.deletions(since=since):
