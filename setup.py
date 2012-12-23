@@ -20,6 +20,7 @@ setup(
 
     install_requires=[
         "Flask",
+        "Flask-Redistore",
         "Flask-SQLAlchemy",
         "Flask-Script",
         "boto",

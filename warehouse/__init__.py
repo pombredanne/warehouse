@@ -8,6 +8,7 @@ import os
 
 from flask import Flask
 
+from flask.ext.redistore import Redistore  # pylint: disable=E0611,F0401
 from flask.ext.script import Manager  # pylint: disable=E0611,F0401
 from flask.ext.sqlalchemy import SQLAlchemy  # pylint: disable=E0611,F0401
 
@@ -32,6 +33,7 @@ MODULES = [
 logger = logging.getLogger("warehouse")
 
 db = SQLAlchemy(session_options={"autoflush": True})
+redis = Redistore()
 
 
 def create_app(config=None):
@@ -52,7 +54,11 @@ def create_app(config=None):
     # Initialize Extensions
     logger.debug("Initializing extensions")
 
+    # Initialize the database
     db.init_app(app)
+
+    # Initialize Redis
+    redis.init_app(app)
 
     # Load Modules
     logger.debug("Loading modules")
