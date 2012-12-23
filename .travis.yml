@@ -6,4 +6,4 @@ script:
   - pylint --rcfile .pylintrc -r y warehouse
   - py.test
 install:
-  - pip install "file://$PWD#egg=warehouse[tests]"
+  - pip install -q "file://$PWD#egg=warehouse[tests]"
