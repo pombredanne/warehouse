@@ -12,6 +12,7 @@ from warehouse.synchronize.fetchers import PyPIFetcher
 
 
 REDIS_SINCE_KEY = "warehouse:since"
+REDIS_SYNC_LOCK_KEY = "warehouse:sync:lock:{project}"
 
 
 eventlet.monkey_patch()
@@ -25,38 +26,48 @@ class DummyBar(object):
 
 def synchronize_project(app, project, fetcher, force=False):
     with app.test_request_context():
-        project = store.project(project)
+        key = REDIS_SYNC_LOCK_KEY.format(project=project)
 
-        versions = fetcher.versions(project.name)
+        with redis.lock(key, timeout=60 * 10):
+            project = store.project(project)
 
-        for ver in versions:
-            version = store.version(
-                        project,
-                        fetcher.release(project.name, ver),
-                    )
-            dists = list(fetcher.distributions(project.name, version.version))
+            versions = fetcher.versions(project.name)
 
-            for dist in dists:
-                distribution = store.distribution(version, dist)
-
-                # Check if the stored hash matches what the fetcher says
-                if (force or
-                        distribution.hashes is None or
-                        dist["md5_digest"] != distribution.hashes.get("md5")):
-                    # The fetcher has a different file
-                    store.distribution_file(
-                            distribution,
-                            fetcher.file(dist["url"]),
+            for ver in versions:
+                version = store.version(
+                            project,
+                            fetcher.release(project.name, ver),
                         )
 
-            # Yank distributions that no longer exist in PyPI
-            diff.distributions(version, [x["filename"] for x in dists])
+                dists = fetcher.distributions(project.name, version.version)
+                dists = list(dists)
 
-        # Yank versions that no longer exist in PyPI
-        diff.versions(project, versions)
+                for dist in dists:
+                    distribution = store.distribution(version, dist)
 
-        # Commit our changes
-        db.session.commit()
+                    if distribution.hashes is None:
+                        current_hash = None
+                    else:
+                        current_hash = distribution.hashes.get("md5")
+
+                    # Check if the stored hash matches what the fetcher says
+                    if (force or
+                            distribution.hashes is None or
+                            dist["md5_digest"] != current_hash):
+                        # The fetcher has a different file
+                        store.distribution_file(
+                                distribution,
+                                fetcher.file(dist["url"]),
+                            )
+
+                # Yank distributions that no longer exist in PyPI
+                diff.distributions(version, [x["filename"] for x in dists])
+
+            # Yank versions that no longer exist in PyPI
+            diff.versions(project, versions)
+
+            # Commit our changes
+            db.session.commit()
 
 
 def syncer(projects=None, since=None, fetcher=None, pool=None, progress=True,
