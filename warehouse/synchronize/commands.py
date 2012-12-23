@@ -6,9 +6,12 @@ import eventlet
 
 from progress.bar import ShadyBar
 
-from warehouse import create_app, db, script
+from warehouse import create_app, db, redis, script
 from warehouse.packages import diff, store
 from warehouse.synchronize.fetchers import PyPIFetcher
+
+
+REDIS_SINCE_KEY = "warehouse:since"
 
 
 eventlet.monkey_patch()
@@ -117,6 +120,10 @@ def synchronize(projects=None, concurrency=10, progress=True, force=False,
     # Create the Pool that Synchronization will use
     pool = eventlet.GreenPool(concurrency)
 
+    # Get our last run out of Redis if there was a last run
+    if since is None:
+        since = int(redis.get(REDIS_SINCE_KEY))
+
     # Run the actual Synchronization
     synced = syncer(projects,
                 since=since,
@@ -124,6 +131,9 @@ def synchronize(projects=None, concurrency=10, progress=True, force=False,
                 progress=progress,
                 force=force
             )
+
+    # Save our synchronization time in redis
+    redis.set(REDIS_SINCE_KEY, synced)
 
     # Output the time we started the sync
     print "Synchronization completed at", synced
