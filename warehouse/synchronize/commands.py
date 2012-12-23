@@ -107,13 +107,14 @@ def syncer(projects=None, since=None, fetcher=None, pool=None, progress=True,
     return current
 
 
+@script.option("--full", action="store_true", dest="full", default=False)
 @script.option("--since", type=int, default=None)
 @script.option("--force-download", action="store_true", dest="force")
 @script.option("--concurrency", dest="concurrency", type=int, default=10)
 @script.option("--no-progress", action="store_false", dest="progress")
 @script.option("projects", nargs="*", metavar="project")
 def synchronize(projects=None, concurrency=10, progress=True, force=False,
-        since=None):
+        since=None, full=False):
     # This is a hack to normalize the incoming projects to unicode
     projects = [x.decode("utf-8") for x in projects]
 
@@ -121,8 +122,11 @@ def synchronize(projects=None, concurrency=10, progress=True, force=False,
     pool = eventlet.GreenPool(concurrency)
 
     # Get our last run out of Redis if there was a last run
-    if since is None:
+    if since is None and not full:
         since = int(redis.get(REDIS_SINCE_KEY))
+
+    if full and not since is None:
+        since = None
 
     # Run the actual Synchronization
     synced = syncer(projects,
