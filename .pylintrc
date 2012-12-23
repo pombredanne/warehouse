@@ -38,7 +38,7 @@ comment=no
 bad-functions=map,filter,apply,input
 
 # Regular expression which should only match correct module level names
-const-rgx=(([A-Z_][A-Z0-9_]*)|(__.*__))|(logger|db|script)$
+const-rgx=(([A-Z_][A-Z0-9_]*)|(__.*__))|(logger|db|redis|script)$
 
 # Good variable names which should always be accepted, separated by a comma
 good-names=i,j,k,_,fp
