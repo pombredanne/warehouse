@@ -72,7 +72,7 @@ def synchronize_project(app, project, fetcher, force=False):
 
 
 def syncer(projects=None, since=None, fetcher=None, pool=None, progress=True,
-        force=False):
+        force=False, raise_exc=False):
     if pool is None:
         pool = eventlet.GreenPool(10)
 
@@ -119,6 +119,10 @@ def syncer(projects=None, since=None, fetcher=None, pool=None, progress=True,
         except Exception:  # pylint: disable=W0703
             failed = True
 
+            # If we are re-raising exceptions then raise this one
+            if raise_exc:
+                raise
+
     if failed:
         # Raise a general Synchronization has failed exception. In general
         #   hiding the exception like this isn't very nice but it's difficult
@@ -139,6 +143,7 @@ def syncer(projects=None, since=None, fetcher=None, pool=None, progress=True,
     return current
 
 
+@script.option("--raise", action="store_true", dest="raise_exc", default=False)
 @script.option("--no-store",
             action="store_false", dest="store_since", default=True)
 @script.option("--full", action="store_true", dest="full", default=False)
@@ -148,7 +153,7 @@ def syncer(projects=None, since=None, fetcher=None, pool=None, progress=True,
 @script.option("--no-progress", action="store_false", dest="progress")
 @script.option("projects", nargs="*", metavar="project")
 def synchronize(projects=None, concurrency=10, progress=True, force=False,
-        since=None, full=False, store_since=True):
+        since=None, full=False, store_since=True, raise_exc=False):
     # This is a hack to normalize the incoming projects to unicode
     projects = [x.decode("utf-8") for x in projects]
 
@@ -167,7 +172,8 @@ def synchronize(projects=None, concurrency=10, progress=True, force=False,
                 since=since,
                 pool=pool,
                 progress=progress,
-                force=force
+                force=force,
+                raise_exc=raise_exc,
             )
 
     # Save our synchronization time in redis
