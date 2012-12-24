@@ -6,6 +6,8 @@ import logging
 
 import eventlet
 
+from flask.ext.script import (  # pylint: disable=E0611,F0401
+                            Command, Group, Option)
 from progress.bar import ShadyBar
 
 from warehouse import create_app, db, redis, script
@@ -180,60 +182,75 @@ def syncer(projects=None, since=None, fetcher=None, pool=None, progress=True,
     return current
 
 
-@script.option("--timeout", type=int, dest="timeout", default=None)
-@script.option("--repeat-every", type=int, dest="repeat", default=False)
-@script.option("--raise", action="store_true", dest="raise_exc", default=False)
-@script.option("--no-store",
-            action="store_false", dest="store_since", default=True)
-@script.option("--full", action="store_true", dest="full", default=False)
-@script.option("--since", type=int, default=None)
-@script.option("--force-download", action="store_true", dest="force")
-@script.option("--concurrency", dest="concurrency", type=int, default=10)
-@script.option("--no-progress", action="store_false", dest="progress")
-@script.option("projects", nargs="*", metavar="project")
-def synchronize(projects=None, concurrency=10, progress=True, force=False,
-        since=None, full=False, store_since=True, raise_exc=False,
-        repeat=False, timeout=None):
-    # This is a hack to normalize the incoming projects to unicode
-    projects = [x.decode("utf-8") for x in projects]
+class Synchronize(Command):
 
-    if projects:
-        logger.info("Will synchronize %s from pypi.python.org", projects)
-    else:
-        logger.info("will synchronize all projects from pypi.python.org")
+    # pylint: disable=W0232
 
-    # Create the Pool that Synchronization will use
-    pool = eventlet.GreenPool(concurrency)
-    logger.debug("Using concurrency of %s for GreenPool", pool.size)
+    option_list = [
+        Option("projects", nargs="*", metavar="project"),
+        Option("--repeat-every", type=int, dest="repeat", default=False),
+        Option("--no-progress", action="store_false", dest="progress"),
+        Option("--force-download", action="store_true", dest="force"),
+        Option("--timeout", type=int, dest="timeout", default=None),
+        Option("--no-store",
+                action="store_false", dest="store_since", default=True),
+        Option("--raise",
+                action="store_true", dest="raise_exc", default=False),
+        Option("--concurrency", dest="concurrency", type=int, default=10),
+        Group(
+            Option("--full", action="store_true", dest="full", default=False),
+            Option("--since", type=int, default=None),
+            exclusive=True,
+        ),
+    ]
 
-    # record if we should be grabbing since from redis
-    fetch_since = not since and not full
+    def run(self, projects=None, concurrency=10, progress=True, force=False,
+            since=None, full=False, store_since=True, raise_exc=False,
+            repeat=False, timeout=None):
+        # This is a hack to normalize the incoming projects to unicode
+        projects = [x.decode("utf-8") for x in projects]
 
-    for _ in utils.repeat_every(
-                seconds=repeat if repeat else 0,
-                times=None if repeat else 1,
-            ):
-        # Determine what our since should be
-        if fetch_since:
-            since = int(redis.get(REDIS_SINCE_KEY))
-        elif full:
-            since = None
+        if projects:
+            logger.info("Will synchronize %s from pypi.python.org", projects)
+        else:
+            logger.info("will synchronize all projects from pypi.python.org")
 
-        # Run the actual Synchronization
-        synced = syncer(projects,
-                    since=since,
-                    pool=pool,
-                    progress=progress,
-                    force=force,
-                    raise_exc=raise_exc,
-                    timeout=timeout,
-                )
+        # Create the Pool that Synchronization will use
+        pool = eventlet.GreenPool(concurrency)
+        logger.debug("Using concurrency of %s for GreenPool", pool.size)
 
-        # Save our synchronization time in redis
-        if store_since:
-            redis.set(REDIS_SINCE_KEY, synced)
+        # record if we should be grabbing since from redis
+        fetch_since = not since and not full
 
-        # Output the time we started the sync
-        logger.info("Synchronization from pypi.python.org completed at %s",
-            synced,
-        )
+        for _ in utils.repeat_every(
+                    seconds=repeat if repeat else 0,
+                    times=None if repeat else 1,
+                ):
+            # Determine what our since should be
+            if fetch_since:
+                since = int(redis.get(REDIS_SINCE_KEY))
+            elif full:
+                since = None
+
+            # Run the actual Synchronization
+            synced = syncer(projects,
+                        since=since,
+                        pool=pool,
+                        progress=progress,
+                        force=force,
+                        raise_exc=raise_exc,
+                        timeout=timeout,
+                    )
+
+            # Save our synchronization time in redis
+            if store_since:
+                redis.set(REDIS_SINCE_KEY, synced)
+
+            # Output the time we started the sync
+            logger.info(
+                "Synchronization from pypi.python.org completed at %s",
+                synced,
+            )
+
+script.add_command("sync", Synchronize())
+script.add_command("synchronize", Synchronize())
