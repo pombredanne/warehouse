@@ -6,7 +6,8 @@ import logging
 
 import eventlet
 
-from flask.ext.script import Command, Group, Option
+from flask.ext.script import (  # pylint: disable=E0611,F0401
+                            Command, Group, Option)
 from progress.bar import ShadyBar
 
 from warehouse import create_app, db, redis, script
@@ -182,6 +183,8 @@ def syncer(projects=None, since=None, fetcher=None, pool=None, progress=True,
 
 
 class Synchronize(Command):
+
+    # pylint: disable=W0232
 
     option_list = [
         Option("projects", nargs="*", metavar="project"),
