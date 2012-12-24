@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 import os
 import platform
 import sys
+import time
 
 import flask
 
@@ -43,6 +44,22 @@ def user_agent():
             "%s/%s" % (_implementation, _implementation_version),
             "%s/%s" % (platform.system(), platform.release()),
         ])
+
+
+def repeat_every(seconds=0, minutes=0, hours=0, initial=False, times=None):
+    ran = 0
+    seconds = seconds + (minutes * 60) + (hours * 60 * 60)
+
+    if not initial and (times is None or times > 0):
+        if not times is None:
+            ran += 1
+        yield 0
+
+    while times is None or times > ran:
+        if not times is None:
+            ran += 1
+        time.sleep(seconds)
+        yield seconds
 
 
 def ropen(path, mode="r"):
