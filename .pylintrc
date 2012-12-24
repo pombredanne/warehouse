@@ -14,10 +14,12 @@ persistent=yes
 #   R0913(too-many-arguments) - Tool enforced limits like this are horrible
 #   R0903(too-few-public-methods) - Tool enforced limits like this are horrible
 #   R0904(too-many-public-methods) - Tool enforced limits like this are horrible
+#   R0912(too-many-branches) - Tool enforced limits like this are horrible
+#   R0914(too-many-locals) - Tool enforced limits like this are horrible
 #   R0201(no-self-use) - Does @staticmethod even really gain anything?
 #   W142(star-args) - Language features are not "magic"
 #   E0603(undefined-all-variable) - This appears to be broken?
-disable=W0511,I0011,C0111,R0913,R0903,R0904,R0201,W0142,E0603
+disable=W0511,I0011,C0111,R0913,R0903,R0904,R0912,R0914,R0201,W0142,E0603
 
 
 [REPORTS]
