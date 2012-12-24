@@ -17,6 +17,7 @@ from warehouse import __about__
 
 __all__ = ["create_app", "db", "script"] + __about__.__all__
 
+
 # - Meta Information -
 # This is pretty ugly
 for attr in __about__.__all__:
@@ -31,6 +32,7 @@ MODULES = [
 ]
 
 logger = logging.getLogger("warehouse")
+logger.addHandler(logging.NullHandler())
 
 db = SQLAlchemy(session_options={"autoflush": True})
 redis = Redistore()
@@ -41,27 +43,27 @@ def create_app(config=None):
     app = Flask("warehouse")
 
     # Load Configuration
-    logger.debug("Loading configuration")
-
+    logger.debug("Loading configuration from 'warehouse.defaults'")
     app.config.from_object("warehouse.defaults")
 
     if "WAREHOUSE_CONF" in os.environ:
+        logger.debug(
+            "Loading configuration from '%s' via $WAREHOUSE_CONF",
+            os.environ["WAREHOUSE_CONF"],
+        )
         app.config.from_envvar("WAREHOUSE_CONF")
 
     if config:
+        logger.debug("Loading configuration from '%s' via -c/--config", config)
         app.config.from_pyfile(config)
 
-    # Initialize Extensions
-    logger.debug("Initializing extensions")
-
     # Initialize the database
+    logger.debug("Initialize the PostgreSQL database object")
     db.init_app(app)
 
     # Initialize Redis
+    logger.debug("Initialize the Redis database object")
     redis.init_app(app)
-
-    # Load Modules
-    logger.debug("Loading modules")
 
     for module in MODULES:  # pylint: disable=W0621
         # Load Models
@@ -71,7 +73,7 @@ def create_app(config=None):
 
         # Load views
         if module.get("views"):
-            logger.debug("Loading views for %s", module["name"])
+            logger.debug("Loading blueprints for %s", module["name"])
             mod = importlib.import_module("warehouse.%(name)s.views" % module)
 
             for blueprint in mod.BLUEPRINTS:
