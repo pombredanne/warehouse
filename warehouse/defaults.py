@@ -14,7 +14,7 @@ REDIS_URI = "redis://localhost:6379/0"
 
 # The amount of time (in seconds) that synchronizing each project can take
 #   before timing out.
-SYNCHRONIZATION_TIMEOUT = 60 * (2 * 60)
+SYNCHRONIZATION_TIMEOUT = 60 * 15
 
 # The type of Storage to use. Can be either Filesystem or S3.
 STORAGE = "Filesystem"
