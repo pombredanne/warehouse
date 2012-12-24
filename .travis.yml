@@ -1,9 +1,10 @@
 language: python
 python:
   - 2.7
+install:
+  - "pip install -q git+git://github.com/techniq/flask-script.git@1c8da823518439312f8c48b851c3a5604d1a4c87#egg=Flask-Script"
+  - pip install -q "file://$PWD#egg=warehouse[tests]"
 script:
   - pep8 warehouse
   - pylint --rcfile .pylintrc -r y warehouse
   - py.test
-install:
-  - pip install -q "file://$PWD#egg=warehouse[tests]"
