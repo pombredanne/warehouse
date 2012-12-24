@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 
 import calendar
 import datetime
+import logging
 import os
 import urlparse
 
@@ -12,6 +13,10 @@ import xmlrpc2.client
 
 from warehouse.synchronize import validators as warehouse_validators
 from warehouse import utils
+
+
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 
 def filter_dict(unfiltered, required=None):
@@ -36,6 +41,7 @@ class PyPIFetcher(object):
     def __init__(self, client=None, session=None, validators=None):
         if session is None:
             certificate = os.path.join(os.path.dirname(__file__), "PyPI.crt")
+            logger.debug("Using the certificate located at '%s'", certificate)
 
             session = requests.session()
             session.verify = certificate
@@ -62,6 +68,7 @@ class PyPIFetcher(object):
         self.validators = validators
 
     def classifiers(self):
+        logger.debug("Fetching classifiers from pypi.python.org")
         resp = self.session.get(
                     "https://pypi.python.org/pypi?:action=list_classifiers")
         return [c for c in resp.text.split("\n") if c]
@@ -73,6 +80,8 @@ class PyPIFetcher(object):
         parsed = urlparse.urlparse(url)
         url = urlparse.urlunparse(("https",) + parsed[1:])
 
+        logger.debug("Fetching '%s'", url)
+
         resp = self.session.get(url)
         return resp.content
 
@@ -81,6 +90,13 @@ class PyPIFetcher(object):
         Takes a project and version and it returns the normalized files for
         the release of project with the given version.
         """
+        logger.debug(
+            "Fetching distributions for '%s' version '%s' "
+                "from pypi.python.org",
+            project,
+            version,
+        )
+
         urls = self.client.release_urls(project, version)
         urls = self.validators.release_urls.validate(urls)
 
@@ -109,6 +125,12 @@ class PyPIFetcher(object):
         Takes a project and version and it returns the normalized data for the
         release of project with that version.
         """
+        logger.debug(
+            "Fetching release data for '%s' version '%s' from pypi.python.org",
+            project,
+            version,
+        )
+
         data = self.client.release_data(project, version)
         data = filter_dict(data, required=set(["name", "version"]))
         data = self.validators.release_data.validate(data)
@@ -147,6 +169,11 @@ class PyPIFetcher(object):
         """
         Returns a list of all the versions for a particular project.
         """
+        logger.debug(
+            "Fetching versions for '%s' from pypi.python.org",
+            project,
+        )
+
         versions = self.client.package_releases(project, True)
         return self.validators.package_releases.validate(versions)
 
@@ -155,10 +182,17 @@ class PyPIFetcher(object):
         Returns a list of all project names
         """
         if since is None:
+            logger.debug("Fetching all projects from pypi.python.org")
             packages = self.client.list_packages()
             return set(self.validators.list_packages.validate(packages))
         else:
             since = since - 1
+
+            logger.debug(
+                "Fetching all changes since %s from pypi.python.org",
+                since,
+            )
+
             changes = self.client.changelog(since)
 
             # TODO(dstufft): validate output
@@ -175,6 +209,10 @@ class PyPIFetcher(object):
         if since is None:
             # With no point of reference we must assume there has been
             #   deletions
+            logger.debug(
+                "Assuming there have been deletions since there is no point "
+                "of reference"
+            )
             return True
         else:
             since = since - 1
@@ -186,12 +224,22 @@ class PyPIFetcher(object):
                 if action.lower() == "remove" and version is None:
                     # If we find *any* project deletions we know there was
                     #   at least one and can say True
+                    logger.debug(
+                        "Found deletions that have occurred since %s",
+                        since,
+                    )
                     return True
+
+            logger.debug(
+                "Found no deletions that have occurred since %s",
+                since,
+            )
 
             # We've found no deletions, so False
             return False
 
     def current(self):
+        logger.debug("Fetching the current time from pypi.python.org")
         current_string = self.session.get("https://pypi.python.org/daytime")
         current = datetime.datetime.strptime(
                         current_string.text.strip(),
