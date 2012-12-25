@@ -258,4 +258,3 @@ class Synchronize(Command):
             )
 
 script.add_command("sync", Synchronize())
-script.add_command("synchronize", Synchronize())
