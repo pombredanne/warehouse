@@ -120,51 +120,53 @@ def syncer(projects=None, since=None, fetcher=None, pool=None, progress=True,
     if not projects:
         projects = fetcher.projects(since=since)
 
-    if progress:
-        bar = ShadyBar("Synchronizing", max=len(projects))
-    else:
-        bar = DummyBar()
+    # Check if we have anything to sync before bothering to attempt to sync
+    if projects:
+        if progress:
+            bar = ShadyBar("Synchronizing", max=len(projects))
+        else:
+            bar = DummyBar()
 
-    app = create_app()
+        app = create_app()
 
-    results = []
+        results = []
 
-    with app.app_context():
-        if timeout is None:
-            timeout = app.config["SYNCHRONIZATION_TIMEOUT"]
+        with app.app_context():
+            if timeout is None:
+                timeout = app.config["SYNCHRONIZATION_TIMEOUT"]
 
-        with eventlet.Timeout(timeout, SynchronizationTimeout):
-            for project in bar.iter(projects):
-                results.append(
-                    pool.spawn(synchronize_project,
-                            app,
-                            project,
-                            fetcher,
-                            force,
-                    ),
-                )
+            with eventlet.Timeout(timeout, SynchronizationTimeout):
+                for project in bar.iter(projects):
+                    results.append(
+                        pool.spawn(synchronize_project,
+                                app,
+                                project,
+                                fetcher,
+                                force,
+                        ),
+                    )
 
-    failed = False
+        failed = False
 
-    for result in results:
-        # Wait for the result so that it will raise an exception if one
-        #   occured
-        try:
-            result.wait()
-        # Catch a general Exception here because we do not know what will
-        #   be raised by the green thread.
-        except Exception:  # pylint: disable=W0703
-            logger.exception("An error has occured during synchronization")
-            failed = True
-            # If we are re-raising exceptions then raise this one
-            if raise_exc:
-                raise
+        for result in results:
+            # Wait for the result so that it will raise an exception if one
+            #   occured
+            try:
+                result.wait()
+            # Catch a general Exception here because we do not know what will
+            #   be raised by the green thread.
+            except Exception:  # pylint: disable=W0703
+                logger.exception("An error has occured during synchronization")
+                failed = True
+                # If we are re-raising exceptions then raise this one
+                if raise_exc:
+                    raise
 
-    if failed:
-        # Raise a general Synchronization has failed exception. In general
-        #   hiding the exception like this isn't very nice but it's difficult
-        #   to "do the right thing" with green threads.
-        raise FailedSynchronization
+        if failed:
+            # Raise a general Synchronization has failed exception. In general
+            #   hiding the exception like this isn't very nice but it's
+            #    difficult to "do the right thing" with green threads.
+            raise FailedSynchronization
 
     # See if there have been any deletions
     if fetcher.deletions(since=since):
