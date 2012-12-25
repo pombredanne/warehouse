@@ -120,51 +120,53 @@ def syncer(projects=None, since=None, fetcher=None, pool=None, progress=True,
     if not projects:
         projects = fetcher.projects(since=since)
 
-    if progress:
-        bar = ShadyBar("Synchronizing", max=len(projects))
-    else:
-        bar = DummyBar()
+    # Check if we have anything to sync before bothering to attempt to sync
+    if projects:
+        if progress:
+            bar = ShadyBar("Synchronizing", max=len(projects))
+        else:
+            bar = DummyBar()
 
-    app = create_app()
+        app = create_app()
 
-    results = []
+        results = []
 
-    with app.app_context():
-        if timeout is None:
-            timeout = app.config["SYNCHRONIZATION_TIMEOUT"]
+        with app.app_context():
+            if timeout is None:
+                timeout = app.config["SYNCHRONIZATION_TIMEOUT"]
 
-        with eventlet.Timeout(timeout, SynchronizationTimeout):
-            for project in bar.iter(projects):
-                results.append(
-                    pool.spawn(synchronize_project,
-                            app,
-                            project,
-                            fetcher,
-                            force,
-                    ),
-                )
+            with eventlet.Timeout(timeout, SynchronizationTimeout):
+                for project in bar.iter(projects):
+                    results.append(
+                        pool.spawn(synchronize_project,
+                                app,
+                                project,
+                                fetcher,
+                                force,
+                        ),
+                    )
 
-    failed = False
+        failed = False
 
-    for result in results:
-        # Wait for the result so that it will raise an exception if one
-        #   occured
-        try:
-            result.wait()
-        # Catch a general Exception here because we do not know what will
-        #   be raised by the green thread.
-        except Exception:  # pylint: disable=W0703
-            logger.exception("An error has occured during synchronization")
-            failed = True
-            # If we are re-raising exceptions then raise this one
-            if raise_exc:
-                raise
+        for result in results:
+            # Wait for the result so that it will raise an exception if one
+            #   occured
+            try:
+                result.wait()
+            # Catch a general Exception here because we do not know what will
+            #   be raised by the green thread.
+            except Exception:  # pylint: disable=W0703
+                logger.exception("An error has occured during synchronization")
+                failed = True
+                # If we are re-raising exceptions then raise this one
+                if raise_exc:
+                    raise
 
-    if failed:
-        # Raise a general Synchronization has failed exception. In general
-        #   hiding the exception like this isn't very nice but it's difficult
-        #   to "do the right thing" with green threads.
-        raise FailedSynchronization
+        if failed:
+            # Raise a general Synchronization has failed exception. In general
+            #   hiding the exception like this isn't very nice but it's
+            #    difficult to "do the right thing" with green threads.
+            raise FailedSynchronization
 
     # See if there have been any deletions
     if fetcher.deletions(since=since):
@@ -183,23 +185,69 @@ def syncer(projects=None, since=None, fetcher=None, pool=None, progress=True,
 
 
 class Synchronize(Command):
+    """
+    Synchronizes Warehouse with PyPI.
+    """
 
     # pylint: disable=W0232
 
     option_list = [
-        Option("projects", nargs="*", metavar="project"),
-        Option("--repeat-every", type=int, dest="repeat", default=False),
-        Option("--no-progress", action="store_false", dest="progress"),
-        Option("--force-download", action="store_true", dest="force"),
-        Option("--timeout", type=int, dest="timeout", default=None),
+        Option("projects", nargs="*", help="list of projects to synchronize"),
+        Option("--repeat-every",
+            type=int,
+            dest="repeat",
+            default=False,
+            help="repeat the synchronization with the selected options every "
+                "REPEAT seconds",
+        ),
+        Option("--no-progress",
+            action="store_false",
+            dest="progress",
+            help="do not display a progress bar",
+        ),
+        Option("--force-download",
+            action="store_true",
+            dest="force",
+            help="force downloading packages even if the hashes match",
+        ),
+        Option("--timeout",
+            type=int,
+            dest="timeout",
+            default=None,
+            help="timeout each individual project synchronization in TIMEOUT "
+                "seconds",
+        ),
         Option("--no-store",
-                action="store_false", dest="store_since", default=True),
+            action="store_false",
+            dest="store_since",
+            default=True,
+            help="do not store the synchronization time",
+        ),
         Option("--raise",
-                action="store_true", dest="raise_exc", default=False),
-        Option("--concurrency", dest="concurrency", type=int, default=10),
+            action="store_true",
+            dest="raise_exc",
+            default=False,
+            help="raise an exception in project synchronization as it happens "
+                "instead of a generic one at the end",
+        ),
+        Option("--concurrency",
+            dest="concurrency",
+            type=int,
+            default=10,
+            help="use CONCURRENCY eventlet threads at once",
+        ),
         Group(
-            Option("--full", action="store_true", dest="full", default=False),
-            Option("--since", type=int, default=None),
+            Option("--full",
+                action="store_true",
+                dest="full",
+                default=False,
+                help="force a full synchronization instead of differential",
+            ),
+            Option("--since",
+                type=int,
+                default=None,
+                help="synchronize since SINCE",
+            ),
             exclusive=True,
         ),
     ]
@@ -253,4 +301,3 @@ class Synchronize(Command):
             )
 
 script.add_command("sync", Synchronize())
-script.add_command("synchronize", Synchronize())
