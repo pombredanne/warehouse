@@ -102,7 +102,7 @@ class PyPIFetcher(object):
 
         keys = set([
             "filename", "filesize", "python_version", "type", "comment",
-            "md5_digest", "url",
+            "md5_digest", "url", "created",
         ])
 
         for url in urls:
@@ -113,6 +113,9 @@ class PyPIFetcher(object):
 
             # Rename packagetype to type
             url["type"] = url["packagetype"]
+
+            # Rename upload_time to created
+            url["created"] = url["upload_time"]
 
             # Rename comment_text to comment
             if "comment_text" in url:

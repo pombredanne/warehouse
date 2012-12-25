@@ -133,6 +133,8 @@ def distribution(vers, dist):
     #   creating a new object the Database will cause an error.
     vfile.yanked = False
 
+    vfile.created = dist["created"]
+
     vfile.filesize = dist["filesize"]
     vfile.python_version = dist["python_version"]
 
