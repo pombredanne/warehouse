@@ -134,6 +134,31 @@ class Version(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
                 WHEN (OLD.yanked = TRUE AND NEW.yanked = FALSE)
                 EXECUTE PROCEDURE cannot_unyank();
         """),
+        TableDDL("""
+            CREATE OR REPLACE FUNCTION update_projects_created_from_versions()
+            RETURNS trigger as $$
+            BEGIN
+                UPDATE projects
+                SET created = NEW.created
+                WHERE id = NEW.project_id AND created > NEW.created;
+
+                return NULL;
+            END;
+            $$ LANGUAGE plpgsql;
+
+            CREATE TRIGGER %(table)s_insert_projects_created
+            AFTER INSERT
+            ON %(table)s
+            FOR EACH ROW
+            EXECUTE PROCEDURE update_projects_created_from_versions();
+
+            CREATE TRIGGER %(table)s_update_projects_created
+            AFTER UPDATE OF created
+            ON %(table)s
+            FOR EACH ROW
+            WHEN (NEW.created < OLD.created)
+            EXECUTE PROCEDURE update_projects_created_from_versions();
+        """),
     )))
 
     yanked = db.Column(db.Boolean,
@@ -228,6 +253,31 @@ class File(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
                 FOR EACH ROW
                 WHEN (OLD.yanked = TRUE AND NEW.yanked = FALSE)
                 EXECUTE PROCEDURE cannot_unyank();
+        """),
+        TableDDL("""
+            CREATE OR REPLACE FUNCTION update_versions_created_from_files()
+            RETURNS trigger as $$
+            BEGIN
+                UPDATE versions
+                SET created = NEW.created
+                WHERE id = NEW.version_id AND created > NEW.created;
+
+                return NULL;
+            END;
+            $$ LANGUAGE plpgsql;
+
+            CREATE TRIGGER %(table)s_insert_version_created
+            AFTER INSERT
+            ON %(table)s
+            FOR EACH ROW
+            EXECUTE PROCEDURE update_versions_created_from_files();
+
+            CREATE TRIGGER %(table)s_update_version_created
+            AFTER UPDATE OF created
+            ON %(table)s
+            FOR EACH ROW
+            WHEN (NEW.created < OLD.created)
+            EXECUTE PROCEDURE update_versions_created_from_files();
         """),
     )))
 

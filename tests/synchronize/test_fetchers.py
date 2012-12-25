@@ -12,6 +12,9 @@ from warehouse import utils
 from warehouse.synchronize import fetchers
 
 
+NOW = datetime.datetime.utcnow()
+
+
 @pytest.mark.parametrize(("inp", "expected"), [
     ({"a": None}, {}),
     ({"b": "None"}, {}),
@@ -250,7 +253,7 @@ def test_fetcher_release(project, version, client_response, expected):
             "Test", "1.0",
             [{
                 "has_sig": False,
-                "upload_time": datetime.datetime.utcnow(),
+                "upload_time": NOW,
                 "python_version": "any",
                 "url": "http://files.test.local/T/Test/Test-1.0.tar.gz",
                 "md5_digest": "aabcd",
@@ -262,6 +265,7 @@ def test_fetcher_release(project, version, client_response, expected):
             }],
             [{
                 "python_version": "any",
+                "created": NOW,
                 "url": "http://files.test.local/T/Test/Test-1.0.tar.gz",
                 "md5_digest": "aabcd",
                 "filename": "Test-1.0.tar.gz",
@@ -273,7 +277,7 @@ def test_fetcher_release(project, version, client_response, expected):
             "Test", "1.0",
             [{
                 "has_sig": False,
-                "upload_time": datetime.datetime.utcnow(),
+                "upload_time": NOW,
                 "python_version": "any",
                 "url": "http://files.test.local/T/Test/Test-1.0.tar.gz",
                 "md5_digest": "aabcd",
@@ -285,6 +289,7 @@ def test_fetcher_release(project, version, client_response, expected):
             }],
             [{
                 "python_version": "any",
+                "created": NOW,
                 "url": "http://files.test.local/T/Test/Test-1.0.tar.gz",
                 "md5_digest": "aabcd",
                 "filename": "Test-1.0.tar.gz",
