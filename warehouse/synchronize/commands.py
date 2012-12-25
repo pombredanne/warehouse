@@ -185,6 +185,9 @@ def syncer(projects=None, since=None, fetcher=None, pool=None, progress=True,
 
 
 class Synchronize(Command):
+    """
+    Synchronizes Warehouse with PyPI.
+    """
 
     # pylint: disable=W0232
 
