@@ -276,7 +276,8 @@ class Synchronize(Command):
                 ):
             # Determine what our since should be
             if fetch_since:
-                since = int(redis.get(REDIS_SINCE_KEY))
+                fetched = redis.get(REDIS_SINCE_KEY)
+                since = int(fetched) if not fetched is None else None
             elif full:
                 since = None
 
