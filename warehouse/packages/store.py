@@ -20,6 +20,13 @@ from warehouse.packages.models import (
 from warehouse.utils import ropen
 
 
+def _delete(obj):
+    db.session.delete(obj)
+    db.session.flush()
+    obj = None
+    return obj
+
+
 def classifier(trove):
     # This method is so short that we don't really care about the bad name "c"
     # pylint: disable=c0103
@@ -39,9 +46,7 @@ def project(name):
         # This object already exists, so if yanked is True we need to make it
         #   "new"
         if proj.yanked:
-            db.session.delete(proj)
-            db.session.flush()
-            proj = None
+            proj = _delete(proj)
     except NoResultFound:
         proj = None
 
@@ -65,9 +70,7 @@ def version(proj, release):
         # This object already exists, so if yanked is True we need to make it
         #   "new"
         if vers.yanked:
-            db.session.delete(vers)
-            db.session.flush()
-            vers = None
+            vers = _delete(vers)
     except NoResultFound:
         vers = None
 
@@ -114,15 +117,16 @@ def version(proj, release):
 
 def distribution(vers, dist):
     try:
-        vfile = File.query.filter_by(version=vers,
-                                     filename=dist["filename"]).one()
+        vfile = File.query.filter_by(filename=dist["filename"]).one()
 
         # This object already exists, so if yanked is True we need to make it
         #   "new"
         if vfile.yanked:
-            db.session.delete(vfile)
-            db.session.flush()
-            vfile = None
+            vfile = _delete(vfile)
+        # We need to check to make sure that the version on the file matches
+        #   the one we expect.
+        elif vfile.version != vers:
+            vfile = _delete(vfile)
     except NoResultFound:
         vfile = None
 
