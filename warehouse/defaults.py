@@ -16,21 +16,11 @@ REDIS_URI = "redis://localhost:6379/0"
 #   before timing out.
 SYNCHRONIZATION_TIMEOUT = 60 * 15
 
-# The type of Storage to use. Can be either Filesystem or S3.
-STORAGE = "Filesystem"
+# The type of Storage to use.
+STORAGE = "stockpile.filesystem:HashedFileSystem"
 
-# The hash to use in computing filenames.
-#   Allowed values: md5, sha1, sha224, sha256, sha384, sha512, None
-STORAGE_HASH = "md5"
-
-# Base directory for storage when using the Filesystem.
-STORAGE_DIRECTORY = "data"
-
-# The name of the bucket that files will be stored in when using S3.
-# STORAGE_BUCKET = "<storage bucket>"
-
-# The S3 Key used to access S3 when using S3 Storage
-# S3_KEY = "<S3 Key>"
-
-# The S3 Secret used to access S# when using S3 Storage
-# S3_SECRET = "<S3 Secret>"
+# Options to pass into the stockpile storage backend
+STORAGE_OPTIONS = {
+    "location": "data",
+    "hash_algorithm": "md5",
+}
