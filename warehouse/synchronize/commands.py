@@ -32,7 +32,7 @@ class DummyBar(object):
             yield item
 
 
-def synchronize_project(app, project, fetcher, force=False):
+def synchronize_project(app, project, fetcher, download=None):
     with app.test_request_context():
         key = REDIS_SYNC_LOCK_KEY.format(project=project)
 
@@ -69,15 +69,17 @@ def synchronize_project(app, project, fetcher, force=False):
                     distribution = store.distribution(version, dist)
 
                     if distribution.hashes is None:
-                        current_hash = None
+                        current_hashes = {}
                     else:
-                        current_hash = distribution.hashes.get("md5")
+                        current_hashes = distribution.hashes
 
-                    # Check if the stored hash matches what the fetcher says
-                    if (force or
-                            distribution.hashes is None or
-                            dist["md5_digest"] != current_hash):
-                        # The fetcher has a different file
+                    # Handle the True/False/None logic of download, and if
+                    #   download is None check if our stored hash matches
+                    #   the hash from PyPI
+                    if download or (
+                                download is None and
+                                dist["md5_digest"] != current_hashes.get("md5")
+                            ):
                         store.distribution_file(
                                 distribution,
                                 fetcher.file(dist["url"]),
@@ -99,7 +101,7 @@ def synchronize_project(app, project, fetcher, force=False):
 
 
 def syncer(projects=None, since=None, fetcher=None, pool=None, progress=True,
-        force=False, raise_exc=False, timeout=None):
+        download=None, raise_exc=False, timeout=None):
     if pool is None:
         pool = eventlet.GreenPool(10)
         logger.debug("Using concurrency of %s for GreenPool", pool.size)
@@ -142,7 +144,7 @@ def syncer(projects=None, since=None, fetcher=None, pool=None, progress=True,
                                 app,
                                 project,
                                 fetcher,
-                                force,
+                                download,
                         ),
                     )
 
@@ -205,11 +207,6 @@ class Synchronize(Command):
             dest="progress",
             help="do not display a progress bar",
         ),
-        Option("--force-download",
-            action="store_true",
-            dest="force",
-            help="force downloading packages even if the hashes match",
-        ),
         Option("--timeout",
             type=int,
             dest="timeout",
@@ -250,9 +247,23 @@ class Synchronize(Command):
             ),
             exclusive=True,
         ),
+        Group(
+            Option("--force-download",
+                action="store_true",
+                dest="download",
+                help="force downloading packages even if the hashes match",
+                default=None,
+            ),
+            Option("--no-download",
+                action="store_false",
+                dest="download",
+                help="disable downloading of files even if hashes mismatch",
+            ),
+            exclusive=True,
+        ),
     ]
 
-    def run(self, projects=None, concurrency=10, progress=True, force=False,
+    def run(self, projects=None, concurrency=10, progress=True, download=None,
             since=None, full=False, store_since=True, raise_exc=False,
             repeat=False, timeout=None):
         # This is a hack to normalize the incoming projects to unicode
@@ -286,7 +297,7 @@ class Synchronize(Command):
                         since=since,
                         pool=pool,
                         progress=progress,
-                        force=force,
+                        download=download,
                         raise_exc=raise_exc,
                         timeout=timeout,
                     )
