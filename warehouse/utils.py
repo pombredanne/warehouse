@@ -2,12 +2,12 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
-import os
 import platform
 import sys
 import time
 
 import flask
+import stockpile
 
 import warehouse
 
@@ -62,36 +62,12 @@ def repeat_every(seconds=0, minutes=0, hours=0, initial=False, times=None):
         yield seconds
 
 
-def ropen(path, mode="r"):
-    """
-    Redirects the open() call depending on the configured storage.
-    """
-    app = flask.current_app
+def get_storage(app=None):
+    if app is None:
+        app = flask.current_app
 
-    if app.config["STORAGE"].lower() == "filesystem":
-        real_path = os.path.join(app.config["STORAGE_DIRECTORY"], path)
+    storage_kwargs = app.config.get("STORAGE_OPTIONS", {})
+    storage_class = stockpile.get_storage(app.config["STORAGE"])
+    storage = storage_class(**storage_kwargs)
 
-        # TODO(dstufft): Detect suspicious paths
-
-        try:
-            os.makedirs(os.path.dirname(real_path))
-        except OSError:
-            # TODO(dstufft): Filter this down to only EEXISTS
-            pass
-
-        return open(real_path, mode)
-    elif app.config["STORAGE"].lower() == "s3":
-        from s3file import s3open
-
-        # Generate the url
-        fmt = {"bucket": app.config["STORAGE_BUCKET"], "filename": path}
-        url = "http://{bucket}.s3.amazonaws.com/{filename}".format(**fmt)
-
-        return s3open(url,
-                    key=app.config["S3_KEY"],
-                    secret=app.config["S3_SECRET"],
-                    create=False,
-                )
-    else:
-        raise ValueError(
-            "Unsupported 'STORAGE' option '{}'".format(app.config["STORAGE"]))
+    return storage

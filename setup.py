@@ -27,9 +27,9 @@ setup(
         "eventlet",
         "progress",
         "psycopg2",
-        "python-s3file>=1.1",
         "requests",
         "schema",
+        "stockpile",
         "xmlrpc2",
     ],
     extras_require={

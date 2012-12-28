@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import unicode_literals
 
 import hashlib
-import os
+import io
 
 import flask
 
@@ -17,7 +17,7 @@ from warehouse.packages.models import (
                                     File,
                                     FileType,
                                 )
-from warehouse.utils import ropen
+from warehouse.utils import get_storage
 
 
 def _delete(obj):
@@ -159,21 +159,10 @@ def distribution_file(dist, dist_file):
     for algorithm in hashlib.algorithms:
         hashes[algorithm] = getattr(hashlib, algorithm)(dist_file).hexdigest()
 
-    parts = []
-    # If we have a hash selected include it in the filename parts
-    if app.config.get("STORAGE_HASH"):
-        parts += list(hashes[app.config["STORAGE_HASH"]][:5])
-        parts += [hashes[app.config["STORAGE_HASH"]]]
-    # Finally end the filename parts with the actual filename
-    parts += [dist.filename]
+    # Save our file
+    storage = get_storage(app=app)
+    filename = storage.save(dist.filename, io.BytesIO(dist_file))
 
-    # Join together the parts to get the final filename
-    filename = os.path.join(*parts)
-
-    # Open the file with the redirected open (ropen) and save the contents
-    with ropen(filename, "w") as fp:
-        fp.write(dist_file)
-
-    # Set the hashes and filename for the distribution
+    # Store our information on the model
     dist.hashes = hashes
     dist.file = filename
