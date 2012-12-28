@@ -4,7 +4,6 @@ from __future__ import unicode_literals
 
 import hashlib
 import io
-import os
 
 import flask
 
