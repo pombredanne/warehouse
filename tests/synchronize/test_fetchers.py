@@ -135,7 +135,7 @@ def test_fetcher_projects(client_response, expected):
 def test_fetcher_projects_since(client_response, expected):
     session = pretend.stub(headers={})
     client = pretend.stub(changelog=lambda x: client_response)
-    validators = pretend.stub()
+    validators = pretend.stub(changelog=pretend.stub(validate=lambda x: x))
 
     fetcher = fetchers.PyPIFetcher(
                             session=session,
