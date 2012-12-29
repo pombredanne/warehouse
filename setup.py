@@ -25,6 +25,7 @@ setup(
         "Flask-Script",
         "boto",
         "eventlet",
+        "markerlib",
         "progress",
         "psycopg2",
         "requests",
