@@ -77,6 +77,7 @@ class PyPIFetcher(object):
         """
         Fetches the file located at ``url``.
         """
+        # TODO(dstufft): Validate File Content?
         parsed = urlparse.urlparse(url)
         url = urlparse.urlunparse(("https",) + parsed[1:])
 
@@ -197,8 +198,7 @@ class PyPIFetcher(object):
             )
 
             changes = self.client.changelog(since)
-
-            # TODO(dstufft): validate output
+            changes = self.validators.changelog.validate(changes)
 
             updated = set()
 
@@ -220,8 +220,7 @@ class PyPIFetcher(object):
         else:
             since = since - 1
             changes = self.client.changelog(since)
-
-            # TODO(dstufft): validate output
+            changes = self.validators.changelog.validate(changes)
 
             for _name, version, _timestamp, action in changes:
                 if action.lower() == "remove" and version is None:
