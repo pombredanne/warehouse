@@ -207,7 +207,26 @@ class Version(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
                             nullable=False,
                             server_default="{}"
                         )
+    requirements = relationship("Requirement",
+                cascade="all,delete,delete-orphan",
+                backref="version",
+                lazy="joined",
+                innerjoin=True,
+            )
+    provides = relationship("Provide",
+                cascade="all,delete,delete-orphan",
+                backref="version",
+                lazy="joined",
+                innerjoin=True,
+            )
+    obsoletes = relationship("Obsolete",
+                cascade="all,delete,delete-orphan",
+                backref="version",
+                lazy="joined",
+                innerjoin=True,
+            )
 
+    # Classifiers
     _classifiers = relationship("Classifier",
                         secondary=classifiers,
                         backref=db.backref("versions", lazy='dynamic')
@@ -223,6 +242,61 @@ class Version(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
     def __repr__(self):
         ctx = {"name": self.project.name, "version": self.version}
         return "<Version: {name} {version}>".format(**ctx)
+
+
+class Requirement(UUIDPrimaryKeyMixin, db.Model):
+
+    __tablename__ = "requires"
+
+    version_id = db.Column(pg.UUID(as_uuid=True),
+                        db.ForeignKey("versions.id", ondelete="CASCADE"),
+                        nullable=False
+                    )
+
+    name = db.Column(db.UnicodeText, nullable=False)
+    versions = db.Column(pg.ARRAY(db.UnicodeText, dimensions=1),
+                    nullable=False,
+                    server_default="{}"
+                )
+    environment = db.Column(db.UnicodeText, nullable=False, server_default="")
+    approximate = db.Column(db.Boolean,
+                    nullable=False,
+                    server_default=text("FALSE"),
+                )
+
+
+class Provide(UUIDPrimaryKeyMixin, db.Model):
+
+    __tablename__ = "provides"
+
+    version_id = db.Column(pg.UUID(as_uuid=True),
+                        db.ForeignKey("versions.id", ondelete="CASCADE"),
+                        nullable=False
+                    )
+
+    name = db.Column(db.UnicodeText, nullable=False)
+    versions = db.Column(pg.ARRAY(db.UnicodeText, dimensions=1),
+                    nullable=False,
+                    server_default="{}"
+                )
+    environment = db.Column(db.UnicodeText, nullable=False, server_default="")
+
+
+class Obsolete(UUIDPrimaryKeyMixin, db.Model):
+
+    __tablename__ = "obsoletes"
+
+    version_id = db.Column(pg.UUID(as_uuid=True),
+                        db.ForeignKey("versions.id", ondelete="CASCADE"),
+                        nullable=False
+                    )
+
+    name = db.Column(db.UnicodeText, nullable=False)
+    versions = db.Column(pg.ARRAY(db.UnicodeText, dimensions=1),
+                    nullable=False,
+                    server_default="{}"
+                )
+    environment = db.Column(db.UnicodeText, nullable=False, server_default="")
 
 
 class FileType(Enum):
