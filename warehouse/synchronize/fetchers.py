@@ -147,6 +147,29 @@ class PyPIFetcher(object):
         if "download_url" in data:
             data["download_uri"] = data["download_url"]
 
+        # Rename current requires/obsoletes/provides
+        if "requires" in data:
+            data["requires_old"] = data["requires"]
+            del data["requires"]
+
+        if "provides" in data:
+            data["provides_old"] = data["provides"]
+            del data["provides"]
+
+        if "obsoletes" in data:
+            data["obsoletes_old"] in data["obsoletes"]
+            del data["obsoletes"]
+
+        # Rename the *_dist to be requires/obsoletes/provides
+        if "requires_dist" in data:
+            data["requires"] = data["requires_dist"]
+
+        if "provides_dist" in data:
+            data["provides"] = data["provides_dist"]
+
+        if "obsoletes_dist" in data:
+            data["obsoletes"] = data["obsoletes_dist"]
+
         # Collapse project_url, bugtrack_url, and home_page into uris
         data["uris"] = {}
 
@@ -163,8 +186,8 @@ class PyPIFetcher(object):
         keys = set([
             "name", "version", "summary", "description", "author",
             "author_email", "maintainer", "maintainer_email", "license",
-            "requires_python", "requires_external", "uris", "keywords",
-            "download_uri", "classifiers",
+            "requires_python", "requires_external", "requires", "provides",
+            "obsoletes", "uris", "keywords", "download_uri", "classifiers",
         ])
 
         return dict(x for x in data.items() if x[0] in keys)

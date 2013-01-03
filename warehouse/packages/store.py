@@ -14,10 +14,14 @@ from warehouse.packages.models import (
                                     Classifier,
                                     Project,
                                     Version,
+                                    Requirement,
+                                    Provide,
+                                    Obsolete,
                                     File,
                                     FileType,
                                 )
 from warehouse.utils import get_storage
+from warehouse.utils.version import VersionPredicate
 
 
 def _delete(obj):
@@ -63,6 +67,33 @@ def project(name):
 
 
 def version(proj, release):
+    def _handle_require(requires, model, approximate=None):
+        collected = []
+
+        for req in requires:
+            if ";" in req:
+                predicate, environment = [x.strip() for x in req.split(";", 1)]
+            else:
+                predicate, environment = req.strip(), None
+
+            vp = VersionPredicate(predicate)
+
+            name = vp.name
+            rversions = ["".join([str(y) for y in x])
+                            for x in sorted(vp.predicates, key=lambda z: z[1])]
+
+            kw = {
+                "name": name,
+                "versions": rversions,
+                "environment": environment,
+            }
+
+            if approximate is not None:
+                kw.update({"approximate": approximate})
+
+            collected += [model(**kw)]
+
+        return collected
     try:
         vers = Version.query.filter_by(project=proj,
                                           version=release["version"]).one()
@@ -95,6 +126,26 @@ def version(proj, release):
     vers.requires_python = release.get("requires_python", "")
     vers.requires_external = release.get("requires_external", [])
 
+    vers.keywords = release.get("keywords", [])
+
+    vers.uris = release.get("uris", {})
+
+    vers.download_uri = release.get("download_uri", "")
+
+    # Process Requirements
+    vers.requirements = _handle_require(release.get("requires", []),
+                        model=Requirement,
+                        approximate=False,
+                    )
+
+    # Process Provides
+    vers.provides = _handle_require(release.get("provides", []), model=Provide)
+
+    # Process Obsoletes
+    vers.obsoletes = _handle_require(release.get("obsoletes", []),
+                        model=Obsolete,
+                    )
+
     # We cannot use the association proxy here because of a bug, and because
     #   of a race condition in multiple green threads.
     #   See: https://github.com/mitsuhiko/flask-sqlalchemy/issues/112
@@ -103,12 +154,6 @@ def version(proj, release):
     # pylint: disable=W0212
     vers._classifiers = [Classifier.query.filter_by(trove=t).one()
                                 for t in release.get("classifiers", [])]
-
-    vers.keywords = release.get("keywords", [])
-
-    vers.uris = release.get("uris", {})
-
-    vers.download_uri = release.get("download_uri", "")
 
     db.session.add(vers)
 
