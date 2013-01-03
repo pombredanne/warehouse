@@ -146,6 +146,11 @@ def version(proj, release):
                         model=Obsolete,
                     )
 
+    # Deprecated requires-like fields, stored only for completeness
+    vers.requires_old = release.get("requires_old", [])
+    vers.provides_old = release.get("provides_old", [])
+    vers.obsoletes_old = release.get("obsoletes_old", [])
+
     # We cannot use the association proxy here because of a bug, and because
     #   of a race condition in multiple green threads.
     #   See: https://github.com/mitsuhiko/flask-sqlalchemy/issues/112

@@ -187,7 +187,8 @@ class PyPIFetcher(object):
             "name", "version", "summary", "description", "author",
             "author_email", "maintainer", "maintainer_email", "license",
             "requires_python", "requires_external", "requires", "provides",
-            "obsoletes", "uris", "keywords", "download_uri", "classifiers",
+            "obsoletes", "requires_old", "provides_old", "obsoletes_od",
+            "uris", "keywords", "download_uri", "classifiers",
         ])
 
         return dict(x for x in data.items() if x[0] in keys)

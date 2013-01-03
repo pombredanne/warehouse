@@ -225,6 +225,18 @@ class Version(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
                 lazy="joined",
                 innerjoin=True,
             )
+    requires_old = db.Column(pg.ARRAY(db.UnicodeText, dimensions=1),
+                        nullable=False,
+                        server_default="{}",
+                    )
+    provides_old = db.Column(pg.ARRAY(db.UnicodeText, dimensions=1),
+                        nullable=False,
+                        server_default="{}",
+                    )
+    obsoletes_old = db.Column(pg.ARRAY(db.UnicodeText, dimensions=1),
+                        nullable=False,
+                        server_default="{}",
+                    )
 
     # Classifiers
     _classifiers = relationship("Classifier",
