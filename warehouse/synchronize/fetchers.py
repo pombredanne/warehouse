@@ -157,7 +157,7 @@ class PyPIFetcher(object):
             del data["provides"]
 
         if "obsoletes" in data:
-            data["obsoletes_old"] in data["obsoletes"]
+            data["obsoletes_old"] = data["obsoletes"]
             del data["obsoletes"]
 
         # Rename the *_dist to be requires/obsoletes/provides
