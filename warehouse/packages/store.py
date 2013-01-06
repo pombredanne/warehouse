@@ -45,22 +45,22 @@ def _handle_require(requires, model, approximate=None):
         else:
             predicate, environment = req.strip(), None
 
-        vp = VersionPredicate(predicate)
+        vpred = VersionPredicate(predicate)
 
-        name = vp.name
+        name = vpred.name
         rversions = ["".join([str(y) for y in x])
-                        for x in sorted(vp.predicates, key=lambda z: z[1])]
+                        for x in sorted(vpred.predicates, key=lambda z: z[1])]
 
-        kw = {
+        kwargs = {
             "name": name,
             "versions": rversions,
             "environment": environment,
         }
 
         if approximate is not None:
-            kw.update({"approximate": approximate})
+            kwargs.update({"approximate": approximate})
 
-        collected += [model(**kw)]
+        collected += [model(**kwargs)]
 
     return collected
 
@@ -244,8 +244,8 @@ def distribution_file(dist, dist_file):
     dist.file = filename
 
 
-def setuptools_requires(version, filename, file_data):
-    hard_requirements = [x for x in version.requirements if not x.approximate]
+def setuptools_requires(vers, filename, file_data):
+    hard_requirements = [x for x in vers.requirements if not x.approximate]
     if hard_requirements:
         # We have hard requirements, we assume they take precedence over
         #   approximate requirements
@@ -271,9 +271,9 @@ def setuptools_requires(version, filename, file_data):
     archive = io.BytesIO(file_data)
 
     # Normalize requirements, provides, and obsoletes back to empty
-    version.requirements = []
-    version.provides = []
-    version.obsoletes = []
+    vers.requirements = []
+    vers.provides = []
+    vers.obsoletes = []
 
     # Extract the requires.txt from the file_data
     if compression == "zip":
@@ -333,4 +333,4 @@ def setuptools_requires(version, filename, file_data):
                 requirement.environment = "extra = '%s'" % section
 
             # Add this Requirement to the version
-            version.requirements.append(requirement)
+            vers.requirements.append(requirement)
