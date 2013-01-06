@@ -2,10 +2,15 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
+import fnmatch
 import hashlib
 import io
+import os
+import tarfile
+import zipfile
 
 import flask
+import pkg_resources
 
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -29,6 +34,35 @@ def _delete(obj):
     db.session.flush()
     obj = None
     return obj
+
+
+def _handle_require(requires, model, approximate=None):
+    collected = []
+
+    for req in requires:
+        if ";" in req:
+            predicate, environment = [x.strip() for x in req.split(";", 1)]
+        else:
+            predicate, environment = req.strip(), None
+
+        vp = VersionPredicate(predicate)
+
+        name = vp.name
+        rversions = ["".join([str(y) for y in x])
+                        for x in sorted(vp.predicates, key=lambda z: z[1])]
+
+        kw = {
+            "name": name,
+            "versions": rversions,
+            "environment": environment,
+        }
+
+        if approximate is not None:
+            kw.update({"approximate": approximate})
+
+        collected += [model(**kw)]
+
+    return collected
 
 
 def classifier(trove):
@@ -67,33 +101,6 @@ def project(name):
 
 
 def version(proj, release):
-    def _handle_require(requires, model, approximate=None):
-        collected = []
-
-        for req in requires:
-            if ";" in req:
-                predicate, environment = [x.strip() for x in req.split(";", 1)]
-            else:
-                predicate, environment = req.strip(), None
-
-            vp = VersionPredicate(predicate)
-
-            name = vp.name
-            rversions = ["".join([str(y) for y in x])
-                            for x in sorted(vp.predicates, key=lambda z: z[1])]
-
-            kw = {
-                "name": name,
-                "versions": rversions,
-                "environment": environment,
-            }
-
-            if approximate is not None:
-                kw.update({"approximate": approximate})
-
-            collected += [model(**kw)]
-
-        return collected
     try:
         vers = Version.query.filter_by(project=proj,
                                           version=release["version"]).one()
@@ -133,10 +140,29 @@ def version(proj, release):
     vers.download_uri = release.get("download_uri", "")
 
     # Process Requirements
-    vers.requirements = _handle_require(release.get("requires", []),
+    approximate_requirements = [x for x in vers.requirements if x.approximate]
+
+    if approximate_requirements:
+        if release.get("requires", []):
+            # We have approximate requirements, and hard requirements
+            #   we're going to assume the hard requirements overwrite the
+            #   approximate
+            requirements = []
+        else:
+            # We have approximate requirements and no hard requirements
+            #   we're going to only keep the approximate requirements
+            requirements = approximate_requirements
+    else:
+        # We have no approximate requirements so we can assume we are
+        #   overwriting with the current, even if it's empty
+        requirements = []
+
+    # Add our current requires to whatever our starting base is
+    requirements += _handle_require(release.get("requires", []),
                         model=Requirement,
                         approximate=False,
                     )
+    vers.requirements = requirements
 
     # Process Provides
     vers.provides = _handle_require(release.get("provides", []), model=Provide)
@@ -216,3 +242,95 @@ def distribution_file(dist, dist_file):
     # Store our information on the model
     dist.hashes = hashes
     dist.file = filename
+
+
+def setuptools_requires(version, filename, file_data):
+    hard_requirements = [x for x in version.requirements if not x.approximate]
+    if hard_requirements:
+        # We have hard requirements, we assume they take precedence over
+        #   approximate requirements
+        return
+
+    # Determine the type of compression to use
+    compression = os.path.splitext(filename)[1][1:]
+
+    # Normalize tgz to just gz
+    if compression == "tgz":
+        compression = "gz"
+
+    # short circuit on some invalid sdist types that PyPI somehow has
+    if compression in set(["rpm", "egg", "deb"]):
+        return
+
+    if compression not in set(["gz", "bz2", "zip"]):
+        raise ValueError(
+                "Invalid compression type %s for %s" % (compression, filename)
+            )
+
+    # Shove our file_data into a BytesIO so we can treat it like a file
+    archive = io.BytesIO(file_data)
+
+    # Normalize requirements, provides, and obsoletes back to empty
+    version.requirements = []
+    version.provides = []
+    version.obsoletes = []
+
+    # Extract the requires.txt from the file_data
+    if compression == "zip":
+        try:
+            zipf = zipfile.ZipFile(archive)
+        except zipfile.BadZipfile:
+            # invalid archive
+            return
+
+        files = fnmatch.filter(zipf.namelist(), "*.egg-info/requires.txt")
+
+        if not files:
+            # requires.txt doesn't exist
+            return
+
+        # Figure out which requires.txt is closest to the root
+        files.sort(key=lambda x: len(x.split("/")))
+
+        # Grab the first requires.txt
+        rfilename = files.pop(0)
+
+        # Extract the requires.txt from the zip archive
+        requires = zipf.open(rfilename)
+    elif compression in set(["gz", "bz2"]):
+        try:
+            mode = "r:%s" % compression
+            tar = tarfile.open(filename, mode=mode, fileobj=archive)
+        except tarfile.ReadError:
+            # Invalid archive
+            return
+
+        files = fnmatch.filter(tar.getnames(), "*.egg-info/requires.txt")
+
+        if not files:
+            # requires.txt doesn't exist
+            return
+
+        # Figure out which requires.txt is closest to the root
+        files.sort(key=lambda x: len(x.split("/")))
+
+        # Grab the first requires.txt
+        rfilename = files.pop(0)
+
+        # Extract the requires.txt from the tar archive
+        requires = tar.extractfile(rfilename)
+
+    for section, reqs in pkg_resources.split_sections(requires):
+        for req in pkg_resources.parse_requirements(reqs):
+            requirement = Requirement(name=req.project_name, approximate=True)
+
+            # If we have any version modifiers, add them
+            if req.specs:
+                requirement.versions = ["".join(x) for x in req.specs]
+
+            # If we have any section add is as an extras
+            if section is not None:
+                requirement.environment = "extra = '%s'" % section
+
+            # Add this Requirement to the version
+            version.requirements.append(requirement)
