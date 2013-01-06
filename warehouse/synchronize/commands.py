@@ -14,6 +14,7 @@ from warehouse import create_app, db, redis, script
 from warehouse import utils
 from warehouse.exceptions import FailedSynchronization, SynchronizationTimeout
 from warehouse.packages import diff, store
+from warehouse.packages.models import FileType
 from warehouse.synchronize.fetchers import PyPIFetcher
 
 
@@ -49,10 +50,8 @@ def synchronize_project(app, project, fetcher, download=None):
                     project.name,
                 )
 
-                version = store.version(
-                            project,
-                            fetcher.release(project.name, ver),
-                        )
+                release = fetcher.release(project.name, ver)
+                version = store.version(project, release)
 
                 dists = fetcher.distributions(project.name, version.version)
                 dists = list(dists)
@@ -80,9 +79,14 @@ def synchronize_project(app, project, fetcher, download=None):
                                 download is None and
                                 dist["md5_digest"] != current_hashes.get("md5")
                             ):
-                        store.distribution_file(
-                                distribution,
-                                fetcher.file(dist["url"]),
+                        file_data = fetcher.file(dist["url"])
+                        store.distribution_file(distribution, file_data)
+
+                        if distribution.type == FileType.source:
+                            store.setuptools_requires(
+                                version,
+                                distribution.filename,
+                                file_data,
                             )
 
                 # Yank distributions that no longer exist in PyPI
