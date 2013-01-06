@@ -211,19 +211,16 @@ class Version(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
                 cascade="all,delete,delete-orphan",
                 backref="version",
                 lazy="joined",
-                innerjoin=True,
             )
     provides = relationship("Provide",
                 cascade="all,delete,delete-orphan",
                 backref="version",
                 lazy="joined",
-                innerjoin=True,
             )
     obsoletes = relationship("Obsolete",
                 cascade="all,delete,delete-orphan",
                 backref="version",
                 lazy="joined",
-                innerjoin=True,
             )
     requires_old = db.Column(pg.ARRAY(db.UnicodeText, dimensions=1),
                         nullable=False,
