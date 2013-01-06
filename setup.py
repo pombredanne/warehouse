@@ -22,7 +22,7 @@ setup(
         "Flask",
         "Flask-Redistore",
         "Flask-SQLAlchemy",
-        "Flask-Script",
+        "Flask-Script>=0.5.2",
         "boto",
         "eventlet",
         "markerlib",
