@@ -113,6 +113,14 @@ class Project(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
     def __repr__(self):
         return "<Project: {name}>".format(name=self.name)
 
+    @classmethod
+    def yank(cls, name, synchronize=None):
+        kwargs = {}
+        if synchronize:
+            kwargs["synchronize_session"] = synchronize
+
+        cls.query.filter_by(name=name).update({"yanked": True}, **kwargs)
+
 
 class Version(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
 

@@ -3,6 +3,7 @@ from __future__ import division
 from __future__ import unicode_literals
 
 import calendar
+import collections
 import datetime
 import logging
 import os
@@ -17,6 +18,11 @@ from warehouse import utils
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
+
+
+Journal = collections.namedtuple("Journal",
+            ["name", "version", "timestamp", "action"],
+        )
 
 
 def filter_dict(unfiltered, required=None):
@@ -263,6 +269,25 @@ class PyPIFetcher(object):
 
             # We've found no deletions, so False
             return False
+
+    def journals(self, since=None):
+        if since is None:
+            # Default since to the beginning of unix time
+            since = 0
+
+        if since > 0:
+            # If we have a positive since then we want to go backwards in time
+            #   one second to make sure we get all changes
+            since = since - 1
+
+        logger.debug(
+            "Fetching all changes since %s from pypi.python.org", since,
+        )
+
+        changes = self.client.changelog(since)
+        changes = self.validators.changelog.validate(changes)
+
+        return [Journal(*change) for change in changes]
 
     def current(self):
         logger.debug("Fetching the current time from pypi.python.org")

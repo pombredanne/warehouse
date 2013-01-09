@@ -283,7 +283,10 @@ def setuptools_requires(vers, filename, file_data):
             # invalid archive
             return
 
-        files = fnmatch.filter(zipf.namelist(), "*.egg-info/requires.txt")
+        try:
+            files = fnmatch.filter(zipf.namelist(), "*.egg-info/requires.txt")
+        except IOError:
+            return
 
         if not files:
             # requires.txt doesn't exist
@@ -305,7 +308,10 @@ def setuptools_requires(vers, filename, file_data):
             # Invalid archive
             return
 
-        files = fnmatch.filter(tar.getnames(), "*.egg-info/requires.txt")
+        try:
+            files = fnmatch.filter(tar.getnames(), "*.egg-info/requires.txt")
+        except IOError:
+            return
 
         if not files:
             # requires.txt doesn't exist
