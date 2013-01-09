@@ -211,32 +211,13 @@ class PyPIFetcher(object):
         versions = self.client.package_releases(project, True)
         return self.validators.package_releases.validate(versions)
 
-    def projects(self, since=None):
+    def projects(self):
         """
         Returns a list of all project names
         """
-        if since is None:
-            logger.debug("Fetching all projects from pypi.python.org")
-            packages = self.client.list_packages()
-            return set(self.validators.list_packages.validate(packages))
-        else:
-            since = since - 1
-
-            logger.debug(
-                "Fetching all changes since %s from pypi.python.org",
-                since,
-            )
-
-            changes = self.client.changelog(since)
-            changes = self.validators.changelog.validate(changes)
-
-            updated = set()
-
-            for name, version, _timestamp, action in changes:
-                if not (action.lower() == "remove" and version is None):
-                    updated.add(name)
-
-            return updated
+        logger.debug("Fetching all projects from pypi.python.org")
+        packages = self.client.list_packages()
+        return set(self.validators.list_packages.validate(packages))
 
     def deletions(self, since=None):
         if since is None:

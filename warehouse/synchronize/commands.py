@@ -98,19 +98,25 @@ def synchronize_project(project, fetcher, download=None):
         db.session.commit()
 
 
-def synchronize_by_journals(since=None, fetcher=None, progress=True,
-        download=None):
-    if fetcher is None:
-        fetcher = PyPIFetcher()
-
-    current = fetcher.current()
-
+def synchronize_classifiers(fetcher):
     # Sync the Classifiers
     for classifier in fetcher.classifiers():
         store.classifier(classifier)
 
     # Commit the classifiers
     db.session.commit()
+
+
+def synchronize_by_journals(since=None, fetcher=None, progress=True,
+        download=None):
+    if fetcher is None:
+        fetcher = PyPIFetcher()
+
+    # Grab the current datetime
+    current = fetcher.current()
+
+    # Synchronize all the classifiers with PyPI
+    synchronize_classifiers(fetcher)
 
     # Grab the journals since `since`
     journals = fetcher.journals(since=since)
@@ -154,6 +160,39 @@ def synchronize_by_journals(since=None, fetcher=None, progress=True,
         len(updated),
         len(deleted),
     )
+
+    return current
+
+
+def synchronize_by_projects(projects=None, fetcher=None, progress=True,
+        download=None):
+    if fetcher is None:
+        fetcher = PyPIFetcher()
+
+    # Grab the current datetime
+    current = fetcher.current()
+
+    # Synchronize all the classifiers with PyPI
+    synchronize_classifiers(fetcher)
+
+    if not projects:
+        # Grab a list of projects from PyPI
+        projects = fetcher.projects()
+
+        # We are not synchronizing a subset of projects, so we can check for
+        #   any deletions (if required) and yank them.
+        diff.projects(projects)
+
+        # Commit our yanked projects
+        db.session.commit()
+
+    if progress:
+        bar = ShadyBar("Processing Projects", max=len(projects))
+    else:
+        bar = DummyBar()
+
+    for project in bar.iter(projects):
+        synchronize_project(project, fetcher, download=download)
 
     return current
 
@@ -226,21 +265,27 @@ class Synchronize(Command):
             logger.info("will synchronize all projects from pypi.python.org")
 
         # record if we should be grabbing since from redis
-        fetch_since = not since and not full
+        fetch_since = not since
 
         for _ in utils.repeat_every(
                     seconds=repeat if repeat else 0,
                     times=None if repeat else 1,
                 ):
-            # Determine what our since should be
-            if fetch_since:
-                fetched = redis.get(REDIS_SINCE_KEY)
-                since = int(fetched) if not fetched is None else None
-            elif full:
-                since = None
+            if full or projects:
+                # We are preforming a full synchronization, or by a list of
+                #   projects
+                synced = synchronize_by_projects(projects,
+                            progress=progress,
+                            download=download,
+                        )
+            else:
+                if fetch_since:
+                    # Grab the since key from redis
+                    fetched = redis.get(REDIS_SINCE_KEY)
+                    since = int(fetched) if not fetched is None else None
 
-            # Run the actual Synchronization
-            synced = synchronize_by_journals(since,
+                # We are preforming a standard journal based synchronization
+                synced = synchronize_by_journals(since,
                         progress=progress,
                         download=download,
                     )
