@@ -155,10 +155,9 @@ def synchronize_by_journals(since=None, fetcher=None, progress=True,
                         download=download,
                     )
 
-    logger.info("Finished processing journals at %s; updated %s and deleted %s",
-        current,
-        len(updated),
-        len(deleted),
+    logger.info(
+        "Finished processing journals at %s; updated %s and deleted %s",
+        current, len(updated), len(deleted),
     )
 
     return current
