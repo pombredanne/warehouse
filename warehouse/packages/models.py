@@ -69,7 +69,7 @@ class Project(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
             RETURNS trigger AS $$
             BEGIN
                 NEW.normalized = lower(
-                            regexp_replace(new.name, '[^A-Za-z0-9.]+', '-'));
+                        regexp_replace(new.name, '[^A-Za-z0-9.]+', '-', 'g'));
                 return NEW;
             END;
             $$ LANGUAGE plpgsql;
