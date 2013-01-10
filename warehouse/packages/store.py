@@ -6,6 +6,7 @@ import fnmatch
 import hashlib
 import io
 import os
+import re
 import tarfile
 import zipfile
 
@@ -27,6 +28,9 @@ from warehouse.packages.models import (
                                 )
 from warehouse.utils import get_storage
 from warehouse.utils.version import VersionPredicate
+
+
+_normalize_regex = re.compile(r"[^A-Za-z0-9.]+")
 
 
 def _delete(obj):
@@ -79,7 +83,8 @@ def classifier(trove):
 
 def project(name):
     try:
-        proj = Project.query.filter_by(name=name).one()
+        normalized = _normalize_regex.sub("-", name).lower()
+        proj = Project.query.filter_by(normalized=normalized).one()
 
         # This object already exists, so if yanked is True we need to make it
         #   "new"
@@ -90,6 +95,9 @@ def project(name):
 
     if proj is None:
         proj = Project(name)
+
+    # Assert that our project name matches what we expect
+    assert proj.name == name
 
     # Explicitly set yanked to False. If somehow we are un-yanking instead of
     #   creating a new object the Database will cause an error.
@@ -283,7 +291,10 @@ def setuptools_requires(vers, filename, file_data):
             # invalid archive
             return
 
-        files = fnmatch.filter(zipf.namelist(), "*.egg-info/requires.txt")
+        try:
+            files = fnmatch.filter(zipf.namelist(), "*.egg-info/requires.txt")
+        except IOError:
+            return
 
         if not files:
             # requires.txt doesn't exist
@@ -305,7 +316,10 @@ def setuptools_requires(vers, filename, file_data):
             # Invalid archive
             return
 
-        files = fnmatch.filter(tar.getnames(), "*.egg-info/requires.txt")
+        try:
+            files = fnmatch.filter(tar.getnames(), "*.egg-info/requires.txt")
+        except IOError:
+            return
 
         if not files:
             # requires.txt doesn't exist

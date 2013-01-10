@@ -112,23 +112,6 @@ def test_fetcher_projects(client_response, expected):
     assert fetcher.projects() == expected
 
 
-@pytest.mark.parametrize(("client_response", "expected"), [
-    ([["Foo", "1.0", 1, "create"], ["bar", None, 1, "remove"]], set(["Foo"])),
-])
-def test_fetcher_projects_since(client_response, expected):
-    session = pretend.stub(headers={})
-    client = pretend.stub(changelog=lambda x: client_response)
-    validators = pretend.stub(changelog=pretend.stub(validate=lambda x: x))
-
-    fetcher = fetchers.PyPIFetcher(
-                            session=session,
-                            client=client,
-                            validators=validators,
-                        )
-
-    assert fetcher.projects(since=1) == expected
-
-
 @pytest.mark.parametrize(("project", "client_response", "expected"), [
     ("Test", ["1.0", "2.0"], ["1.0", "2.0"]),
 ])
@@ -319,19 +302,3 @@ def test_fetcher_files(url, https_url, content):
     assert fetcher.file(url) == content
 
     session_get.assert_called_once_with(https_url)
-
-
-@pytest.mark.parametrize(("since", "client_response", "expected"), [
-    (None, None, True),
-    (1, [["Test", None, 1, "remove"]], True),
-    (1, [["Test", "1.0", 1, "remove"]], False),
-    (1, [["Test", None, 1, "create"]], False),
-    (1, [["Test", "1.0", 1, "create"]], False),
-])
-def test_fetcher_deletions(since, client_response, expected):
-    session = pretend.stub(headers={})
-    client = pretend.stub(changelog=lambda _: client_response)
-
-    fetcher = fetchers.PyPIFetcher(session=session, client=client)
-
-    assert fetcher.deletions(since=since) == expected

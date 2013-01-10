@@ -3,6 +3,7 @@ from __future__ import division
 from __future__ import unicode_literals
 
 import calendar
+import collections
 import datetime
 import logging
 import os
@@ -18,6 +19,11 @@ from warehouse.synchronize import validators as warehouse_validators
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
+
+
+Journal = collections.namedtuple("Journal",
+            ["name", "version", "timestamp", "action"],
+        )
 
 
 def filter_dict(unfiltered, required=None):
@@ -209,64 +215,32 @@ class PyPIFetcher(object):
         versions = self.client.package_releases(project, True)
         return self.validators.package_releases.validate(versions)
 
-    def projects(self, since=None):
+    def projects(self):
         """
         Returns a list of all project names
         """
+        logger.debug("Fetching all projects from pypi.python.org")
+        packages = self.client.list_packages()
+        return set(self.validators.list_packages.validate(packages))
+
+    def journals(self, since=None):
         if since is None:
-            logger.debug("Fetching all projects from pypi.python.org")
-            packages = self.client.list_packages()
-            return set(self.validators.list_packages.validate(packages))
-        else:
+            # Default since to the beginning of unix time
+            since = 0
+
+        if since > 0:
+            # If we have a positive since then we want to go backwards in time
+            #   one second to make sure we get all changes
             since = since - 1
 
-            logger.debug(
-                "Fetching all changes since %s from pypi.python.org",
-                since,
-            )
+        logger.debug(
+            "Fetching all changes since %s from pypi.python.org", since,
+        )
 
-            changes = self.client.changelog(since)
-            changes = self.validators.changelog.validate(changes)
+        changes = self.client.changelog(since)
+        changes = self.validators.changelog.validate(changes)
 
-            updated = set()
-
-            for name, version, _timestamp, action in changes:
-                if not (action.lower() == "remove" and version is None):
-                    updated.add(name)
-
-            return updated
-
-    def deletions(self, since=None):
-        if since is None:
-            # With no point of reference we must assume there has been
-            #   deletions
-            logger.debug(
-                "Assuming there have been deletions since there is no point "
-                "of reference"
-            )
-            return True
-        else:
-            since = since - 1
-            changes = self.client.changelog(since)
-            changes = self.validators.changelog.validate(changes)
-
-            for _name, version, _timestamp, action in changes:
-                if action.lower() == "remove" and version is None:
-                    # If we find *any* project deletions we know there was
-                    #   at least one and can say True
-                    logger.debug(
-                        "Found deletions that have occurred since %s",
-                        since,
-                    )
-                    return True
-
-            logger.debug(
-                "Found no deletions that have occurred since %s",
-                since,
-            )
-
-            # We've found no deletions, so False
-            return False
+        return [Journal(*change) for change in changes]
 
     def current(self):
         logger.debug("Fetching the current time from pypi.python.org")
