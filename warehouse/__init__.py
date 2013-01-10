@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 
 import importlib
 import logging
+import logging.config
 import os
 
 from flask import Flask
@@ -56,6 +57,10 @@ def create_app(config=None):
     if config:
         logger.debug("Loading configuration from '%s' via -c/--config", config)
         app.config.from_pyfile(config)
+
+    # Configure logging
+    if "LOGGING" in app.config:
+        logging.config.dictConfig(app.config["LOGGING"])
 
     # Initialize the database
     logger.debug("Initialize the PostgreSQL database object")
