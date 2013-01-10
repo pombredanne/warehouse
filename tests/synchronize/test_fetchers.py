@@ -319,19 +319,3 @@ def test_fetcher_files(url, https_url, content):
     assert fetcher.file(url) == content
 
     session_get.assert_called_once_with(https_url)
-
-
-@pytest.mark.parametrize(("since", "client_response", "expected"), [
-    (None, None, True),
-    (1, [["Test", None, 1, "remove"]], True),
-    (1, [["Test", "1.0", 1, "remove"]], False),
-    (1, [["Test", None, 1, "create"]], False),
-    (1, [["Test", "1.0", 1, "create"]], False),
-])
-def test_fetcher_deletions(since, client_response, expected):
-    session = pretend.stub(headers={})
-    client = pretend.stub(changelog=lambda _: client_response)
-
-    fetcher = fetchers.PyPIFetcher(session=session, client=client)
-
-    assert fetcher.deletions(since=since) == expected
