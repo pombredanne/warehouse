@@ -8,7 +8,6 @@ import pytest
 import requests
 import xmlrpc2.client
 
-from warehouse import utils
 from warehouse.synchronize import fetchers
 
 
@@ -67,22 +66,6 @@ def test_fetcher_client_initialize(monkeypatch):
                 "https://pypi.python.org/pypi",
                 transports=[http_transport_stub, https_transport_stub],
             )
-
-
-@pytest.mark.parametrize(("user_agent", "headers", "expected"), [
-    ("Warehouse Test", {}, {"User-Agent": "Warehouse Test"}),
-    ("Warehouse Test", {"Foo": "Bar"},
-                            {"Foo": "Bar", "User-Agent": "Warehouse Test"}),
-])
-def test_fetcher_user_agent(user_agent, headers, expected, monkeypatch):
-    monkeypatch.setattr(utils, "user_agent", lambda: user_agent)
-
-    session = pretend.stub(headers=headers)
-    client = pretend.stub()
-
-    fetcher = fetchers.PyPIFetcher(session=session, client=client)
-
-    assert fetcher.session.headers == expected
 
 
 @pytest.mark.parametrize(("inp", "expected"), [

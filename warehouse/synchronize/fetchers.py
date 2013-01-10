@@ -11,8 +11,9 @@ import urlparse
 import requests
 import xmlrpc2.client
 
+import warehouse
+
 from warehouse.synchronize import validators as warehouse_validators
-from warehouse import utils
 
 
 logger = logging.getLogger(__name__)
@@ -47,7 +48,10 @@ class PyPIFetcher(object):
             session.verify = certificate
 
         # Patch the headers
-        session.headers.update({"User-Agent": utils.user_agent()})
+        version = warehouse.__version__  # pylint: disable=E1101
+        session.headers.update({
+            "User-Agent": "warehouse/{version}".format(version=version),
+        })
 
         # Store the session
         self.session = session
