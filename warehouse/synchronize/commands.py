@@ -193,6 +193,8 @@ def synchronize_by_projects(projects=None, fetcher=None, progress=True,
     for project in bar.iter(projects):
         synchronize_project(project, fetcher, download=download)
 
+    logger.info("Finished processing projects at %s", current)
+
     return current
 
 
@@ -292,11 +294,5 @@ class Synchronize(Command):
             # Save our synchronization time in redis
             if store_since:
                 redis.set(REDIS_SINCE_KEY, synced)
-
-            # Output the time we started the sync
-            logger.info(
-                "Synchronization from pypi.python.org completed at %s",
-                synced,
-            )
 
 script.add_command("sync", Synchronize())
