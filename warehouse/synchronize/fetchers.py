@@ -219,38 +219,6 @@ class PyPIFetcher(object):
         packages = self.client.list_packages()
         return set(self.validators.list_packages.validate(packages))
 
-    def deletions(self, since=None):
-        if since is None:
-            # With no point of reference we must assume there has been
-            #   deletions
-            logger.debug(
-                "Assuming there have been deletions since there is no point "
-                "of reference"
-            )
-            return True
-        else:
-            since = since - 1
-            changes = self.client.changelog(since)
-            changes = self.validators.changelog.validate(changes)
-
-            for _name, version, _timestamp, action in changes:
-                if action.lower() == "remove" and version is None:
-                    # If we find *any* project deletions we know there was
-                    #   at least one and can say True
-                    logger.debug(
-                        "Found deletions that have occurred since %s",
-                        since,
-                    )
-                    return True
-
-            logger.debug(
-                "Found no deletions that have occurred since %s",
-                since,
-            )
-
-            # We've found no deletions, so False
-            return False
-
     def journals(self, since=None):
         if since is None:
             # Default since to the beginning of unix time
