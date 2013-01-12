@@ -414,9 +414,12 @@ class File(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
     @property
     def hashed_uri(self):
         algorithm = flask.current_app.config.get("FILE_URI_HASH")
+        digest = self.hashes.get(algorithm)
 
-        if algorithm is not None:
-            pass
+        if algorithm is not None and digest is not None:
+            parsed = urlparse.urlparse(self.uri)
+            fragment = "=".join([algorithm, digest])
+            return urlparse.urlunparse(parsed[:5] + (fragment,))
         else:
             return self.uri
 
