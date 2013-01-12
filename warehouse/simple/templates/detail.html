@@ -5,21 +5,22 @@
   <body>
     <h1>Links for {{ project.name }}</h1>
 
-    {% for file in files %}
+    {% for file in files -%}
       <a href="">{{ file.filename }}</a>
     {% endfor %}
 
-    {% if not restricted %}
-      {% for version in versions %}
+    {% if not restricted -%}
+      {% for version in versions -%}
         {% for label, uri in version.uris.iteritems() %}
-          {% if label|lower == "download" %}
-            <a href="{{ uri }}" rel="download">{{ version.version }} download_url</a>
-          {% elif label|lower == "home page" or label|lower == "homepage" %}
+          {% if label|lower == "home page" or label|lower == "homepage" -%}
             <a href="{{ uri }}" rel="homepage">{{ version.version }} home_page</a>
-          {% endif %}
-        {% endfor %}
-      {% endfor %}
-    {% endif %}
+          {%- endif %}
+        {%- endfor %}
+        {% if version.download_uri -%}
+          <a href="{{ version.download_uri }}" rel="download">{{ version.version }} download_url</a>
+        {%- endif %}
+      {%- endfor %}
+    {%- endif %}
 
     {# TODO(dstufft): Handle the URIs that we need to parse from the version descriptions #}
   </body>

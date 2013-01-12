@@ -38,8 +38,8 @@ def index():
 @simple.route("/<project>/")
 @simple.route("/<project>/<version>")
 @simple.route("/<project>/<version>/")
-@restricted.route("/<project>", defaults={"restricted": True})
-@restricted.route("/<project>/", defaults={"restricted": True})
+@restricted.route("/<project>", defaults={"restrict": True})
+@restricted.route("/<project>/", defaults={"restrict": True})
 @restricted.route("/<project>/<version>", defaults={"restrict": True})
 @restricted.route("/<project>/<version>/", defaults={"restrict": True})
 def detail(project, version=None, restrict=False):
@@ -49,12 +49,14 @@ def detail(project, version=None, restrict=False):
     if version is None:
         versions = Version.query.filter_by(project=project, yanked=False).all()
         files = File.query.filter(
-                    File.version.in_(versions)
+                    File.version_id.in_([v.id for v in versions])
                 ).filter_by(yanked=False).all()
     else:
         versions = Version.query.filter_by(
                                     project=project, version=version).all()
-        files = File.query.filter(File.version.in_(versions)).all()
+        files = File.query.filter(
+                    File.version_id.in_([v.id for v in versions]),
+                ).all()
 
     return flask.render_template("detail.html",
                 project=project,
