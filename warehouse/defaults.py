@@ -20,3 +20,6 @@ STORAGE_OPTIONS = {
     "location": "data",
     "hash_algorithm": "md5",
 }
+
+# What type of hash to use when displaying a hashed uri for files
+FILE_URI_HASH = "sha256"
