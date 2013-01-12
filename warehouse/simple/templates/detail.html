@@ -6,7 +6,7 @@
     <h1>Links for {{ project.name }}</h1>
 
     {% for file in files -%}
-      <a href="{{ file.hashed_uri }}">{{ file.filename }}</a>
+      <a href="{{ file.hashed_uri }}" rel="file">{{ file.filename }}</a>
     {% endfor %}
 
     {% if not restricted -%}
