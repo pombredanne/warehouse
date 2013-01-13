@@ -143,6 +143,21 @@ def synchronize_by_journals(since=None, fetcher=None, progress=True,
                     # Actually yank the project
                     Project.yank(journal.name, synchronize=False)
                     db.session.commit()
+            elif journal.action.lower().startswith("rename from "):
+                _, _, previous = journal.action.split(" ", 2)
+
+                # Store the proper state for deleted/updated
+                deleted.discard(journal.name)
+                updated.discard(previous)
+                deleted.add(previous)
+                updated.add(journal.name)
+
+                # Rename the project
+                proj = Project.get(previous)
+                proj.rename(journal.name)
+
+                # Commit the rename
+                db.session.commit()
             else:
                 # Process the update
                 if journal.name not in updated:

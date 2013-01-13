@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
+import re
 import urlparse
 
 import flask
@@ -22,6 +23,9 @@ from warehouse.database.schema import TableDDL
 from warehouse.database.types import Enum
 from warehouse.database.utils import table_args
 from warehouse.utils import get_storage
+
+
+_normalize_regex = re.compile(r"[^A-Za-z0-9.]+")
 
 
 classifiers = db.Table("version_classifiers",  # pylint: disable=C0103
@@ -119,12 +123,22 @@ class Project(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
         return "<Project: {name}>".format(name=self.name)
 
     @classmethod
+    def get(cls, name):
+        normalized = _normalize_regex.sub("-", name).lower()
+        return cls.query.filter_by(normalized=normalized).one()
+
+    @classmethod
     def yank(cls, name, synchronize=None):
         kwargs = {}
         if synchronize:
             kwargs["synchronize_session"] = synchronize
 
         cls.query.filter_by(name=name).update({"yanked": True}, **kwargs)
+
+    def rename(self, name):
+        self.name = name
+        self.normalized = _normalize_regex.sub("-", name).lower()
+        return self
 
 
 class Version(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
