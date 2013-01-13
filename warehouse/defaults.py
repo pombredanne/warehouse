@@ -19,6 +19,7 @@ STORAGE = "stockpile.filesystem:HashedFileSystem"
 STORAGE_OPTIONS = {
     "location": "data",
     "hash_algorithm": "md5",
+    "base_url": "https://files.warehouse.local:5000/",
 }
 
 # What type of hash to use when displaying a hashed uri for files
