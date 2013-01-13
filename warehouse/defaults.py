@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 
 # The base domain name for this installation. Used to control linking to
 #      sub-domains.
-SERVER_NAME = "warehouse.local"
+SERVER_NAME = "warehouse.local:5000"
 
 # The URI for our PostgreSQL database.
 SQLALCHEMY_DATABASE_URI = "postgres:///warehouse"
