@@ -39,7 +39,7 @@ db = SQLAlchemy(session_options={"autoflush": True})
 redis = Redistore()
 
 
-def create_app(config=None):
+def create_app(config=None, debug=False):
     # Create the Flask Application
     app = Flask("warehouse")
 
@@ -57,6 +57,10 @@ def create_app(config=None):
     if config:
         logger.debug("Loading configuration from '%s' via -c/--config", config)
         app.config.from_pyfile(config)
+
+    # Configure Debug if it's enabled
+    if debug:
+        app.config["DEBUG"] = debug
 
     # Configure logging
     if "LOGGING" in app.config:
@@ -88,6 +92,7 @@ def create_app(config=None):
 
 script = Manager(create_app)
 script.add_option("-c", "--config", dest="config", required=False)
+script.add_option("--debug", required=False, action="store_true")
 
 for module in MODULES:
     # Load commands
