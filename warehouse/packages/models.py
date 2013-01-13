@@ -2,6 +2,10 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
+import urlparse
+
+import flask
+
 from sqlalchemy.event import listen
 from sqlalchemy.schema import FetchedValue
 from sqlalchemy.dialects import postgresql as pg
@@ -17,6 +21,7 @@ from warehouse.database.mixins import UUIDPrimaryKeyMixin, TimeStampedMixin
 from warehouse.database.schema import TableDDL
 from warehouse.database.types import Enum
 from warehouse.database.utils import table_args
+from warehouse.utils import get_storage
 
 
 classifiers = db.Table("version_classifiers",  # pylint: disable=C0103
@@ -400,6 +405,23 @@ class File(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
                     nullable=False,
                     server_default=text("''::hstore")
                 )
+
+    @property
+    def uri(self):
+        storage = get_storage()
+        return storage.url(self.file)
+
+    @property
+    def hashed_uri(self):
+        algorithm = flask.current_app.config.get("FILE_URI_HASH")
+        digest = self.hashes.get(algorithm)
+
+        if algorithm is not None and digest is not None:
+            parsed = urlparse.urlparse(self.uri)
+            fragment = "=".join([algorithm, digest])
+            return urlparse.urlunparse(parsed[:5] + (fragment,))
+        else:
+            return self.uri
 
 
 listen(db.metadata, "before_create",
