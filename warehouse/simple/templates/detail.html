@@ -22,6 +22,10 @@
       {%- endfor %}
     {%- endif %}
 
-    {# TODO(dstufft): Handle the URIs that we need to parse from the version descriptions #}
+    {% if not restricted -%}
+      {%- for link in project.links %}
+    <a href="{{ link.link }}" rel="extracted">{{ link.link }}</a>
+      {%- endfor -%}
+    {%- endif %}
   </body>
 </html>
