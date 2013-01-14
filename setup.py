@@ -27,6 +27,7 @@ setup(
         "markerlib",
         "progress",
         "psycopg2",
+        "recliner",
         "requests",
         "schema",
         "stockpile",

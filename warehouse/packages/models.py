@@ -115,6 +115,10 @@ class Project(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
                     cascade="all,delete,delete-orphan",
                     backref="project",
                 )
+    links = relationship("ProjectLink",
+                    cascade="all,delete,delete-orphan",
+                    backref="project",
+                )
 
     def __init__(self, name):
         self.name = name
