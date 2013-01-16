@@ -29,7 +29,7 @@ for attr in __about__.__all__:
 MODULES = [
     {"name": "packages", "models": True},
     {"name": "synchronize", "commands": True},
-    {"name": "simple", "views": True},
+    {"name": "simple", "models": True, "views": True},
 ]
 
 logger = logging.getLogger("warehouse")

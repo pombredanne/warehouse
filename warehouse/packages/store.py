@@ -12,6 +12,7 @@ import zipfile
 
 import flask
 import pkg_resources
+import recliner
 
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -26,6 +27,7 @@ from warehouse.packages.models import (
                                     File,
                                     FileType,
                                 )
+from warehouse.simple.models import ProjectLink
 from warehouse.utils import get_storage
 from warehouse.utils.version import VersionPredicate
 
@@ -195,6 +197,15 @@ def version(proj, release):
                                 for t in release.get("classifiers", [])]
 
     db.session.add(vers)
+
+    # Parse the version.description and extract links from the description
+    try:
+        rendered = recliner.render(vers.description)
+    except ValueError:
+        pass
+    else:
+        if rendered:
+            ProjectLink.extract(vers.project, rendered)
 
     return vers
 
