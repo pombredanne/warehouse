@@ -132,6 +132,21 @@ def synchronize_by_journals(since=None, fetcher=None, progress=True,
         else:
             bar = DummyBar()
 
+        # Handle Renames, these need to occur first because PyPI retroactively
+        #   changes journal names to the new project, which if we experience
+        #   any of these prior to handling a rename it'll trigger a sync which
+        #   will act like it's a new project and not a renamed project.
+        if since is not None:
+            for journal in journals:
+                if journal.action.lower().startswith("rename from "):
+                    _, _, previous = journal.action.split(" ", 2)
+
+                    proj = Project.get(previous)
+                    proj.rename(journal.name)
+
+        # Commit the renames
+        db.session.commit()
+
         for journal in bar.iter(journals):
             if (journal.action.lower() == "remove" and
                     journal.version is None):
@@ -146,18 +161,8 @@ def synchronize_by_journals(since=None, fetcher=None, progress=True,
             elif journal.action.lower().startswith("rename from "):
                 _, _, previous = journal.action.split(" ", 2)
 
-                # Store the proper state for deleted/updated
-                deleted.discard(journal.name)
-                updated.discard(previous)
-                deleted.add(previous)
-                updated.add(journal.name)
-
-                # Rename the project
-                proj = Project.get(previous)
-                proj.rename(journal.name)
-
-                # Commit the rename
-                db.session.commit()
+                # Do nothing for right now, eventually we'll use this spot for
+                #   creating a history event
             else:
                 # Process the update
                 if journal.name not in updated:
@@ -240,19 +245,11 @@ class Synchronize(Command):
             default=True,
             help="do not store the synchronization time",
         ),
-        Group(
-            Option("--full",
-                action="store_true",
-                dest="full",
-                default=False,
-                help="force a full synchronization instead of differential",
-            ),
-            Option("--since",
-                type=int,
-                default=None,
-                help="synchronize since SINCE",
-            ),
-            exclusive=True,
+        Option("--full",
+            action="store_true",
+            dest="full",
+            default=False,
+            help="force a full synchronization instead of differential",
         ),
         Group(
             Option("--force-download",
@@ -270,8 +267,8 @@ class Synchronize(Command):
         ),
     ]
 
-    def run(self, projects=None, progress=True, download=None,
-            since=None, full=False, store_since=True, repeat=False):
+    def run(self, projects=None, progress=True, download=None, full=False,
+                store_since=True, repeat=False):
         # This is a hack to normalize the incoming projects to unicode
         projects = [x.decode("utf-8") for x in projects]
 
@@ -279,9 +276,6 @@ class Synchronize(Command):
             logger.info("Will synchronize %s from pypi.python.org", projects)
         else:
             logger.info("will synchronize all projects from pypi.python.org")
-
-        # record if we should be grabbing since from redis
-        fetch_since = not since
 
         for _ in utils.repeat_every(
                     seconds=repeat if repeat else 0,
@@ -295,10 +289,9 @@ class Synchronize(Command):
                             download=download,
                         )
             else:
-                if fetch_since:
-                    # Grab the since key from redis
-                    fetched = redis.get(REDIS_SINCE_KEY)
-                    since = int(fetched) if not fetched is None else None
+                # Grab the since key from redis
+                fetched = redis.get(REDIS_SINCE_KEY)
+                since = int(fetched) if not fetched is None else None
 
                 # We are preforming a standard journal based synchronization
                 synced = synchronize_by_journals(since,
