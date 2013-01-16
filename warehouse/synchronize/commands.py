@@ -17,6 +17,7 @@ from warehouse.packages.models import Project, FileType
 from warehouse.synchronize.fetchers import PyPIFetcher
 
 
+REDIS_JOURNALS_KEY = "warehouse:journals"
 REDIS_SINCE_KEY = "warehouse:since"
 REDIS_SYNC_LOCK_KEY = "warehouse:sync:lock:{project}"
 
@@ -147,8 +148,12 @@ def synchronize_by_journals(since=None, fetcher=None, progress=True,
         db.session.commit()
 
         for journal in bar.iter(journals):
+            if redis.sismember(REDIS_JOURNALS_KEY, journal.id):
+                # We've already processed this entry, so skip to the next one
+                continue
+
             created = datetime.datetime.utcfromtimestamp(journal.timestamp)
-            Journal.upsert(
+            Journal.create(
                         name=journal.name,
                         version=journal.version,
                         created=created,
@@ -182,8 +187,17 @@ def synchronize_by_journals(since=None, fetcher=None, progress=True,
                         download=download,
                     )
 
-            # Commit any changes made from this journal entry
-            db.session.commit()
+            try:
+                # Add this ID to our list of IDs we've processed in Redis
+                redis.sadd(REDIS_JOURNALS_KEY, journal.id)
+
+                # Commit any changes made from this journal entry
+                db.session.commit()
+            except:
+                # If any exception occured during committing remove the id
+                #   from redis
+                redis.srem(REDIS_JOURNALS_KEY, journal.id)
+                raise
 
     logger.info(
         "Finished processing journals at %s; updated %s and deleted %s",

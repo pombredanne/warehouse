@@ -1,7 +1,5 @@
 import calendar
 
-from sqlalchemy.orm.exc import NoResultFound
-
 from warehouse import db
 from warehouse.database.mixins import UUIDPrimaryKeyMixin, TimeStampedMixin
 
@@ -20,12 +18,7 @@ class Journal(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
         return calendar.timegm(self.created.timetuple())
 
     @classmethod
-    def upsert(cls, **kwargs):
-        try:
-            obj = cls.query.filter_by(**kwargs).one()
-        except NoResultFound:
-            obj = cls(**kwargs)
-
+    def create(cls, **kwargs):
+        obj = cls(**kwargs)
         db.session.add(obj)
-
         return obj
