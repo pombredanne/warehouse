@@ -22,7 +22,7 @@ logger.addHandler(logging.NullHandler())
 
 
 Journal = collections.namedtuple("Journal",
-            ["name", "version", "timestamp", "action"],
+            ["name", "version", "timestamp", "action", "id"],
         )
 
 
@@ -237,7 +237,7 @@ class PyPIFetcher(object):
             "Fetching all changes since %s from pypi.python.org", since,
         )
 
-        changes = self.client.changelog(since)
+        changes = self.client.changelog(since, True)
         changes = self.validators.changelog.validate(changes)
 
         return [Journal(*change) for change in changes]
