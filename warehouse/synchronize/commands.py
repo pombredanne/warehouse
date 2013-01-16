@@ -132,6 +132,21 @@ def synchronize_by_journals(since=None, fetcher=None, progress=True,
         else:
             bar = DummyBar()
 
+        # Handle Renames, these need to occur first because PyPI retroactively
+        #   changes journal names to the new project, which if we experience
+        #   any of these prior to handling a rename it'll trigger a sync which
+        #   will act like it's a new project and not a renamed project.
+        if since is not None:
+            for journal in journals:
+                if journal.action.lower().startswith("rename from "):
+                    _, _, previous = journal.action.split(" ", 2)
+
+                    proj = Project.get(previous)
+                    proj.rename(journal.name)
+
+        # Commit the renames
+        db.session.commit()
+
         for journal in bar.iter(journals):
             if (journal.action.lower() == "remove" and
                     journal.version is None):
@@ -146,18 +161,8 @@ def synchronize_by_journals(since=None, fetcher=None, progress=True,
             elif journal.action.lower().startswith("rename from "):
                 _, _, previous = journal.action.split(" ", 2)
 
-                # Store the proper state for deleted/updated
-                deleted.discard(journal.name)
-                updated.discard(previous)
-                deleted.add(previous)
-                updated.add(journal.name)
-
-                # Rename the project
-                proj = Project.get(previous)
-                proj.rename(journal.name)
-
-                # Commit the rename
-                db.session.commit()
+                # Do nothing for right now, eventually we'll use this spot for
+                #   creating a history event
             else:
                 # Process the update
                 if journal.name not in updated:
