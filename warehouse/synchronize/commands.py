@@ -240,19 +240,11 @@ class Synchronize(Command):
             default=True,
             help="do not store the synchronization time",
         ),
-        Group(
-            Option("--full",
-                action="store_true",
-                dest="full",
-                default=False,
-                help="force a full synchronization instead of differential",
-            ),
-            Option("--since",
-                type=int,
-                default=None,
-                help="synchronize since SINCE",
-            ),
-            exclusive=True,
+        Option("--full",
+            action="store_true",
+            dest="full",
+            default=False,
+            help="force a full synchronization instead of differential",
         ),
         Group(
             Option("--force-download",
@@ -270,8 +262,8 @@ class Synchronize(Command):
         ),
     ]
 
-    def run(self, projects=None, progress=True, download=None,
-            since=None, full=False, store_since=True, repeat=False):
+    def run(self, projects=None, progress=True, download=None, full=False,
+                store_since=True, repeat=False):
         # This is a hack to normalize the incoming projects to unicode
         projects = [x.decode("utf-8") for x in projects]
 
@@ -279,9 +271,6 @@ class Synchronize(Command):
             logger.info("Will synchronize %s from pypi.python.org", projects)
         else:
             logger.info("will synchronize all projects from pypi.python.org")
-
-        # record if we should be grabbing since from redis
-        fetch_since = not since
 
         for _ in utils.repeat_every(
                     seconds=repeat if repeat else 0,
@@ -295,10 +284,9 @@ class Synchronize(Command):
                             download=download,
                         )
             else:
-                if fetch_since:
-                    # Grab the since key from redis
-                    fetched = redis.get(REDIS_SINCE_KEY)
-                    since = int(fetched) if not fetched is None else None
+                # Grab the since key from redis
+                fetched = redis.get(REDIS_SINCE_KEY)
+                since = int(fetched) if not fetched is None else None
 
                 # We are preforming a standard journal based synchronization
                 synced = synchronize_by_journals(since,
