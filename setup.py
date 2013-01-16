@@ -24,6 +24,7 @@ setup(
         "Flask-SQLAlchemy",
         "Flask-Script>=0.5.2",
         "boto",
+        "html5lib",
         "markerlib",
         "progress",
         "psycopg2",
