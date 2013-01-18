@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
+import datetime
 import logging
 
 from flask.ext.script import (  # pylint: disable=E0611,F0401
@@ -10,11 +11,13 @@ from progress.bar import ShadyBar
 
 from warehouse import db, redis, script
 from warehouse import utils
+from warehouse.history.models import Journal
 from warehouse.packages import diff, store
 from warehouse.packages.models import Project, FileType
 from warehouse.synchronize.fetchers import PyPIFetcher
 
 
+REDIS_JOURNALS_KEY = "warehouse:journals"
 REDIS_SINCE_KEY = "warehouse:since"
 REDIS_SYNC_LOCK_KEY = "warehouse:sync:lock:{project}"
 
@@ -94,9 +97,6 @@ def synchronize_project(project, fetcher, download=None):
         logger.debug("Diffing versions of '%s'", project.name)
         diff.versions(project, versions)
 
-        # Commit our changes
-        db.session.commit()
-
 
 def synchronize_classifiers(fetcher):
     # Sync the Classifiers
@@ -148,6 +148,19 @@ def synchronize_by_journals(since=None, fetcher=None, progress=True,
         db.session.commit()
 
         for journal in bar.iter(journals):
+            if redis.sismember(REDIS_JOURNALS_KEY, journal.id):
+                # We've already processed this entry, so skip to the next one
+                continue
+
+            created = datetime.datetime.utcfromtimestamp(journal.timestamp)
+            Journal.create(
+                        name=journal.name,
+                        version=journal.version,
+                        created=created,
+                        action=journal.action,
+                        pypi_id=journal.id,
+                    )
+
             if (journal.action.lower() == "remove" and
                     journal.version is None):
                 # Delete the entire project
@@ -157,7 +170,6 @@ def synchronize_by_journals(since=None, fetcher=None, progress=True,
 
                     # Actually yank the project
                     Project.yank(journal.name, synchronize=False)
-                    db.session.commit()
             elif journal.action.lower().startswith("rename from "):
                 _, _, previous = journal.action.split(" ", 2)
 
@@ -174,6 +186,18 @@ def synchronize_by_journals(since=None, fetcher=None, progress=True,
                         fetcher,
                         download=download,
                     )
+
+            try:
+                # Add this ID to our list of IDs we've processed in Redis
+                redis.sadd(REDIS_JOURNALS_KEY, journal.id)
+
+                # Commit any changes made from this journal entry
+                db.session.commit()
+            except:
+                # If any exception occured during committing remove the id
+                #   from redis
+                redis.srem(REDIS_JOURNALS_KEY, journal.id)
+                raise
 
     logger.info(
         "Finished processing journals at %s; updated %s and deleted %s",

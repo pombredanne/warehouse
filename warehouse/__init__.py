@@ -27,6 +27,7 @@ for attr in __about__.__all__:
 # - End Meta Information -
 
 MODULES = [
+    {"name": "history", "models": True},
     {"name": "packages", "models": True},
     {"name": "synchronize", "commands": True},
     {"name": "simple", "models": True, "views": True},
