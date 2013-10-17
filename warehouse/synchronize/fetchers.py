@@ -3,6 +3,7 @@ from __future__ import division
 from __future__ import unicode_literals
 
 import calendar
+import collections
 import datetime
 import logging
 import os
@@ -11,12 +12,18 @@ import urlparse
 import requests
 import xmlrpc2.client
 
+import warehouse
+
 from warehouse.synchronize import validators as warehouse_validators
-from warehouse import utils
 
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
+
+
+Journal = collections.namedtuple("Journal",
+            ["name", "version", "timestamp", "action", "id"],
+        )
 
 
 def filter_dict(unfiltered, required=None):
@@ -47,7 +54,10 @@ class PyPIFetcher(object):
             session.verify = certificate
 
         # Patch the headers
-        session.headers.update({"User-Agent": utils.user_agent()})
+        version = warehouse.__version__  # pylint: disable=E1101
+        session.headers.update({
+            "User-Agent": "warehouse/{version}".format(version=version),
+        })
 
         # Store the session
         self.session = session
@@ -147,6 +157,29 @@ class PyPIFetcher(object):
         if "download_url" in data:
             data["download_uri"] = data["download_url"]
 
+        # Rename current requires/obsoletes/provides
+        if "requires" in data:
+            data["requires_old"] = data["requires"]
+            del data["requires"]
+
+        if "provides" in data:
+            data["provides_old"] = data["provides"]
+            del data["provides"]
+
+        if "obsoletes" in data:
+            data["obsoletes_old"] = data["obsoletes"]
+            del data["obsoletes"]
+
+        # Rename the *_dist to be requires/obsoletes/provides
+        if "requires_dist" in data:
+            data["requires"] = data["requires_dist"]
+
+        if "provides_dist" in data:
+            data["provides"] = data["provides_dist"]
+
+        if "obsoletes_dist" in data:
+            data["obsoletes"] = data["obsoletes_dist"]
+
         # Collapse project_url, bugtrack_url, and home_page into uris
         data["uris"] = {}
 
@@ -163,8 +196,9 @@ class PyPIFetcher(object):
         keys = set([
             "name", "version", "summary", "description", "author",
             "author_email", "maintainer", "maintainer_email", "license",
-            "requires_python", "requires_external", "uris", "keywords",
-            "download_uri", "classifiers",
+            "requires_python", "requires_external", "requires", "provides",
+            "obsoletes", "requires_old", "provides_old", "obsoletes_od",
+            "uris", "keywords", "download_uri", "classifiers",
         ])
 
         return dict(x for x in data.items() if x[0] in keys)
@@ -181,64 +215,32 @@ class PyPIFetcher(object):
         versions = self.client.package_releases(project, True)
         return self.validators.package_releases.validate(versions)
 
-    def projects(self, since=None):
+    def projects(self):
         """
         Returns a list of all project names
         """
+        logger.debug("Fetching all projects from pypi.python.org")
+        packages = self.client.list_packages()
+        return set(self.validators.list_packages.validate(packages))
+
+    def journals(self, since=None):
         if since is None:
-            logger.debug("Fetching all projects from pypi.python.org")
-            packages = self.client.list_packages()
-            return set(self.validators.list_packages.validate(packages))
-        else:
+            # Default since to the beginning of unix time
+            since = 0
+
+        if since > 0:
+            # If we have a positive since then we want to go backwards in time
+            #   one second to make sure we get all changes
             since = since - 1
 
-            logger.debug(
-                "Fetching all changes since %s from pypi.python.org",
-                since,
-            )
+        logger.debug(
+            "Fetching all changes since %s from pypi.python.org", since,
+        )
 
-            changes = self.client.changelog(since)
-            changes = self.validators.changelog.validate(changes)
+        changes = self.client.changelog(since, True)
+        changes = self.validators.changelog.validate(changes)
 
-            updated = set()
-
-            for name, version, _timestamp, action in changes:
-                if not (action.lower() == "remove" and version is None):
-                    updated.add(name)
-
-            return updated
-
-    def deletions(self, since=None):
-        if since is None:
-            # With no point of reference we must assume there has been
-            #   deletions
-            logger.debug(
-                "Assuming there have been deletions since there is no point "
-                "of reference"
-            )
-            return True
-        else:
-            since = since - 1
-            changes = self.client.changelog(since)
-            changes = self.validators.changelog.validate(changes)
-
-            for _name, version, _timestamp, action in changes:
-                if action.lower() == "remove" and version is None:
-                    # If we find *any* project deletions we know there was
-                    #   at least one and can say True
-                    logger.debug(
-                        "Found deletions that have occurred since %s",
-                        since,
-                    )
-                    return True
-
-            logger.debug(
-                "Found no deletions that have occurred since %s",
-                since,
-            )
-
-            # We've found no deletions, so False
-            return False
+        return [Journal(*change) for change in changes]
 
     def current(self):
         logger.debug("Fetching the current time from pypi.python.org")

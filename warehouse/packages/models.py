@@ -2,6 +2,11 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
+import re
+import urlparse
+
+import flask
+
 from sqlalchemy.event import listen
 from sqlalchemy.schema import FetchedValue
 from sqlalchemy.dialects import postgresql as pg
@@ -17,6 +22,10 @@ from warehouse.database.mixins import UUIDPrimaryKeyMixin, TimeStampedMixin
 from warehouse.database.schema import TableDDL
 from warehouse.database.types import Enum
 from warehouse.database.utils import table_args
+from warehouse.utils import get_storage
+
+
+_normalize_regex = re.compile(r"[^A-Za-z0-9.]+")
 
 
 classifiers = db.Table("version_classifiers",  # pylint: disable=C0103
@@ -69,7 +78,7 @@ class Project(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
             RETURNS trigger AS $$
             BEGIN
                 NEW.normalized = lower(
-                            regexp_replace(new.name, '[^A-Za-z0-9.]+', '-'));
+                        regexp_replace(new.name, '[^A-Za-z0-9.]+', '-', 'g'));
                 return NEW;
             END;
             $$ LANGUAGE plpgsql;
@@ -106,12 +115,34 @@ class Project(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
                     cascade="all,delete,delete-orphan",
                     backref="project",
                 )
+    links = relationship("ProjectLink",
+                    cascade="all,delete,delete-orphan",
+                    backref="project",
+                )
 
     def __init__(self, name):
         self.name = name
 
     def __repr__(self):
         return "<Project: {name}>".format(name=self.name)
+
+    @classmethod
+    def get(cls, name):
+        normalized = _normalize_regex.sub("-", name).lower()
+        return cls.query.filter_by(normalized=normalized).one()
+
+    @classmethod
+    def yank(cls, name, synchronize=None):
+        kwargs = {}
+        if synchronize:
+            kwargs["synchronize_session"] = synchronize
+
+        cls.query.filter_by(name=name).update({"yanked": True}, **kwargs)
+
+    def rename(self, name):
+        self.name = name
+        self.normalized = _normalize_regex.sub("-", name).lower()
+        return self
 
 
 class Version(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
@@ -207,7 +238,35 @@ class Version(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
                             nullable=False,
                             server_default="{}"
                         )
+    requirements = relationship("Requirement",
+                cascade="all,delete,delete-orphan",
+                backref="version",
+                lazy="joined",
+            )
+    provides = relationship("Provide",
+                cascade="all,delete,delete-orphan",
+                backref="version",
+                lazy="joined",
+            )
+    obsoletes = relationship("Obsolete",
+                cascade="all,delete,delete-orphan",
+                backref="version",
+                lazy="joined",
+            )
+    requires_old = db.Column(pg.ARRAY(db.UnicodeText, dimensions=1),
+                        nullable=False,
+                        server_default="{}",
+                    )
+    provides_old = db.Column(pg.ARRAY(db.UnicodeText, dimensions=1),
+                        nullable=False,
+                        server_default="{}",
+                    )
+    obsoletes_old = db.Column(pg.ARRAY(db.UnicodeText, dimensions=1),
+                        nullable=False,
+                        server_default="{}",
+                    )
 
+    # Classifiers
     _classifiers = relationship("Classifier",
                         secondary=classifiers,
                         backref=db.backref("versions", lazy='dynamic')
@@ -223,6 +282,61 @@ class Version(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
     def __repr__(self):
         ctx = {"name": self.project.name, "version": self.version}
         return "<Version: {name} {version}>".format(**ctx)
+
+
+class Requirement(UUIDPrimaryKeyMixin, db.Model):
+
+    __tablename__ = "requires"
+
+    version_id = db.Column(pg.UUID(as_uuid=True),
+                        db.ForeignKey("versions.id", ondelete="CASCADE"),
+                        nullable=False
+                    )
+
+    name = db.Column(db.UnicodeText, nullable=False)
+    versions = db.Column(pg.ARRAY(db.UnicodeText, dimensions=1),
+                    nullable=False,
+                    server_default="{}"
+                )
+    environment = db.Column(db.UnicodeText, nullable=False, server_default="")
+    approximate = db.Column(db.Boolean,
+                    nullable=False,
+                    server_default=text("FALSE"),
+                )
+
+
+class Provide(UUIDPrimaryKeyMixin, db.Model):
+
+    __tablename__ = "provides"
+
+    version_id = db.Column(pg.UUID(as_uuid=True),
+                        db.ForeignKey("versions.id", ondelete="CASCADE"),
+                        nullable=False
+                    )
+
+    name = db.Column(db.UnicodeText, nullable=False)
+    versions = db.Column(pg.ARRAY(db.UnicodeText, dimensions=1),
+                    nullable=False,
+                    server_default="{}"
+                )
+    environment = db.Column(db.UnicodeText, nullable=False, server_default="")
+
+
+class Obsolete(UUIDPrimaryKeyMixin, db.Model):
+
+    __tablename__ = "obsoletes"
+
+    version_id = db.Column(pg.UUID(as_uuid=True),
+                        db.ForeignKey("versions.id", ondelete="CASCADE"),
+                        nullable=False
+                    )
+
+    name = db.Column(db.UnicodeText, nullable=False)
+    versions = db.Column(pg.ARRAY(db.UnicodeText, dimensions=1),
+                    nullable=False,
+                    server_default="{}"
+                )
+    environment = db.Column(db.UnicodeText, nullable=False, server_default="")
 
 
 class FileType(Enum):
@@ -309,6 +423,23 @@ class File(UUIDPrimaryKeyMixin, TimeStampedMixin, db.Model):
                     nullable=False,
                     server_default=text("''::hstore")
                 )
+
+    @property
+    def uri(self):
+        storage = get_storage()
+        return storage.url(self.file)
+
+    @property
+    def hashed_uri(self):
+        algorithm = flask.current_app.config.get("FILE_URI_HASH")
+        digest = self.hashes.get(algorithm)
+
+        if algorithm is not None and digest is not None:
+            parsed = urlparse.urlparse(self.uri)
+            fragment = "=".join([algorithm, digest])
+            return urlparse.urlunparse(parsed[:5] + (fragment,))
+        else:
+            return self.uri
 
 
 listen(db.metadata, "before_create",
